@@ -45,14 +45,6 @@
     return optional ? optional[index] : null;
   }
 
-  function extractList(list, index) {
-    return list.map(function(element) { return element[index]; });
-  }
-
-  function buildList(head, tail, index) {
-    return [head].concat(extractList(tail, index));
-  }
-
   function optionalList(value) {
     return value !== null ? value : [];
   }
@@ -551,8 +543,8 @@ ObjectLiteral
        return wrap({ type: "ObjectExpression", properties: properties });
      }
 PropertyNameAndValueList
-  = head:PropertyAssignment tail:(__ "," __ PropertyAssignment)* {
-      return buildList(head, tail, 3);
+  = head:PropertyAssignment tail:(__ "," __ @PropertyAssignment)* {
+      return [head, ...tail];
     }
 
 PropertyAssignment
@@ -635,8 +627,8 @@ Arguments
     }
 
 ArgumentList
-  = head:SingleExpression tail:(__ "," __ SingleExpression)* {
-      return buildList(head, tail, 3);
+  = head:SingleExpression tail:(__ "," __ @SingleExpression)* {
+      return [head, ...tail];
     }
 
 LeftHandSideExpression
@@ -863,7 +855,7 @@ Block
     }
 
 StatementList
-  = head:Statement tail:(__ Statement)* { return buildList(head, tail, 1); }
+  = head:Statement tail:(__ @Statement)* { return [head, ...tail]; }
 
 VariableStatement
   = attrs: AttributeList?
@@ -877,8 +869,8 @@ VariableStatement
     }
 
 VariableDeclarationList
-  = head:VariableDeclaration tail:(__ "," __ VariableDeclaration)* {
-      return buildList(head, tail, 3);
+  = head:VariableDeclaration tail:(__ "," __ @VariableDeclaration)* {
+      return [head, ...tail];
     }
 
 VariableDeclaration
@@ -1020,7 +1012,7 @@ CaseBlock
     }
 
 CaseClauses
-  = head:CaseClause tail:(__ CaseClause)* { return buildList(head, tail, 1); }
+  = head:CaseClause tail:(__ @CaseClause)* { return [head, ...tail]; }
 
 InstanceofCase
   = InstanceofToken __ id:Identifier {
@@ -1109,10 +1101,10 @@ Symbol
   }
 
 AttributeArgList
-  = '[' __ head:IdentifierName tail:( __ "," __ IdentifierName)* __ ']' {
+  = '[' __ head:IdentifierName tail:( __ "," __ @IdentifierName)* __ ']' {
     return wrap({
       type: "AttributeArgList",
-      list: buildList(head, tail, 3)
+      list: [head, ...tail]
     })
   }
 
@@ -1122,17 +1114,17 @@ Attribute
   }
 
 Attributes
-  = head: Attribute tail:(__ "," __ Attribute)* {
-    return buildList(head, tail, 3);
+  = head: Attribute tail:(__ "," __ @Attribute)* {
+    return [head, ...tail];
   }
 
 AttributeList
   = "(" __ attrs:Attributes __ ")" __ { return attrs; }
 
 ScopedName
-  = head:Identifier tail:(__ "." __ Identifier)* { return wrap({
+  = head:Identifier tail:(__ "." __ @Identifier)* { return wrap({
         type: "ScopedIdentifier",
-        name: extractList(buildList(head, tail, 3), "name").join(".")
+        name: [head, ...tail].map(v => v.name).join(".")
       });
     }
 
@@ -1150,24 +1142,24 @@ ModuleDeclaration
 ClassDeclaration
   = attrs: AttributeList?
     ClassToken __ Identifier
-    parent:(__ ExtendsToken __ ScopedName)?
+    parent:(__ ExtendsToken __ @ScopedName)?
     __ "{"
-    classElems:(__ ClassElement)*
+    body:(__ @ClassElement)*
     __ "}" {
       return wrap({
         type: "Class",
-        parent: extractOptional(parent, 2),
-        body: extractList(classElems, 1),
+        parent,
+        body,
         attrs
       })
     }
 
 ClassElement
-  = access:(AccessSpecifier __)? item:(FunctionDeclaration / EnumDeclaration / VariableStatement) {
+  = access:(@AccessSpecifier __)? item:(FunctionDeclaration / EnumDeclaration / VariableStatement) {
     return wrap({
       type: "ClassElement",
-      access: extractOptional(access, 0),
-      item: item
+      access,
+      item
     })
   }
 
@@ -1178,11 +1170,11 @@ AccessSpecifier
   / "private"
 
 EnumDeclaration
-  = EnumToken __ id:Identifier? __ "{" __ head:Enum __ tail:("," __ Enum)* __ "}" {
+  = EnumToken __ id:Identifier? __ "{" __ head:Enum __ tail:("," __ @Enum)* __ "}" {
     return wrap({
       type: "EnumDeclaration",
       id: id,
-      enums: buildList(head, tail, 2)
+      enums: [head, ...tail]
     })
   }
 
@@ -1258,8 +1250,8 @@ SingleTypeSpec
   }
 
 TypeSpecList
-  = head:SingleTypeSpec tail:(__ "or" __ SingleTypeSpec)* {
-    return buildList(head, tail, 3);
+  = head:SingleTypeSpec tail:(__ "or" __ @SingleTypeSpec)* {
+    return [head, ...tail];
   }
 
 AsTypeSpec
@@ -1274,8 +1266,8 @@ FormalParameter
   }
 
 FormalParameterList
-  = head:FormalParameter tail:(__ "," __ FormalParameter)* {
-      return buildList(head, tail, 3);
+  = head:FormalParameter tail:(__ "," __ @FormalParameter)* {
+      return [head, ...tail];
     }
 
 FunctionBody
@@ -1295,8 +1287,8 @@ Program
     }
 
 ProgramElements
-  = head:ProgramElement tail:(__ ProgramElement)* {
-      return buildList(head, tail, 1);
+  = head:ProgramElement tail:(__ @ProgramElement)* {
+      return [head, ...tail];
     }
 
 ProgramElement
@@ -1312,8 +1304,8 @@ Module
     }
 
 ModuleElements
-  = head:ModuleElement tail:(__ ModuleElement)* {
-      return buildList(head, tail, 1);
+  = head:ModuleElement tail:(__ @ModuleElement)* {
+      return [head, ...tail];
     }
 
 ModuleElement
@@ -1325,8 +1317,8 @@ ModuleElement
   / VariableStatement
 
 FunctionElements
-  = head:FunctionElement tail:(__ FunctionElement)* {
-      return buildList(head, tail, 1);
+  = head:FunctionElement tail:(__ @FunctionElement)* {
+      return [head, ...tail];
     }
 
 FunctionElement
