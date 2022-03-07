@@ -5,7 +5,14 @@
       "label": "Build",
       "type": "process",
       "command": "npx",
-      "args": ["peggy", "-o", "peg/monkeyc.cjs", "peg/monkeyc.peggy"],
+      "args": [
+        "peggy",
+        "-o",
+        "peg/monkeyc.cjs",
+        "--extra-options",
+        "{\"cache\":true}",
+        "peg/monkeyc.peggy"
+      ],
       "problemMatcher": ["$jshint"],
       "group": {
         "kind": "build",
