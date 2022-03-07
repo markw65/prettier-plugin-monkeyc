@@ -182,6 +182,8 @@ Keyword
   / BreakToken
   / CaseToken
   / CatchToken
+  / ClassToken
+  / ConstToken
   / ContinueToken
   / DebuggerToken
   / DefaultToken
@@ -189,16 +191,18 @@ Keyword
   / DoToken
   / ElseToken
   / EnumToken
+  / ExtendsToken
   / FinallyToken
   / ForToken
   / FunctionToken
   / HasToken
   / IfToken
   / InstanceofToken
+  / MeToken
   / NewToken
   / ReturnToken
+  / SelfToken
   / SwitchToken
-  / ThisToken
   / ThrowToken
   / TryToken
   / TypeofToken
@@ -208,10 +212,7 @@ Keyword
   / WhileToken
 
 FutureReservedWord
-  = ClassToken
-  / ConstToken
-  / ExportToken
-  / ExtendsToken
+  = ExportToken
   / SuperToken
 
 Literal
@@ -460,13 +461,14 @@ HasToken        = "has"        !IdentifierPart
 IfToken         = "if"         !IdentifierPart
 ImportToken     = "import"     !IdentifierPart
 InstanceofToken = "instanceof" !IdentifierPart
+MeToken         = "me"         !IdentifierPart
 ModuleToken     = "module"     !IdentifierPart
 NewToken        = "new"        !IdentifierPart
 NullToken       = "null"       !IdentifierPart
 ReturnToken     = "return"     !IdentifierPart
+SelfToken       = "self"       !IdentifierPart
 SuperToken      = "super"      !IdentifierPart
 SwitchToken     = "switch"     !IdentifierPart
-ThisToken       = "this"       !IdentifierPart
 ThrowToken      = "throw"      !IdentifierPart
 TrueToken       = "true"       !IdentifierPart
 TryToken        = "try"        !IdentifierPart
@@ -496,7 +498,7 @@ EOS
 // ----- A.3 Expressions -----
 
 PrimaryExpression
-  = ThisToken { return wrap({ type: "ThisExpression" }); }
+  = text:$(SelfToken / MeToken) { return wrap({ type: "ThisExpression", text }); }
   / Identifier
   / Symbol
   / Literal
@@ -1148,7 +1150,7 @@ ModuleDeclaration
 ClassDeclaration
   = attrs: AttributeList?
     ClassToken __ Identifier
-    parent:(__ "extends" __ ScopedName)?
+    parent:(__ ExtendsToken __ ScopedName)?
     __ "{"
     classElems:(__ ClassElement)*
     __ "}" {
