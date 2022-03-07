@@ -203,7 +203,6 @@ FutureReservedWord
   / EnumToken
   / ExportToken
   / ExtendsToken
-  / ImportToken
   / SuperToken
 
 Literal
@@ -1270,14 +1269,47 @@ DebuggerStatement
 
 // ----- A.5 Functions and Programs -----
 
+SymbolName
+  = ":" id:Identifier { return {
+    type: "SymbolName",
+    name: ":" + id.name
+  }}
+
+Attribute
+  = sym:SymbolName arg:( __ "(" __ ( Identifier / BooleanLiteral ) __ ")" )? {
+    return { type: "Attribute", name: sym.name, arg: extractOptional(arg, 3) }
+  }
+
+Attributes
+  = head: Attribute tail:(__ "," __ Attribute)* {
+    return buildList(head, tail, 3);
+  }
+
+AttributeList
+  = "(" __ attrs:Attributes __ ")" __ { return attrs; }
+
+ScopedName
+  = head:Identifier tail:(__ "." __ Identifier)* { return {
+        type: "ScopedIdentifier",
+        name: extractList(buildList(head, tail, 3), "name").join(".")
+      };
+    }
+
+ImportStatement
+  = ImportToken __ ScopedName __ ";"
+
 FunctionDeclaration
-  = FunctionToken __ id:Identifier __
+  = attrs: AttributeList?
+    FunctionToken __ id:Identifier __
     "(" __ params:(FormalParameterList __)? ")" __
+    ts:AsTypeSpec __
     "{" __ body:FunctionBody __ "}"
     {
       return {
         type: "FunctionDeclaration",
         id: id,
+        attrs: attrs,
+        ts: ts,
         params: optionalList(extractOptional(params, 0)),
         body: body
       };
@@ -1296,8 +1328,47 @@ FunctionExpression
       };
     }
 
+ArrayTypeSpec
+  = ("Array" / "Lang.Array" / "Toybox.Lang.Array" / "$.Toybox.Lang.Array") arg:(__ "<" TypeSpecList __ ">")? {
+    return {
+      type: "typespec",
+      name: "Array",
+      arg: extractOptional(arg, 2)
+    }
+  }
+
+SimpleTypeSpec
+  = id:ScopedName {
+    return {
+      type: "typespec",
+      name: id.name
+    }
+  }
+
+SingleTypeSpec
+  = ts:(SimpleTypeSpec / ArrayTypeSpec) opt:"?"? {
+    ts.optional = opt != null;
+    return ts;
+  }
+
+TypeSpecList
+  = head:SingleTypeSpec tail:("or" SingleTypeSpec)* {
+    return buildList(head, tail, 1);
+  }
+
+AsTypeSpec
+  = ts:(__ "as" __ TypeSpecList)? {
+    return extractOptional(ts, 3)
+  }
+
+FormalParameter
+  = id:Identifier ts:AsTypeSpec {
+    id.ts = ts;
+    return id;
+  }
+
 FormalParameterList
-  = head:Identifier tail:(__ "," __ Identifier)* {
+  = head:FormalParameter tail:(__ "," __ FormalParameter)* {
       return buildList(head, tail, 3);
     }
 
@@ -1325,6 +1396,7 @@ SourceElements
 SourceElement
   = Statement
   / FunctionDeclaration
+  / ImportStatement
 
 // ----- A.6 Universal Resource Identifier Character Classes -----
 
