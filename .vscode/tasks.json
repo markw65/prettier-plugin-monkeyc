@@ -5,7 +5,7 @@
       "label": "Build",
       "type": "process",
       "command": "npx",
-      "args": ["pegjs", "-o", "peg/monkeyc.cjs", "peg/monkeyc.pegjs"],
+      "args": ["peggy", "-o", "peg/monkeyc.cjs", "peg/monkeyc.peggy"],
       "problemMatcher": ["$jshint"],
       "group": {
         "kind": "build",

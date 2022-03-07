@@ -7,7 +7,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch Program",
+      "name": "Run parser",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/src/peg.js"
     }

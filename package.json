@@ -1,6 +1,6 @@
 {
   "type": "module",
   "devDependencies": {
-    "pegjs": "^0.10.0"
+    "peggy": "^1.2.0"
   }
 }
