@@ -8,9 +8,9 @@
       "args": [
         "peggy",
         "-o",
-        "peg/monkeyc.cjs",
+        "peg/monkeyc.js",
         "--extra-options",
-        "{\"cache\":true}",
+        "{\"cache\":true, \"format\":\"es\"}",
         "peg/monkeyc.peggy"
       ],
       "problemMatcher": ["$jshint"],
