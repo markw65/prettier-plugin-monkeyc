@@ -757,26 +757,9 @@ RelationalOperator
   / $InstanceofToken
   / $InToken
 
-RelationalExpressionNoIn
-  = head:ShiftExpression
-    tail:(__ RelationalOperatorNoIn __ ShiftExpression)*
-    { return buildBinaryExpression(head, tail); }
-
-RelationalOperatorNoIn
-  = "<="
-  / ">="
-  / $("<" !"<")
-  / $(">" !">")
-  / $InstanceofToken
-
 EqualityExpression
   = head:RelationalExpression
     tail:(__ EqualityOperator __ RelationalExpression)*
-    { return buildBinaryExpression(head, tail); }
-
-EqualityExpressionNoIn
-  = head:RelationalExpressionNoIn
-    tail:(__ EqualityOperator __ RelationalExpressionNoIn)*
     { return buildBinaryExpression(head, tail); }
 
 EqualityOperator
@@ -790,22 +773,12 @@ BitwiseANDExpression
     tail:(__ BitwiseANDOperator __ EqualityExpression)*
     { return buildBinaryExpression(head, tail); }
 
-BitwiseANDExpressionNoIn
-  = head:EqualityExpressionNoIn
-    tail:(__ BitwiseANDOperator __ EqualityExpressionNoIn)*
-    { return buildBinaryExpression(head, tail); }
-
 BitwiseANDOperator
   = $("&" ![&=])
 
 BitwiseXORExpression
   = head:BitwiseANDExpression
     tail:(__ BitwiseXOROperator __ BitwiseANDExpression)*
-    { return buildBinaryExpression(head, tail); }
-
-BitwiseXORExpressionNoIn
-  = head:BitwiseANDExpressionNoIn
-    tail:(__ BitwiseXOROperator __ BitwiseANDExpressionNoIn)*
     { return buildBinaryExpression(head, tail); }
 
 BitwiseXOROperator
@@ -816,11 +789,6 @@ BitwiseORExpression
     tail:(__ BitwiseOROperator __ BitwiseXORExpression)*
     { return buildBinaryExpression(head, tail); }
 
-BitwiseORExpressionNoIn
-  = head:BitwiseXORExpressionNoIn
-    tail:(__ BitwiseOROperator __ BitwiseXORExpressionNoIn)*
-    { return buildBinaryExpression(head, tail); }
-
 BitwiseOROperator
   = $("|" ![|=])
 
@@ -829,22 +797,12 @@ LogicalANDExpression
     tail:(__ LogicalANDOperator __ BitwiseORExpression)*
     { return buildLogicalExpression(head, tail); }
 
-LogicalANDExpressionNoIn
-  = head:BitwiseORExpressionNoIn
-    tail:(__ LogicalANDOperator __ BitwiseORExpressionNoIn)*
-    { return buildLogicalExpression(head, tail); }
-
 LogicalANDOperator
   = "&&"
 
 LogicalORExpression
   = head:LogicalANDExpression
     tail:(__ LogicalOROperator __ LogicalANDExpression)*
-    { return buildLogicalExpression(head, tail); }
-
-LogicalORExpressionNoIn
-  = head:LogicalANDExpressionNoIn
-    tail:(__ LogicalOROperator __ LogicalANDExpressionNoIn)*
     { return buildLogicalExpression(head, tail); }
 
 LogicalOROperator
@@ -863,20 +821,6 @@ ConditionalExpression
       };
     }
   / LogicalORExpression
-
-ConditionalExpressionNoIn
-  = test:LogicalORExpressionNoIn __
-    "?" __ consequent:AssignmentExpression __
-    ":" __ alternate:AssignmentExpressionNoIn
-    {
-      return {
-        type: "ConditionalExpression",
-        test: test,
-        consequent: consequent,
-        alternate: alternate
-      };
-    }
-  / LogicalORExpressionNoIn
 
 AssignmentExpression
   = left:LeftHandSideExpression __
@@ -903,31 +847,6 @@ AssignmentExpression
     }
   / ConditionalExpression
 
-AssignmentExpressionNoIn
-  = left:LeftHandSideExpression __
-    "=" !"=" __
-    right:AssignmentExpressionNoIn
-    {
-      return {
-        type: "AssignmentExpression",
-        operator: "=",
-        left: left,
-        right: right
-      };
-    }
-  / left:LeftHandSideExpression __
-    operator:AssignmentOperator __
-    right:AssignmentExpressionNoIn
-    {
-      return {
-        type: "AssignmentExpression",
-        operator: operator,
-        left: left,
-        right: right
-      };
-    }
-  / ConditionalExpressionNoIn
-
 AssignmentOperator
   = "*="
   / "/="
@@ -936,24 +855,15 @@ AssignmentOperator
   / "-="
   / "<<="
   / ">>="
-  / ">>>="
   / "&="
   / "^="
   / "|="
 
 Expression
-  = head:AssignmentExpression tail:(__ "," __ AssignmentExpression)* {
-      return tail.length > 0
-        ? { type: "SequenceExpression", expressions: buildList(head, tail, 3) }
-        : head;
-    }
-
-ExpressionNoIn
-  = head:AssignmentExpressionNoIn tail:(__ "," __ AssignmentExpressionNoIn)* {
-      return tail.length > 0
-        ? { type: "SequenceExpression", expressions: buildList(head, tail, 3) }
-        : head;
-    }
+  = expr:AssignmentExpression ts:AsTypeSpec {
+    expr.ts = ts;
+    return expr;
+  }
 
 // ----- A.4 Statements -----
 
@@ -999,11 +909,6 @@ VariableDeclarationList
       return buildList(head, tail, 3);
     }
 
-VariableDeclarationListNoIn
-  = head:VariableDeclarationNoIn tail:(__ "," __ VariableDeclarationNoIn)* {
-      return buildList(head, tail, 3);
-    }
-
 VariableDeclaration
   = id:Identifier init:(__ Initialiser)? {
       return {
@@ -1013,20 +918,8 @@ VariableDeclaration
       };
     }
 
-VariableDeclarationNoIn
-  = id:Identifier init:(__ InitialiserNoIn)? {
-      return {
-        type: "VariableDeclarator",
-        id: id,
-        init: extractOptional(init, 1)
-      };
-    }
-
 Initialiser
   = "=" !"=" __ expression:AssignmentExpression { return expression; }
-
-InitialiserNoIn
-  = "=" !"=" __ expression:AssignmentExpressionNoIn { return expression; }
 
 EmptyStatement
   = ";" { return { type: "EmptyStatement" }; }
@@ -1072,7 +965,7 @@ IterationStatement
     { return { type: "WhileStatement", test: test, body: body }; }
   / ForToken __
     "(" __
-    init:(ExpressionNoIn __)? ";" __
+    init:(Expression __)? ";" __
     test:(Expression __)? ";" __
     update:(Expression __)?
     ")" __
@@ -1088,7 +981,7 @@ IterationStatement
     }
   / ForToken __
     "(" __
-    VarToken __ declarations:VariableDeclarationListNoIn __ ";" __
+    VarToken __ declarations:VariableDeclarationList __ ";" __
     test:(Expression __)? ";" __
     update:(Expression __)?
     ")" __
@@ -1103,40 +996,6 @@ IterationStatement
         },
         test: extractOptional(test, 0),
         update: extractOptional(update, 0),
-        body: body
-      };
-    }
-  / ForToken __
-    "(" __
-    left:LeftHandSideExpression __
-    InToken __
-    right:Expression __
-    ")" __
-    body:Statement
-    {
-      return {
-        type: "ForInStatement",
-        left: left,
-        right: right,
-        body: body
-      };
-    }
-  / ForToken __
-    "(" __
-    VarToken __ declarations:VariableDeclarationListNoIn __
-    InToken __
-    right:Expression __
-    ")" __
-    body:Statement
-    {
-      return {
-        type: "ForInStatement",
-        left: {
-          type: "VariableDeclaration",
-          declarations: declarations,
-          kind: "var"
-        },
-        right: right,
         body: body
       };
     }
