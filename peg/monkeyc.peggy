@@ -170,7 +170,8 @@ ReservedWord
   / BooleanLiteral
 
 Keyword
-  = BreakToken
+  = AsToken
+  / BreakToken
   / CaseToken
   / CatchToken
   / ContinueToken
@@ -179,12 +180,13 @@ Keyword
   / DeleteToken
   / DoToken
   / ElseToken
+  / EnumToken
   / FinallyToken
   / ForToken
   / FunctionToken
+  / HasToken
   / IfToken
   / InstanceofToken
-  / InToken
   / NewToken
   / ReturnToken
   / SwitchToken
@@ -192,15 +194,14 @@ Keyword
   / ThrowToken
   / TryToken
   / TypeofToken
+  / TypedefToken
   / VarToken
   / VoidToken
   / WhileToken
-  / WithToken
 
 FutureReservedWord
   = ClassToken
   / ConstToken
-  / EnumToken
   / ExportToken
   / ExtendsToken
   / SuperToken
@@ -428,6 +429,7 @@ Zs = [\u0020\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]
 
 // Tokens
 
+AsToken         = "as"         !IdentifierPart
 BreakToken      = "break"      !IdentifierPart
 CaseToken       = "case"       !IdentifierPart
 CatchToken      = "catch"      !IdentifierPart
@@ -446,15 +448,14 @@ FalseToken      = "false"      !IdentifierPart
 FinallyToken    = "finally"    !IdentifierPart
 ForToken        = "for"        !IdentifierPart
 FunctionToken   = "function"   !IdentifierPart
-GetToken        = "get"        !IdentifierPart
+HasToken        = "has"        !IdentifierPart
 IfToken         = "if"         !IdentifierPart
 ImportToken     = "import"     !IdentifierPart
 InstanceofToken = "instanceof" !IdentifierPart
-InToken         = "in"         !IdentifierPart
+ModuleToken     = "module"     !IdentifierPart
 NewToken        = "new"        !IdentifierPart
 NullToken       = "null"       !IdentifierPart
 ReturnToken     = "return"     !IdentifierPart
-SetToken        = "set"        !IdentifierPart
 SuperToken      = "super"      !IdentifierPart
 SwitchToken     = "switch"     !IdentifierPart
 ThisToken       = "this"       !IdentifierPart
@@ -462,10 +463,10 @@ ThrowToken      = "throw"      !IdentifierPart
 TrueToken       = "true"       !IdentifierPart
 TryToken        = "try"        !IdentifierPart
 TypeofToken     = "typeof"     !IdentifierPart
+TypedefToken    = "typedef"    !IdentifierPart
 VarToken        = "var"        !IdentifierPart
 VoidToken       = "void"       !IdentifierPart
 WhileToken      = "while"      !IdentifierPart
-WithToken       = "with"       !IdentifierPart
 
 // Skipped
 
@@ -479,12 +480,6 @@ _
 
 EOS
   = __ ";"
-  / _ SingleLineComment? LineTerminatorSequence
-  / _ &"}"
-  / __ EOF
-
-EOF
-  = !.
 
 // ----- A.2 Number Conversions -----
 
@@ -495,10 +490,11 @@ EOF
 PrimaryExpression
   = ThisToken { return { type: "ThisExpression" }; }
   / Identifier
+  / Symbol
   / Literal
   / ArrayLiteral
   / ObjectLiteral
-  / "(" __ expression:Expression __ ")" { return expression; }
+  / "(" __ expression:SingleExpression __ ")" { return expression; }
 
 ArrayLiteral
   = "[" __ elision:(Elision __)? "]" {
@@ -522,12 +518,12 @@ ArrayLiteral
 
 ElementList
   = head:(
-      elision:(Elision __)? element:AssignmentExpression {
+      elision:(Elision __)? element:SingleExpression {
         return optionalList(extractOptional(elision, 0)).concat(element);
       }
     )
     tail:(
-      __ "," __ elision:(Elision __)? element:AssignmentExpression {
+      __ "," __ elision:(Elision __)? element:SingleExpression {
         return optionalList(extractOptional(elision, 0)).concat(element);
       }
     )*
@@ -550,46 +546,9 @@ PropertyNameAndValueList
     }
 
 PropertyAssignment
-  = key:PropertyName __ ":" __ value:AssignmentExpression {
+  = key:PrimaryExpression __ "=>" __ value:SingleExpression {
       return { type: "Property", key: key, value: value, kind: "init" };
     }
-  / GetToken __ key:PropertyName __
-    "(" __ ")" __
-    "{" __ body:FunctionBody __ "}"
-    {
-      return {
-        type: "Property",
-        key: key,
-        value: {
-          type: "FunctionExpression",
-          id: null,
-          params: [],
-          body: body
-        },
-        kind: "get"
-      };
-    }
-  / SetToken __ key:PropertyName __
-    "(" __ params:PropertySetParameterList __ ")" __
-    "{" __ body:FunctionBody __ "}"
-    {
-      return {
-        type: "Property",
-        key: key,
-        value: {
-          type: "FunctionExpression",
-          id: null,
-          params: params,
-          body: body
-        },
-        kind: "set"
-      };
-    }
-
-PropertyName
-  = IdentifierName
-  / StringLiteral
-  / NumericLiteral
 
 PropertySetParameterList
   = id:Identifier { return [id]; }
@@ -603,7 +562,7 @@ MemberExpression
         }
     )
     tail:(
-        __ "[" __ property:Expression __ "]" {
+        __ "[" __ property:SingleExpression __ "]" {
           return { property: property, computed: true };
         }
       / __ "." __ property:IdentifierName {
@@ -637,7 +596,7 @@ CallExpression
         __ args:Arguments {
           return { type: "CallExpression", arguments: args };
         }
-      / __ "[" __ property:Expression __ "]" {
+      / __ "[" __ property:SingleExpression __ "]" {
           return {
             type: "MemberExpression",
             property: property,
@@ -666,7 +625,7 @@ Arguments
     }
 
 ArgumentList
-  = head:AssignmentExpression tail:(__ "," __ AssignmentExpression)* {
+  = head:SingleExpression tail:(__ "," __ SingleExpression)* {
       return buildList(head, tail, 3);
     }
 
@@ -755,7 +714,7 @@ RelationalOperator
   / $("<" !"<")
   / $(">" !">")
   / $InstanceofToken
-  / $InToken
+  / $HasToken
 
 EqualityExpression
   = head:RelationalExpression
@@ -810,8 +769,8 @@ LogicalOROperator
 
 ConditionalExpression
   = test:LogicalORExpression __
-    "?" __ consequent:AssignmentExpression __
-    ":" __ alternate:AssignmentExpression
+    "?" __ consequent:SingleExpression __
+    ":" __ alternate:SingleExpression
     {
       return {
         type: "ConditionalExpression",
@@ -825,7 +784,7 @@ ConditionalExpression
 AssignmentExpression
   = left:LeftHandSideExpression __
     "=" !"=" __
-    right:AssignmentExpression
+    right:SingleExpression
     {
       return {
         type: "AssignmentExpression",
@@ -836,7 +795,7 @@ AssignmentExpression
     }
   / left:LeftHandSideExpression __
     operator:AssignmentOperator __
-    right:AssignmentExpression
+    right:SingleExpression
     {
       return {
         type: "AssignmentExpression",
@@ -859,25 +818,26 @@ AssignmentOperator
   / "^="
   / "|="
 
-Expression
-  = expr:AssignmentExpression ts:AsTypeSpec {
+SingleExpression
+  = expr:AssignmentExpression ts:AsTypeSpec? {
     expr.ts = ts;
     return expr;
   }
+
+Expression
+  = SingleExpression
 
 // ----- A.4 Statements -----
 
 Statement
   = Block
   / VariableStatement
-  / EmptyStatement
   / ExpressionStatement
   / IfStatement
   / IterationStatement
   / ContinueStatement
   / BreakStatement
   / ReturnStatement
-  / WithStatement
   / LabelledStatement
   / SwitchStatement
   / ThrowStatement
@@ -896,11 +856,13 @@ StatementList
   = head:Statement tail:(__ Statement)* { return buildList(head, tail, 1); }
 
 VariableStatement
-  = VarToken __ declarations:VariableDeclarationList EOS {
+  = attrs: AttributeList?
+    kind:($VarToken / $ConstToken) __ declarations:VariableDeclarationList EOS {
       return {
         type: "VariableDeclaration",
-        declarations: declarations,
-        kind: "var"
+        declarations,
+        kind,
+        attrs
       };
     }
 
@@ -910,19 +872,17 @@ VariableDeclarationList
     }
 
 VariableDeclaration
-  = id:Identifier init:(__ Initialiser)? {
+  = id:Identifier ts:(__ AsTypeSpec)? init:(__ Initialiser)? {
       return {
         type: "VariableDeclarator",
         id: id,
+        ts: ts,
         init: extractOptional(init, 1)
       };
     }
 
 Initialiser
-  = "=" !"=" __ expression:AssignmentExpression { return expression; }
-
-EmptyStatement
-  = ";" { return { type: "EmptyStatement" }; }
+  = "=" !"=" __ expression:SingleExpression { return expression; }
 
 ExpressionStatement
   = !("{" / FunctionToken) expression:Expression EOS {
@@ -933,7 +893,7 @@ ExpressionStatement
     }
 
 IfStatement
-  = IfToken __ "(" __ test:Expression __ ")" __
+  = IfToken __ "(" __ test:SingleExpression __ ")" __
     consequent:Statement __
     ElseToken __
     alternate:Statement
@@ -945,7 +905,7 @@ IfStatement
         alternate: alternate
       };
     }
-  / IfToken __ "(" __ test:Expression __ ")" __
+  / IfToken __ "(" __ test:SingleExpression __ ")" __
     consequent:Statement {
       return {
         type: "IfStatement",
@@ -958,15 +918,15 @@ IfStatement
 IterationStatement
   = DoToken __
     body:Statement __
-    WhileToken __ "(" __ test:Expression __ ")" EOS
+    WhileToken __ "(" __ test:SingleExpression __ ")" EOS
     { return { type: "DoWhileStatement", body: body, test: test }; }
-  / WhileToken __ "(" __ test:Expression __ ")" __
+  / WhileToken __ "(" __ test:SingleExpression __ ")" __
     body:Statement
     { return { type: "WhileStatement", test: test, body: body }; }
   / ForToken __
     "(" __
     init:(Expression __)? ";" __
-    test:(Expression __)? ";" __
+    test:(SingleExpression __)? ";" __
     update:(Expression __)?
     ")" __
     body:Statement
@@ -982,7 +942,7 @@ IterationStatement
   / ForToken __
     "(" __
     VarToken __ declarations:VariableDeclarationList __ ";" __
-    test:(Expression __)? ";" __
+    test:(SingleExpression __)? ";" __
     update:(Expression __)?
     ")" __
     body:Statement
@@ -1020,17 +980,12 @@ ReturnStatement
   = ReturnToken EOS {
       return { type: "ReturnStatement", argument: null };
     }
-  / ReturnToken _ argument:Expression EOS {
+  / ReturnToken _ argument:SingleExpression EOS {
       return { type: "ReturnStatement", argument: argument };
     }
 
-WithStatement
-  = WithToken __ "(" __ object:Expression __ ")" __
-    body:Statement
-    { return { type: "WithStatement", object: object, body: body }; }
-
 SwitchStatement
-  = SwitchToken __ "(" __ discriminant:Expression __ ")" __
+  = SwitchToken __ "(" __ discriminant:SingleExpression __ ")" __
     cases:CaseBlock
     {
       return {
@@ -1057,8 +1012,15 @@ CaseBlock
 CaseClauses
   = head:CaseClause tail:(__ CaseClause)* { return buildList(head, tail, 1); }
 
+InstanceofCase
+  = InstanceofToken __ id:Identifier {
+    return {
+      type: "InstanceOfCase",
+      id: id
+    }
+  }
 CaseClause
-  = CaseToken __ test:Expression __ ":" consequent:(__ StatementList)? {
+  = CaseToken __ test:(SingleExpression / InstanceofCase) __ ":" consequent:(__ StatementList)? {
       return {
         type: "SwitchCase",
         test: test,
@@ -1081,7 +1043,7 @@ LabelledStatement
     }
 
 ThrowStatement
-  = ThrowToken _ argument:Expression EOS {
+  = ThrowToken _ argument:SingleExpression EOS {
       return { type: "ThrowStatement", argument: argument };
     }
 
@@ -1128,14 +1090,22 @@ DebuggerStatement
 
 // ----- A.5 Functions and Programs -----
 
-SymbolName
+Symbol
   = ":" id:Identifier { return {
-    type: "SymbolName",
+    type: "Symbol",
     name: ":" + id.name
   }}
 
+AttributeArgList
+  = '[' __ head:IdentifierName tail:( __ "," __ IdentifierName)* __ ']' {
+    return {
+      type: "AttributeArgList",
+      list: buildList(head, tail, 3)
+    }
+  }
+
 Attribute
-  = sym:SymbolName arg:( __ "(" __ ( Identifier / BooleanLiteral ) __ ")" )? {
+  = sym:Symbol arg:( __ "(" __ (IdentifierName / AttributeArgList) __ ")" )? {
     return { type: "Attribute", name: sym.name, arg: extractOptional(arg, 3) }
   }
 
@@ -1155,13 +1125,78 @@ ScopedName
     }
 
 ImportStatement
-  = ImportToken __ ScopedName __ ";"
+  = ImportToken __ id:ScopedName __ ";" {
+      return {
+        type: "Import",
+        id: id
+      }
+    }
+
+ModuleDeclaration
+  = ModuleToken __ Identifier __ "{" __ module:Module __ "}" { return module; }
+
+ClassDeclaration
+  = attrs: AttributeList?
+    ClassToken __ Identifier
+    parent:(__ "extends" __ ScopedName)?
+    __ "{"
+    classElems:(__ ClassElement)*
+    __ "}" {
+      return {
+        type: "Class",
+        parent: extractOptional(parent, 2),
+        body: extractList(classElems, 1),
+        attrs
+      }
+    }
+
+ClassElement
+  = access:(AccessSpecifier __)? item:(FunctionDeclaration / EnumDeclaration / VariableStatement) {
+    return {
+      type: "ClassElement",
+      access: extractOptional(access, 0),
+      item: item
+    }
+  }
+
+AccessSpecifier
+  = "public"
+  / "protected"
+  / "hidden"
+  / "private"
+
+EnumDeclaration
+  = EnumToken __ id:Identifier? __ "{" __ head:Enum __ tail:("," __ Enum)* __ "}" {
+    return {
+      type: "EnumDeclaration",
+      id: id,
+      enums: buildList(head, tail, 2)
+    }
+  }
+
+Enum
+  = id:Identifier value:(__ "=" __ SingleExpression)? {
+    return {
+      type: "Enum",
+      value,
+      id
+    }
+  }
+
+TypedefDeclaration
+  = TypedefToken __ id:Identifier __ ts:AsTypeSpec __ ";" {
+    return {
+      type: "typedef",
+      id,
+      ts
+    }
+  }
 
 FunctionDeclaration
   = attrs: AttributeList?
     FunctionToken __ id:Identifier __
     "(" __ params:(FormalParameterList __)? ")" __
-    ts:AsTypeSpec __
+    ts:AsTypeSpec? __
     "{" __ body:FunctionBody __ "}"
     {
       return {
@@ -1188,11 +1223,11 @@ FunctionExpression
     }
 
 ArrayTypeSpec
-  = ("Array" / "Lang.Array" / "Toybox.Lang.Array" / "$.Toybox.Lang.Array") arg:(__ "<" TypeSpecList __ ">")? {
+  = name:("Array" / "Lang.Array" / "Toybox.Lang.Array" / "$.Toybox.Lang.Array") arg:(__ "<" __ TypeSpecList __ ">")? {
     return {
       type: "typespec",
-      name: "Array",
-      arg: extractOptional(arg, 2)
+      name: name,
+      arg: extractOptional(arg, 3)
     }
   }
 
@@ -1205,23 +1240,23 @@ SimpleTypeSpec
   }
 
 SingleTypeSpec
-  = ts:(SimpleTypeSpec / ArrayTypeSpec) opt:"?"? {
+  = ts:(ArrayTypeSpec / SimpleTypeSpec) opt:"?"? {
     ts.optional = opt != null;
     return ts;
   }
 
 TypeSpecList
-  = head:SingleTypeSpec tail:("or" SingleTypeSpec)* {
-    return buildList(head, tail, 1);
+  = head:SingleTypeSpec tail:(__ "or" __ SingleTypeSpec)* {
+    return buildList(head, tail, 3);
   }
 
 AsTypeSpec
-  = ts:(__ "as" __ TypeSpecList)? {
-    return extractOptional(ts, 3)
+  = __ AsToken __ ts:TypeSpecList {
+    return ts;
   }
 
 FormalParameter
-  = id:Identifier ts:AsTypeSpec {
+  = id:Identifier ts:AsTypeSpec? {
     id.ts = ts;
     return id;
   }
@@ -1232,7 +1267,7 @@ FormalParameterList
     }
 
 FunctionBody
-  = body:SourceElements? {
+  = body:FunctionElements? {
       return {
         type: "BlockStatement",
         body: optionalList(body)
@@ -1240,22 +1275,52 @@ FunctionBody
     }
 
 Program
-  = body:SourceElements? {
+  = body:ProgramElements? {
       return {
         type: "Program",
         body: optionalList(body)
       };
     }
 
-SourceElements
-  = head:SourceElement tail:(__ SourceElement)* {
+ProgramElements
+  = head:ProgramElement tail:(__ ProgramElement)* {
       return buildList(head, tail, 1);
     }
 
-SourceElement
-  = Statement
-  / FunctionDeclaration
+ProgramElement
+  = ModuleElement
   / ImportStatement
+
+Module
+  = body:ModuleElements? {
+      return {
+        type: "Module",
+        body: optionalList(body)
+      };
+    }
+
+ModuleElements
+  = head:ModuleElement tail:(__ ModuleElement)* {
+      return buildList(head, tail, 1);
+    }
+
+ModuleElement
+  = ClassDeclaration
+  / EnumDeclaration
+  / FunctionDeclaration
+  / ModuleDeclaration
+  / TypedefDeclaration
+  / VariableStatement
+
+FunctionElements
+  = head:FunctionElement tail:(__ FunctionElement)* {
+      return buildList(head, tail, 1);
+    }
+
+FunctionElement
+  = Statement
+  / EnumDeclaration
+  / TypedefDeclaration
 
 // ----- A.6 Universal Resource Identifier Character Classes -----
 
