@@ -41,10 +41,6 @@
       .map(function() { return value; });
   }
 
-  function extractOptional(optional, index) {
-    return optional ? optional[index] : null;
-  }
-
   function optionalList(value) {
     return value !== null ? value : [];
   }
@@ -499,10 +495,10 @@ PrimaryExpression
   / "(" __ expression:SingleExpression __ ")" { return expression; }
 
 ArrayLiteral
-  = "[" __ elision:(Elision __)? "]" {
+  = "[" __ elision:(@Elision __)? "]" {
       return wrap({
         type: "ArrayExpression",
-        elements: optionalList(extractOptional(elision, 0))
+        elements: optionalList(elision)
       });
     }
   / "[" __ elements:ElementList __ "]" {
@@ -511,22 +507,22 @@ ArrayLiteral
         elements: elements
       });
     }
-  / "[" __ elements:ElementList __ "," __ elision:(Elision __)? "]" {
+  / "[" __ elements:ElementList __ "," __ elision:(@Elision __)? "]" {
       return wrap({
         type: "ArrayExpression",
-        elements: elements.concat(optionalList(extractOptional(elision, 0)))
+        elements: elements.concat(optionalList(elision))
       });
     }
 
 ElementList
   = head:(
-      elision:(Elision __)? element:SingleExpression {
-        return optionalList(extractOptional(elision, 0)).concat(element);
+      elision:(@Elision __)? element:SingleExpression {
+        return optionalList(elision).concat(element);
       }
     )
     tail:(
-      __ "," __ elision:(Elision __)? element:SingleExpression {
-        return optionalList(extractOptional(elision, 0)).concat(element);
+      __ "," __ elision:(@Elision __)? element:SingleExpression {
+        return optionalList(elision).concat(element);
       }
     )*
     { return Array.prototype.concat.apply(head, tail); }
@@ -622,8 +618,8 @@ CallExpression
     }
 
 Arguments
-  = "(" __ args:(ArgumentList __)? ")" {
-      return optionalList(extractOptional(args, 0));
+  = "(" __ args:(@ArgumentList __)? ")" {
+      return optionalList(args);
     }
 
 ArgumentList
@@ -847,10 +843,10 @@ Statement
   / DebuggerStatement
 
 Block
-  = "{" __ body:(StatementList __)? "}" {
+  = "{" __ body:(@StatementList __)? "}" {
       return wrap({
         type: "BlockStatement",
-        body: optionalList(extractOptional(body, 0))
+        body: optionalList(body)
       });
     }
 
@@ -874,12 +870,12 @@ VariableDeclarationList
     }
 
 VariableDeclaration
-  = id:Identifier ts:(__ AsTypeSpec)? init:(__ Initialiser)? {
+  = id:Identifier ts:(__ AsTypeSpec)? init:(__ @Initialiser)? {
       return wrap({
         type: "VariableDeclarator",
-        id: id,
-        ts: ts,
-        init: extractOptional(init, 1)
+        id,
+        ts,
+        init
       });
     }
 
@@ -927,25 +923,25 @@ IterationStatement
     { return wrap({ type: "WhileStatement", test: test, body: body }); }
   / ForToken __
     "(" __
-    init:(Expression __)? ";" __
-    test:(SingleExpression __)? ";" __
-    update:(Expression __)?
+    init:(@Expression __)? ";" __
+    test:(@SingleExpression __)? ";" __
+    update:(@Expression __)?
     ")" __
     body:Statement
     {
       return wrap({
         type: "ForStatement",
-        init: extractOptional(init, 0),
-        test: extractOptional(test, 0),
-        update: extractOptional(update, 0),
-        body: body
+        init,
+        test,
+        update,
+        body
       });
     }
   / ForToken __
     "(" __
     VarToken __ declarations:VariableDeclarationList __ ";" __
-    test:(SingleExpression __)? ";" __
-    update:(Expression __)?
+    test:(@SingleExpression __)? ";" __
+    update:(@Expression __)?
     ")" __
     body:Statement
     {
@@ -956,9 +952,9 @@ IterationStatement
           declarations: declarations,
           kind: "var"
         },
-        test: extractOptional(test, 0),
-        update: extractOptional(update, 0),
-        body: body
+        test,
+        update,
+        body
       });
     }
 
@@ -967,7 +963,7 @@ ContinueStatement
       return wrap({ type: "ContinueStatement", label: null });
     }
   / ContinueToken _ label:Identifier EOS {
-      return wrap({ type: "ContinueStatement", label: label });
+      return wrap({ type: "ContinueStatement", label });
     }
 
 BreakStatement
@@ -975,7 +971,7 @@ BreakStatement
       return wrap({ type: "BreakStatement", label: null });
     }
   / BreakToken _ label:Identifier EOS {
-      return wrap({ type: "BreakStatement", label: label });
+      return wrap({ type: "BreakStatement", label });
     }
 
 ReturnStatement
@@ -998,17 +994,17 @@ SwitchStatement
     }
 
 CaseBlock
-  = "{" __ clauses:(CaseClauses __)? "}" {
-      return optionalList(extractOptional(clauses, 0));
+  = "{" __ clauses:(@CaseClauses __)? "}" {
+      return optionalList(clauses);
     }
   / "{" __
-    before:(CaseClauses __)?
+    before:(@CaseClauses __)?
     default_:DefaultClause __
-    after:(CaseClauses __)? "}"
+    after:(@CaseClauses __)? "}"
     {
-      return optionalList(extractOptional(before, 0))
+      return optionalList(before)
         .concat(default_)
-        .concat(optionalList(extractOptional(after, 0)));
+        .concat(optionalList(after));
     }
 
 CaseClauses
@@ -1022,20 +1018,20 @@ InstanceofCase
     })
   }
 CaseClause
-  = CaseToken __ test:(SingleExpression / InstanceofCase) __ ":" consequent:(__ StatementList)? {
+  = CaseToken __ test:(SingleExpression / InstanceofCase) __ ":" consequent:(__ @StatementList)? {
       return wrap({
         type: "SwitchCase",
         test: test,
-        consequent: optionalList(extractOptional(consequent, 1))
+        consequent: optionalList(consequent)
       });
     }
 
 DefaultClause
-  = DefaultToken __ ":" consequent:(__ StatementList)? {
+  = DefaultToken __ ":" consequent:(__ @StatementList)? {
       return wrap({
         type: "SwitchCase",
         test: null,
-        consequent: optionalList(extractOptional(consequent, 1))
+        consequent: optionalList(consequent)
       });
     }
 
@@ -1109,8 +1105,8 @@ AttributeArgList
   }
 
 Attribute
-  = sym:Symbol arg:( __ "(" __ (IdentifierName / AttributeArgList) __ ")" )? {
-    return wrap({ type: "Attribute", name: sym.name, arg: extractOptional(arg, 3) })
+  = sym:Symbol arg:( __ "(" __ @(IdentifierName / AttributeArgList) __ ")" )? {
+    return wrap({ type: "Attribute", name: sym.name, arg })
   }
 
 Attributes
@@ -1199,39 +1195,39 @@ TypedefDeclaration
 FunctionDeclaration
   = attrs: AttributeList?
     FunctionToken __ id:Identifier __
-    "(" __ params:(FormalParameterList __)? ")" __
+    "(" __ params:(@FormalParameterList __)? ")" __
     ts:AsTypeSpec? __
     "{" __ body:FunctionBody __ "}"
     {
       return wrap({
         type: "FunctionDeclaration",
-        id: id,
-        attrs: attrs,
-        ts: ts,
-        params: optionalList(extractOptional(params, 0)),
-        body: body
+        id,
+        attrs,
+        ts,
+        params: optionalList(params),
+        body
       });
     }
 
 FunctionExpression
-  = FunctionToken __ id:(Identifier __)?
-    "(" __ params:(FormalParameterList __)? ")" __
+  = FunctionToken __ id:(@Identifier __)?
+    "(" __ params:(@FormalParameterList __)? ")" __
     "{" __ body:FunctionBody __ "}"
     {
       return wrap({
         type: "FunctionExpression",
-        id: extractOptional(id, 0),
-        params: optionalList(extractOptional(params, 0)),
-        body: body
+        id,
+        params: optionalList(params),
+        body
       });
     }
 
 ArrayTypeSpec
-  = name:("Array" / "Lang.Array" / "Toybox.Lang.Array" / "$.Toybox.Lang.Array") arg:(__ "<" __ TypeSpecList __ ">")? {
+  = name:("Array" / "Lang.Array" / "Toybox.Lang.Array" / "$.Toybox.Lang.Array") arg:(__ "<" __ @TypeSpecList __ ">")? {
     return wrap({
       type: "typespec",
-      name: name,
-      arg: extractOptional(arg, 3)
+      name,
+      arg
     })
   }
 
