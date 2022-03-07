@@ -30,7 +30,7 @@
 // [3] http://inimino.org/~inimino/blog/
 // [4] http://boshi.inimino.org/3box/asof/1270029991384/PEG/ECMAScript_unified.peg
 
-{
+{{
   var TYPES_TO_PROPERTY_NAMES = {
     CallExpression:   "callee",
     MemberExpression: "object",
@@ -53,30 +53,38 @@
     return [head].concat(extractList(tail, index));
   }
 
+  function optionalList(value) {
+    return value !== null ? value : [];
+  }
+
+}}
+
+{
+  function wrap(value) {
+    value.location = location();
+    return value;
+  }
+
   function buildBinaryExpression(head, tail) {
     return tail.reduce(function(result, element) {
-      return {
+      return wrap({
         type: "BinaryExpression",
         operator: element[1],
         left: result,
         right: element[3]
-      };
+      });
     }, head);
   }
 
   function buildLogicalExpression(head, tail) {
     return tail.reduce(function(result, element) {
-      return {
+      return wrap({
         type: "LogicalExpression",
         operator: element[1],
         left: result,
         right: element[3]
-      };
+      });
     }, head);
-  }
-
-  function optionalList(value) {
-    return value !== null ? value : [];
   }
 }
 
@@ -125,10 +133,10 @@ Identifier
 
 IdentifierName "identifier"
   = head:IdentifierStart tail:IdentifierPart* {
-      return {
+      return wrap({
         type: "Identifier",
         name: head + tail.join("")
-      };
+      });
     }
 
 IdentifierStart
@@ -214,11 +222,11 @@ Literal
   / RegularExpressionLiteral
 
 NullLiteral
-  = NullToken { return { type: "Literal", value: null }; }
+  = NullToken { return wrap({ type: "Literal", value: null }); }
 
 BooleanLiteral
-  = TrueToken  { return { type: "Literal", value: true  }; }
-  / FalseToken { return { type: "Literal", value: false }; }
+  = TrueToken  { return wrap({ type: "Literal", value: true  }); }
+  / FalseToken { return wrap({ type: "Literal", value: false }); }
 
 // The "!(IdentifierStart / DecimalDigit)" predicate is not part of the official
 // grammar, it comes from text in section 7.8.3.
@@ -232,13 +240,13 @@ NumericLiteral "number"
 
 DecimalLiteral
   = DecimalIntegerLiteral "." DecimalDigit* ExponentPart? {
-      return { type: "Literal", value: parseFloat(text()) };
+      return wrap({ type: "Literal", value: parseFloat(text()) });
     }
   / "." DecimalDigit+ ExponentPart? {
-      return { type: "Literal", value: parseFloat(text()) };
+      return wrap({ type: "Literal", value: parseFloat(text()) });
     }
   / DecimalIntegerLiteral ExponentPart? {
-      return { type: "Literal", value: parseFloat(text()) };
+      return wrap({ type: "Literal", value: parseFloat(text()) });
     }
 
 DecimalIntegerLiteral
@@ -262,7 +270,7 @@ SignedInteger
 
 HexIntegerLiteral
   = "0x"i digits:$HexDigit+ {
-      return { type: "Literal", value: parseInt(digits, 16) };
+      return wrap({ type: "Literal", value: parseInt(digits, 16) });
      }
 
 HexDigit
@@ -270,10 +278,10 @@ HexDigit
 
 StringLiteral "string"
   = '"' chars:DoubleStringCharacter* '"' {
-      return { type: "Literal", value: chars.join("") };
+      return wrap({ type: "Literal", value: chars.join("") });
     }
   / "'" chars:SingleStringCharacter* "'" {
-      return { type: "Literal", value: chars.join("") };
+      return wrap({ type: "Literal", value: chars.join("") });
     }
 
 DoubleStringCharacter
@@ -339,7 +347,7 @@ RegularExpressionLiteral "regular expression"
         error(e.message);
       }
 
-      return { type: "Literal", value: value };
+      return wrap({ type: "Literal", value: value });
     }
 
 RegularExpressionBody
@@ -488,7 +496,7 @@ EOS
 // ----- A.3 Expressions -----
 
 PrimaryExpression
-  = ThisToken { return { type: "ThisExpression" }; }
+  = ThisToken { return wrap({ type: "ThisExpression" }); }
   / Identifier
   / Symbol
   / Literal
@@ -498,22 +506,22 @@ PrimaryExpression
 
 ArrayLiteral
   = "[" __ elision:(Elision __)? "]" {
-      return {
+      return wrap({
         type: "ArrayExpression",
         elements: optionalList(extractOptional(elision, 0))
-      };
+      });
     }
   / "[" __ elements:ElementList __ "]" {
-      return {
+      return wrap({
         type: "ArrayExpression",
         elements: elements
-      };
+      });
     }
   / "[" __ elements:ElementList __ "," __ elision:(Elision __)? "]" {
-      return {
+      return wrap({
         type: "ArrayExpression",
         elements: elements.concat(optionalList(extractOptional(elision, 0)))
-      };
+      });
     }
 
 ElementList
@@ -533,12 +541,12 @@ Elision
   = "," commas:(__ ",")* { return filledArray(commas.length + 1, null); }
 
 ObjectLiteral
-  = "{" __ "}" { return { type: "ObjectExpression", properties: [] }; }
+  = "{" __ "}" { return wrap({ type: "ObjectExpression", properties: [] }); }
   / "{" __ properties:PropertyNameAndValueList __ "}" {
-       return { type: "ObjectExpression", properties: properties };
+       return wrap({ type: "ObjectExpression", properties: properties });
      }
   / "{" __ properties:PropertyNameAndValueList __ "," __ "}" {
-       return { type: "ObjectExpression", properties: properties };
+       return wrap({ type: "ObjectExpression", properties: properties });
      }
 PropertyNameAndValueList
   = head:PropertyAssignment tail:(__ "," __ PropertyAssignment)* {
@@ -547,7 +555,7 @@ PropertyNameAndValueList
 
 PropertyAssignment
   = key:PrimaryExpression __ "=>" __ value:SingleExpression {
-      return { type: "Property", key: key, value: value, kind: "init" };
+      return wrap({ type: "Property", key: key, value: value, kind: "init" });
     }
 
 PropertySetParameterList
@@ -558,57 +566,57 @@ MemberExpression
         PrimaryExpression
       / FunctionExpression
       / NewToken __ callee:MemberExpression __ args:Arguments {
-          return { type: "NewExpression", callee: callee, arguments: args };
+          return wrap({ type: "NewExpression", callee: callee, arguments: args });
         }
     )
     tail:(
         __ "[" __ property:SingleExpression __ "]" {
-          return { property: property, computed: true };
+          return wrap({ property: property, computed: true });
         }
       / __ "." __ property:IdentifierName {
-          return { property: property, computed: false };
+          return wrap({ property: property, computed: false });
         }
     )*
     {
       return tail.reduce(function(result, element) {
-        return {
+        return wrap({
           type: "MemberExpression",
           object: result,
           property: element.property,
           computed: element.computed
-        };
+        });
       }, head);
     }
 
 NewExpression
   = MemberExpression
   / NewToken __ callee:NewExpression {
-      return { type: "NewExpression", callee: callee, arguments: [] };
+      return wrap({ type: "NewExpression", callee: callee, arguments: [] });
     }
 
 CallExpression
   = head:(
       callee:MemberExpression __ args:Arguments {
-        return { type: "CallExpression", callee: callee, arguments: args };
+        return wrap({ type: "CallExpression", callee: callee, arguments: args });
       }
     )
     tail:(
         __ args:Arguments {
-          return { type: "CallExpression", arguments: args };
+          return wrap({ type: "CallExpression", arguments: args });
         }
       / __ "[" __ property:SingleExpression __ "]" {
-          return {
+          return wrap({
             type: "MemberExpression",
             property: property,
             computed: true
-          };
+          });
         }
       / __ "." __ property:IdentifierName {
-          return {
+          return wrap({
             type: "MemberExpression",
             property: property,
             computed: false
-          };
+          });
         }
     )*
     {
@@ -635,12 +643,12 @@ LeftHandSideExpression
 
 PostfixExpression
   = argument:LeftHandSideExpression _ operator:PostfixOperator {
-      return {
+      return wrap({
         type: "UpdateExpression",
         operator: operator,
         argument: argument,
         prefix: false
-      };
+      });
     }
   / LeftHandSideExpression
 
@@ -655,12 +663,12 @@ UnaryExpression
         ? "UpdateExpression"
         : "UnaryExpression";
 
-      return {
+      return wrap({
         type: type,
         operator: operator,
         argument: argument,
         prefix: true
-      };
+      });
     }
 
 UnaryOperator
@@ -772,12 +780,12 @@ ConditionalExpression
     "?" __ consequent:SingleExpression __
     ":" __ alternate:SingleExpression
     {
-      return {
+      return wrap({
         type: "ConditionalExpression",
         test: test,
         consequent: consequent,
         alternate: alternate
-      };
+      });
     }
   / LogicalORExpression
 
@@ -786,23 +794,23 @@ AssignmentExpression
     "=" !"=" __
     right:SingleExpression
     {
-      return {
+      return wrap({
         type: "AssignmentExpression",
         operator: "=",
         left: left,
         right: right
-      };
+      });
     }
   / left:LeftHandSideExpression __
     operator:AssignmentOperator __
     right:SingleExpression
     {
-      return {
+      return wrap({
         type: "AssignmentExpression",
         operator: operator,
         left: left,
         right: right
-      };
+      });
     }
   / ConditionalExpression
 
@@ -846,10 +854,10 @@ Statement
 
 Block
   = "{" __ body:(StatementList __)? "}" {
-      return {
+      return wrap({
         type: "BlockStatement",
         body: optionalList(extractOptional(body, 0))
-      };
+      });
     }
 
 StatementList
@@ -858,12 +866,12 @@ StatementList
 VariableStatement
   = attrs: AttributeList?
     kind:($VarToken / $ConstToken) __ declarations:VariableDeclarationList EOS {
-      return {
+      return wrap({
         type: "VariableDeclaration",
         declarations,
         kind,
         attrs
-      };
+      });
     }
 
 VariableDeclarationList
@@ -873,12 +881,12 @@ VariableDeclarationList
 
 VariableDeclaration
   = id:Identifier ts:(__ AsTypeSpec)? init:(__ Initialiser)? {
-      return {
+      return wrap({
         type: "VariableDeclarator",
         id: id,
         ts: ts,
         init: extractOptional(init, 1)
-      };
+      });
     }
 
 Initialiser
@@ -886,10 +894,10 @@ Initialiser
 
 ExpressionStatement
   = !("{" / FunctionToken) expression:Expression EOS {
-      return {
+      return wrap({
         type: "ExpressionStatement",
         expression: expression
-      };
+      });
     }
 
 IfStatement
@@ -898,31 +906,31 @@ IfStatement
     ElseToken __
     alternate:Statement
     {
-      return {
+      return wrap({
         type: "IfStatement",
         test: test,
         consequent: consequent,
         alternate: alternate
-      };
+      });
     }
   / IfToken __ "(" __ test:SingleExpression __ ")" __
     consequent:Statement {
-      return {
+      return wrap({
         type: "IfStatement",
         test: test,
         consequent: consequent,
         alternate: null
-      };
+      });
     }
 
 IterationStatement
   = DoToken __
     body:Statement __
     WhileToken __ "(" __ test:SingleExpression __ ")" EOS
-    { return { type: "DoWhileStatement", body: body, test: test }; }
+    { return wrap({ type: "DoWhileStatement", body: body, test: test }); }
   / WhileToken __ "(" __ test:SingleExpression __ ")" __
     body:Statement
-    { return { type: "WhileStatement", test: test, body: body }; }
+    { return wrap({ type: "WhileStatement", test: test, body: body }); }
   / ForToken __
     "(" __
     init:(Expression __)? ";" __
@@ -931,13 +939,13 @@ IterationStatement
     ")" __
     body:Statement
     {
-      return {
+      return wrap({
         type: "ForStatement",
         init: extractOptional(init, 0),
         test: extractOptional(test, 0),
         update: extractOptional(update, 0),
         body: body
-      };
+      });
     }
   / ForToken __
     "(" __
@@ -947,7 +955,7 @@ IterationStatement
     ")" __
     body:Statement
     {
-      return {
+      return wrap({
         type: "ForStatement",
         init: {
           type: "VariableDeclaration",
@@ -957,42 +965,42 @@ IterationStatement
         test: extractOptional(test, 0),
         update: extractOptional(update, 0),
         body: body
-      };
+      });
     }
 
 ContinueStatement
   = ContinueToken EOS {
-      return { type: "ContinueStatement", label: null };
+      return wrap({ type: "ContinueStatement", label: null });
     }
   / ContinueToken _ label:Identifier EOS {
-      return { type: "ContinueStatement", label: label };
+      return wrap({ type: "ContinueStatement", label: label });
     }
 
 BreakStatement
   = BreakToken EOS {
-      return { type: "BreakStatement", label: null };
+      return wrap({ type: "BreakStatement", label: null });
     }
   / BreakToken _ label:Identifier EOS {
-      return { type: "BreakStatement", label: label };
+      return wrap({ type: "BreakStatement", label: label });
     }
 
 ReturnStatement
   = ReturnToken EOS {
-      return { type: "ReturnStatement", argument: null };
+      return wrap({ type: "ReturnStatement", argument: null });
     }
   / ReturnToken _ argument:SingleExpression EOS {
-      return { type: "ReturnStatement", argument: argument };
+      return wrap({ type: "ReturnStatement", argument: argument });
     }
 
 SwitchStatement
   = SwitchToken __ "(" __ discriminant:SingleExpression __ ")" __
     cases:CaseBlock
     {
-      return {
+      return wrap({
         type: "SwitchStatement",
         discriminant: discriminant,
         cases: cases
-      };
+      });
     }
 
 CaseBlock
@@ -1014,99 +1022,101 @@ CaseClauses
 
 InstanceofCase
   = InstanceofToken __ id:Identifier {
-    return {
+    return wrap({
       type: "InstanceOfCase",
       id: id
-    }
+    })
   }
 CaseClause
   = CaseToken __ test:(SingleExpression / InstanceofCase) __ ":" consequent:(__ StatementList)? {
-      return {
+      return wrap({
         type: "SwitchCase",
         test: test,
         consequent: optionalList(extractOptional(consequent, 1))
-      };
+      });
     }
 
 DefaultClause
   = DefaultToken __ ":" consequent:(__ StatementList)? {
-      return {
+      return wrap({
         type: "SwitchCase",
         test: null,
         consequent: optionalList(extractOptional(consequent, 1))
-      };
+      });
     }
 
 LabelledStatement
   = label:Identifier __ ":" __ body:Statement {
-      return { type: "LabeledStatement", label: label, body: body };
+      return wrap({ type: "LabeledStatement", label: label, body: body });
     }
 
 ThrowStatement
   = ThrowToken _ argument:SingleExpression EOS {
-      return { type: "ThrowStatement", argument: argument };
+      return wrap({ type: "ThrowStatement", argument: argument });
     }
 
 TryStatement
   = TryToken __ block:Block __ handler:Catch __ finalizer:Finally {
-      return {
+      return wrap({
         type: "TryStatement",
         block: block,
         handler: handler,
         finalizer: finalizer
-      };
+      });
     }
   / TryToken __ block:Block __ handler:Catch {
-      return {
+      return wrap({
         type: "TryStatement",
         block: block,
         handler: handler,
         finalizer: null
-      };
+      });
     }
   / TryToken __ block:Block __ finalizer:Finally {
-      return {
+      return wrap({
         type: "TryStatement",
         block: block,
         handler: null,
         finalizer: finalizer
-      };
+      });
     }
 
 Catch
   = CatchToken __ "(" __ param:Identifier __ ")" __ body:Block {
-      return {
+      return wrap({
         type: "CatchClause",
         param: param,
         body: body
-      };
+      });
     }
 
 Finally
   = FinallyToken __ block:Block { return block; }
 
 DebuggerStatement
-  = DebuggerToken EOS { return { type: "DebuggerStatement" }; }
+  = DebuggerToken EOS { return wrap({ type: "DebuggerStatement" }); }
 
 // ----- A.5 Functions and Programs -----
 
 Symbol
-  = ":" id:Identifier { return {
-    type: "Symbol",
-    name: ":" + id.name
-  }}
+  = ":" id:Identifier {
+    return wrap({
+      type: "Symbol",
+      name: ":" + id.name
+    })
+  }
 
 AttributeArgList
   = '[' __ head:IdentifierName tail:( __ "," __ IdentifierName)* __ ']' {
-    return {
+    return wrap({
       type: "AttributeArgList",
       list: buildList(head, tail, 3)
-    }
+    })
   }
 
 Attribute
   = sym:Symbol arg:( __ "(" __ (IdentifierName / AttributeArgList) __ ")" )? {
-    return { type: "Attribute", name: sym.name, arg: extractOptional(arg, 3) }
+    return wrap({ type: "Attribute", name: sym.name, arg: extractOptional(arg, 3) })
   }
 
 Attributes
@@ -1118,18 +1128,18 @@ AttributeList
   = "(" __ attrs:Attributes __ ")" __ { return attrs; }
 
 ScopedName
-  = head:Identifier tail:(__ "." __ Identifier)* { return {
+  = head:Identifier tail:(__ "." __ Identifier)* { return wrap({
         type: "ScopedIdentifier",
         name: extractList(buildList(head, tail, 3), "name").join(".")
-      };
+      });
     }
 
 ImportStatement
   = ImportToken __ id:ScopedName __ ";" {
-      return {
+      return wrap({
         type: "Import",
         id: id
-      }
+      })
     }
 
 ModuleDeclaration
@@ -1142,21 +1152,21 @@ ClassDeclaration
     __ "{"
     classElems:(__ ClassElement)*
     __ "}" {
-      return {
+      return wrap({
         type: "Class",
         parent: extractOptional(parent, 2),
         body: extractList(classElems, 1),
         attrs
-      }
+      })
     }
 
 ClassElement
   = access:(AccessSpecifier __)? item:(FunctionDeclaration / EnumDeclaration / VariableStatement) {
-    return {
+    return wrap({
       type: "ClassElement",
       access: extractOptional(access, 0),
       item: item
-    }
+    })
   }
 
 AccessSpecifier
@@ -1167,29 +1177,29 @@ AccessSpecifier
 
 EnumDeclaration
   = EnumToken __ id:Identifier? __ "{" __ head:Enum __ tail:("," __ Enum)* __ "}" {
-    return {
+    return wrap({
       type: "EnumDeclaration",
       id: id,
       enums: buildList(head, tail, 2)
-    }
+    })
   }
 
 Enum
   = id:Identifier value:(__ "=" __ SingleExpression)? {
-    return {
+    return wrap({
       type: "Enum",
       value,
       id
-    }
+    })
   }
 
 TypedefDeclaration
   = TypedefToken __ id:Identifier __ ts:AsTypeSpec __ ";" {
-    return {
+    return wrap({
       type: "typedef",
       id,
       ts
-    }
+    })
   }
 
 FunctionDeclaration
@@ -1199,14 +1209,14 @@ FunctionDeclaration
     ts:AsTypeSpec? __
     "{" __ body:FunctionBody __ "}"
     {
-      return {
+      return wrap({
         type: "FunctionDeclaration",
         id: id,
         attrs: attrs,
         ts: ts,
         params: optionalList(extractOptional(params, 0)),
         body: body
-      };
+      });
     }
 
 FunctionExpression
@@ -1214,29 +1224,29 @@ FunctionExpression
     "(" __ params:(FormalParameterList __)? ")" __
     "{" __ body:FunctionBody __ "}"
     {
-      return {
+      return wrap({
         type: "FunctionExpression",
         id: extractOptional(id, 0),
         params: optionalList(extractOptional(params, 0)),
         body: body
-      };
+      });
     }
 
 ArrayTypeSpec
   = name:("Array" / "Lang.Array" / "Toybox.Lang.Array" / "$.Toybox.Lang.Array") arg:(__ "<" __ TypeSpecList __ ">")? {
-    return {
+    return wrap({
       type: "typespec",
       name: name,
       arg: extractOptional(arg, 3)
-    }
+    })
   }
 
 SimpleTypeSpec
   = id:ScopedName {
-    return {
+    return wrap({
       type: "typespec",
       name: id.name
-    }
+    })
   }
 
 SingleTypeSpec
@@ -1268,18 +1278,18 @@ FormalParameterList
 
 FunctionBody
   = body:FunctionElements? {
-      return {
+      return wrap({
         type: "BlockStatement",
         body: optionalList(body)
-      };
+      });
     }
 
 Program
   = body:ProgramElements? {
-      return {
+      return wrap({
         type: "Program",
         body: optionalList(body)
-      };
+      });
     }
 
 ProgramElements
@@ -1293,10 +1303,10 @@ ProgramElement
 
 Module
   = body:ModuleElements? {
-      return {
+      return wrap({
         type: "Module",
         body: optionalList(body)
-      };
+      });
     }
 
 ModuleElements

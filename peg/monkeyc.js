@@ -2,6 +2,35 @@
 //
 // https://peggyjs.org/
 
+
+  var TYPES_TO_PROPERTY_NAMES = {
+    CallExpression:   "callee",
+    MemberExpression: "object",
+  };
+
+  function filledArray(count, value) {
+    return Array.apply(null, new Array(count))
+      .map(function() { return value; });
+  }
+
+  function extractOptional(optional, index) {
+    return optional ? optional[index] : null;
+  }
+
+  function extractList(list, index) {
+    return list.map(function(element) { return element[index]; });
+  }
+
+  function buildList(head, tail, index) {
+    return [head].concat(extractList(tail, index));
+  }
+
+  function optionalList(value) {
+    return value !== null ? value : [];
+  }
+
+
+
 function peg$subclass(child, parent) {
   function C() { this.constructor = child; }
   C.prototype = parent.prototype;
@@ -483,26 +512,26 @@ function peg$parse(input, options) {
   var peg$f0 = function(program) { return program; };
   var peg$f1 = function(name) { return name; };
   var peg$f2 = function(head, tail) {
-        return {
+        return wrap({
           type: "Identifier",
           name: head + tail.join("")
-        };
+        });
       };
   var peg$f3 = function(sequence) { return sequence; };
-  var peg$f4 = function() { return { type: "Literal", value: null }; };
-  var peg$f5 = function() { return { type: "Literal", value: true  }; };
-  var peg$f6 = function() { return { type: "Literal", value: false }; };
+  var peg$f4 = function() { return wrap({ type: "Literal", value: null }); };
+  var peg$f5 = function() { return wrap({ type: "Literal", value: true  }); };
+  var peg$f6 = function() { return wrap({ type: "Literal", value: false }); };
   var peg$f7 = function(literal) {
         return literal;
       };
   var peg$f8 = function() {
-        return { type: "Literal", value: parseFloat(text()) };
+        return wrap({ type: "Literal", value: parseFloat(text()) });
       };
   var peg$f9 = function(digits) {
-        return { type: "Literal", value: parseInt(digits, 16) };
+        return wrap({ type: "Literal", value: parseInt(digits, 16) });
        };
   var peg$f10 = function(chars) {
-        return { type: "Literal", value: chars.join("") };
+        return wrap({ type: "Literal", value: chars.join("") });
       };
   var peg$f11 = function() { return text(); };
   var peg$f12 = function() { return ""; };
@@ -525,27 +554,27 @@ function peg$parse(input, options) {
           error(e.message);
         }
 
-        return { type: "Literal", value: value };
+        return wrap({ type: "Literal", value: value });
       };
-  var peg$f22 = function() { return { type: "ThisExpression" }; };
+  var peg$f22 = function() { return wrap({ type: "ThisExpression" }); };
   var peg$f23 = function(expression) { return expression; };
   var peg$f24 = function(elision) {
-        return {
+        return wrap({
           type: "ArrayExpression",
           elements: optionalList(extractOptional(elision, 0))
-        };
+        });
       };
   var peg$f25 = function(elements) {
-        return {
+        return wrap({
           type: "ArrayExpression",
           elements: elements
-        };
+        });
       };
   var peg$f26 = function(elements, elision) {
-        return {
+        return wrap({
           type: "ArrayExpression",
           elements: elements.concat(optionalList(extractOptional(elision, 0)))
-        };
+        });
       };
   var peg$f27 = function(elision, element) {
           return optionalList(extractOptional(elision, 0)).concat(element);
@@ -555,58 +584,58 @@ function peg$parse(input, options) {
         };
   var peg$f29 = function(head, tail) { return Array.prototype.concat.apply(head, tail); };
   var peg$f30 = function(commas) { return filledArray(commas.length + 1, null); };
-  var peg$f31 = function() { return { type: "ObjectExpression", properties: [] }; };
+  var peg$f31 = function() { return wrap({ type: "ObjectExpression", properties: [] }); };
   var peg$f32 = function(properties) {
-         return { type: "ObjectExpression", properties: properties };
+         return wrap({ type: "ObjectExpression", properties: properties });
        };
   var peg$f33 = function(head, tail) {
         return buildList(head, tail, 3);
       };
   var peg$f34 = function(key, value) {
-        return { type: "Property", key: key, value: value, kind: "init" };
+        return wrap({ type: "Property", key: key, value: value, kind: "init" });
       };
   var peg$f35 = function(id) { return [id]; };
   var peg$f36 = function(callee, args) {
-            return { type: "NewExpression", callee: callee, arguments: args };
+            return wrap({ type: "NewExpression", callee: callee, arguments: args });
           };
   var peg$f37 = function(head, property) {
-            return { property: property, computed: true };
+            return wrap({ property: property, computed: true });
           };
   var peg$f38 = function(head, property) {
-            return { property: property, computed: false };
+            return wrap({ property: property, computed: false });
           };
   var peg$f39 = function(head, tail) {
         return tail.reduce(function(result, element) {
-          return {
+          return wrap({
             type: "MemberExpression",
             object: result,
             property: element.property,
             computed: element.computed
-          };
+          });
         }, head);
       };
   var peg$f40 = function(callee) {
-        return { type: "NewExpression", callee: callee, arguments: [] };
+        return wrap({ type: "NewExpression", callee: callee, arguments: [] });
       };
   var peg$f41 = function(callee, args) {
-          return { type: "CallExpression", callee: callee, arguments: args };
+          return wrap({ type: "CallExpression", callee: callee, arguments: args });
         };
   var peg$f42 = function(head, args) {
-            return { type: "CallExpression", arguments: args };
+            return wrap({ type: "CallExpression", arguments: args });
           };
   var peg$f43 = function(head, property) {
-            return {
+            return wrap({
               type: "MemberExpression",
               property: property,
               computed: true
-            };
+            });
           };
   var peg$f44 = function(head, property) {
-            return {
+            return wrap({
               type: "MemberExpression",
               property: property,
               computed: false
-            };
+            });
           };
   var peg$f45 = function(head, tail) {
         return tail.reduce(function(result, element) {
@@ -619,113 +648,113 @@ function peg$parse(input, options) {
         return optionalList(extractOptional(args, 0));
       };
   var peg$f47 = function(argument, operator) {
-        return {
+        return wrap({
           type: "UpdateExpression",
           operator: operator,
           argument: argument,
           prefix: false
-        };
+        });
       };
   var peg$f48 = function(operator, argument) {
         var type = (operator === "++" || operator === "--")
           ? "UpdateExpression"
           : "UnaryExpression";
 
-        return {
+        return wrap({
           type: type,
           operator: operator,
           argument: argument,
           prefix: true
-        };
+        });
       };
   var peg$f49 = function(head, tail) { return buildBinaryExpression(head, tail); };
   var peg$f50 = function(head, tail) { return buildLogicalExpression(head, tail); };
   var peg$f51 = function(test, consequent, alternate) {
-        return {
+        return wrap({
           type: "ConditionalExpression",
           test: test,
           consequent: consequent,
           alternate: alternate
-        };
+        });
       };
   var peg$f52 = function(left, right) {
-        return {
+        return wrap({
           type: "AssignmentExpression",
           operator: "=",
           left: left,
           right: right
-        };
+        });
       };
   var peg$f53 = function(left, operator, right) {
-        return {
+        return wrap({
           type: "AssignmentExpression",
           operator: operator,
           left: left,
           right: right
-        };
+        });
       };
   var peg$f54 = function(expr, ts) {
       expr.ts = ts;
       return expr;
     };
   var peg$f55 = function(body) {
-        return {
+        return wrap({
           type: "BlockStatement",
           body: optionalList(extractOptional(body, 0))
-        };
+        });
       };
   var peg$f56 = function(head, tail) { return buildList(head, tail, 1); };
   var peg$f57 = function(attrs, kind, declarations) {
-        return {
+        return wrap({
           type: "VariableDeclaration",
           declarations,
           kind,
           attrs
-        };
+        });
       };
   var peg$f58 = function(id, ts, init) {
-        return {
+        return wrap({
           type: "VariableDeclarator",
           id: id,
           ts: ts,
           init: extractOptional(init, 1)
-        };
+        });
       };
   var peg$f59 = function(expression) {
-        return {
+        return wrap({
           type: "ExpressionStatement",
           expression: expression
-        };
+        });
       };
   var peg$f60 = function(test, consequent, alternate) {
-        return {
+        return wrap({
           type: "IfStatement",
           test: test,
           consequent: consequent,
           alternate: alternate
-        };
+        });
       };
   var peg$f61 = function(test, consequent) {
-        return {
+        return wrap({
           type: "IfStatement",
           test: test,
           consequent: consequent,
           alternate: null
-        };
+        });
       };
-  var peg$f62 = function(body, test) { return { type: "DoWhileStatement", body: body, test: test }; };
-  var peg$f63 = function(test, body) { return { type: "WhileStatement", test: test, body: body }; };
+  var peg$f62 = function(body, test) { return wrap({ type: "DoWhileStatement", body: body, test: test }); };
+  var peg$f63 = function(test, body) { return wrap({ type: "WhileStatement", test: test, body: body }); };
   var peg$f64 = function(init, test, update, body) {
-        return {
+        return wrap({
           type: "ForStatement",
           init: extractOptional(init, 0),
           test: extractOptional(test, 0),
           update: extractOptional(update, 0),
           body: body
-        };
+        });
       };
   var peg$f65 = function(declarations, test, update, body) {
-        return {
+        return wrap({
           type: "ForStatement",
           init: {
             type: "VariableDeclaration",
@@ -735,32 +764,32 @@ function peg$parse(input, options) {
           test: extractOptional(test, 0),
           update: extractOptional(update, 0),
           body: body
-        };
+        });
       };
   var peg$f66 = function() {
-        return { type: "ContinueStatement", label: null };
+        return wrap({ type: "ContinueStatement", label: null });
       };
   var peg$f67 = function(label) {
-        return { type: "ContinueStatement", label: label };
+        return wrap({ type: "ContinueStatement", label: label });
       };
   var peg$f68 = function() {
-        return { type: "BreakStatement", label: null };
+        return wrap({ type: "BreakStatement", label: null });
       };
   var peg$f69 = function(label) {
-        return { type: "BreakStatement", label: label };
+        return wrap({ type: "BreakStatement", label: label });
       };
   var peg$f70 = function() {
-        return { type: "ReturnStatement", argument: null };
+        return wrap({ type: "ReturnStatement", argument: null });
       };
   var peg$f71 = function(argument) {
-        return { type: "ReturnStatement", argument: argument };
+        return wrap({ type: "ReturnStatement", argument: argument });
       };
   var peg$f72 = function(discriminant, cases) {
-        return {
+        return wrap({
           type: "SwitchStatement",
           discriminant: discriminant,
           cases: cases
-        };
+        });
       };
   var peg$f73 = function(clauses) {
         return optionalList(extractOptional(clauses, 0));
@@ -771,159 +800,161 @@ function peg$parse(input, options) {
           .concat(optionalList(extractOptional(after, 0)));
       };
   var peg$f75 = function(id) {
-      return {
+      return wrap({
         type: "InstanceOfCase",
         id: id
-      }
+      })
     };
   var peg$f76 = function(test, consequent) {
-        return {
+        return wrap({
           type: "SwitchCase",
           test: test,
           consequent: optionalList(extractOptional(consequent, 1))
-        };
+        });
       };
   var peg$f77 = function(consequent) {
-        return {
+        return wrap({
           type: "SwitchCase",
           test: null,
           consequent: optionalList(extractOptional(consequent, 1))
-        };
+        });
       };
   var peg$f78 = function(label, body) {
-        return { type: "LabeledStatement", label: label, body: body };
+        return wrap({ type: "LabeledStatement", label: label, body: body });
       };
   var peg$f79 = function(argument) {
-        return { type: "ThrowStatement", argument: argument };
+        return wrap({ type: "ThrowStatement", argument: argument });
       };
   var peg$f80 = function(block, handler, finalizer) {
-        return {
+        return wrap({
           type: "TryStatement",
           block: block,
           handler: handler,
           finalizer: finalizer
-        };
+        });
       };
   var peg$f81 = function(block, handler) {
-        return {
+        return wrap({
           type: "TryStatement",
           block: block,
           handler: handler,
           finalizer: null
-        };
+        });
       };
   var peg$f82 = function(block, finalizer) {
-        return {
+        return wrap({
           type: "TryStatement",
           block: block,
           handler: null,
           finalizer: finalizer
-        };
+        });
       };
   var peg$f83 = function(param, body) {
-        return {
+        return wrap({
           type: "CatchClause",
           param: param,
           body: body
-        };
+        });
       };
   var peg$f84 = function(block) { return block; };
-  var peg$f85 = function() { return { type: "DebuggerStatement" }; };
-  var peg$f86 = function(id) { return {
-      type: "Symbol",
-      name: ":" + id.name
-    }};
+  var peg$f85 = function() { return wrap({ type: "DebuggerStatement" }); };
+  var peg$f86 = function(id) {
+      return wrap({
+        type: "Symbol",
+        name: ":" + id.name
+      })
+    };
   var peg$f87 = function(head, tail) {
-      return {
+      return wrap({
         type: "AttributeArgList",
         list: buildList(head, tail, 3)
-      }
+      })
     };
   var peg$f88 = function(sym, arg) {
-      return { type: "Attribute", name: sym.name, arg: extractOptional(arg, 3) }
+      return wrap({ type: "Attribute", name: sym.name, arg: extractOptional(arg, 3) })
     };
   var peg$f89 = function(head, tail) {
       return buildList(head, tail, 3);
     };
   var peg$f90 = function(attrs) { return attrs; };
-  var peg$f91 = function(head, tail) { return {
+  var peg$f91 = function(head, tail) { return wrap({
           type: "ScopedIdentifier",
           name: extractList(buildList(head, tail, 3), "name").join(".")
-        };
+        });
       };
   var peg$f92 = function(id) {
-        return {
+        return wrap({
           type: "Import",
           id: id
-        }
+        })
       };
   var peg$f93 = function(module) { return module; };
   var peg$f94 = function(attrs, parent, classElems) {
-        return {
+        return wrap({
           type: "Class",
           parent: extractOptional(parent, 2),
           body: extractList(classElems, 1),
           attrs
-        }
+        })
       };
   var peg$f95 = function(access, item) {
-      return {
+      return wrap({
         type: "ClassElement",
         access: extractOptional(access, 0),
         item: item
-      }
+      })
     };
   var peg$f96 = function(id, head, tail) {
-      return {
+      return wrap({
         type: "EnumDeclaration",
         id: id,
         enums: buildList(head, tail, 2)
-      }
+      })
     };
   var peg$f97 = function(id, value) {
-      return {
+      return wrap({
         type: "Enum",
         value,
         id
-      }
+      })
     };
   var peg$f98 = function(id, ts) {
-      return {
+      return wrap({
         type: "typedef",
         id,
         ts
-      }
+      })
     };
   var peg$f99 = function(attrs, id, params, ts, body) {
-        return {
+        return wrap({
           type: "FunctionDeclaration",
           id: id,
           attrs: attrs,
           ts: ts,
           params: optionalList(extractOptional(params, 0)),
           body: body
-        };
+        });
       };
   var peg$f100 = function(id, params, body) {
-        return {
+        return wrap({
           type: "FunctionExpression",
           id: extractOptional(id, 0),
           params: optionalList(extractOptional(params, 0)),
           body: body
-        };
+        });
       };
   var peg$f101 = function(name, arg) {
-      return {
+      return wrap({
         type: "typespec",
         name: name,
         arg: extractOptional(arg, 3)
-      }
+      })
     };
   var peg$f102 = function(id) {
-      return {
+      return wrap({
         type: "typespec",
         name: id.name
-      }
+      })
     };
   var peg$f103 = function(ts, opt) {
       ts.optional = opt != null;
@@ -937,25 +968,25 @@ function peg$parse(input, options) {
       return id;
     };
   var peg$f106 = function(body) {
-        return {
+        return wrap({
           type: "BlockStatement",
           body: optionalList(body)
-        };
+        });
       };
   var peg$f107 = function(body) {
-        return {
+        return wrap({
           type: "Program",
           body: optionalList(body)
-        };
+        });
       };
   var peg$f108 = function(head, tail) {
         return buildList(head, tail, 1);
       };
   var peg$f109 = function(body) {
-        return {
+        return wrap({
           type: "Module",
           body: optionalList(body)
-        };
+        });
       };
 
   var peg$currPos = 0;
@@ -13005,52 +13036,31 @@ function peg$parse(input, options) {
   }
 
 
-    var TYPES_TO_PROPERTY_NAMES = {
-      CallExpression:   "callee",
-      MemberExpression: "object",
-    };
-
-    function filledArray(count, value) {
-      return Array.apply(null, new Array(count))
-        .map(function() { return value; });
-    }
-
-    function extractOptional(optional, index) {
-      return optional ? optional[index] : null;
-    }
-
-    function extractList(list, index) {
-      return list.map(function(element) { return element[index]; });
-    }
-
-    function buildList(head, tail, index) {
-      return [head].concat(extractList(tail, index));
+    function wrap(value) {
+      value.location = location();
+      return value;
     }
 
     function buildBinaryExpression(head, tail) {
       return tail.reduce(function(result, element) {
-        return {
+        return wrap({
           type: "BinaryExpression",
           operator: element[1],
           left: result,
           right: element[3]
-        };
+        });
       }, head);
     }
 
     function buildLogicalExpression(head, tail) {
       return tail.reduce(function(result, element) {
-        return {
+        return wrap({
           type: "LogicalExpression",
           operator: element[1],
           left: result,
           right: element[3]
-        };
+        });
       }, head);
-    }
-
-    function optionalList(value) {
-      return value !== null ? value : [];
     }
 
 
