@@ -48,8 +48,12 @@
 }}
 
 {
+  const comments = [];
   function wrap(value) {
     value.location = location();
+    if (comments.length) {
+      value.comments = comments.splice(0);
+    }
     return value;
   }
 
@@ -104,14 +108,12 @@ LineTerminatorSequence "end of line"
   / "\u2029"
 
 Comment "comment"
-  = MultiLineComment
-  / SingleLineComment
+  = comment:$(MultiLineComment / SingleLineComment) {
+    comments.push(comment);
+  }
 
 MultiLineComment
   = "/*" (!"*/" SourceCharacter)* "*/"
-
-MultiLineCommentNoLineTerminator
-  = "/*" (!("*/" / LineTerminator) SourceCharacter)* "*/"
 
 SingleLineComment
   = "//" (!LineTerminator SourceCharacter)*
@@ -471,9 +473,6 @@ WhileToken      = "while"      !IdentifierPart
 __
   = (WhiteSpace / LineTerminatorSequence / Comment)*
 
-_
-  = (WhiteSpace / MultiLineCommentNoLineTerminator)*
-
 // Automatic Semicolon Insertion
 
 EOS
@@ -775,7 +774,7 @@ AssignmentExpression
         right
       });
     }
-  / argument:LeftHandSideExpression _ operator:UpdateOperator {
+  / argument:LeftHandSideExpression __ operator:UpdateOperator {
       return wrap({
         type: "UpdateStatement",
         operator,
@@ -783,7 +782,7 @@ AssignmentExpression
         prefix: false
       });
     }
-  / operator:UpdateOperator _ argument:LeftHandSideExpression {
+  / operator:UpdateOperator __ argument:LeftHandSideExpression {
       return wrap({
         type: "UpdateStatement",
         operator,
@@ -962,7 +961,7 @@ ContinueStatement
   = ContinueToken EOS {
       return wrap({ type: "ContinueStatement", label: null });
     }
-  / ContinueToken _ label:Identifier EOS {
+  / ContinueToken __ label:Identifier EOS {
       return wrap({ type: "ContinueStatement", label });
     }
 
@@ -970,7 +969,7 @@ BreakStatement
   = BreakToken EOS {
       return wrap({ type: "BreakStatement", label: null });
     }
-  / BreakToken _ label:Identifier EOS {
+  / BreakToken __ label:Identifier EOS {
       return wrap({ type: "BreakStatement", label });
     }
 
@@ -978,7 +977,7 @@ ReturnStatement
   = ReturnToken EOS {
       return wrap({ type: "ReturnStatement", argument: null });
     }
-  / ReturnToken _ argument:SingleExpression EOS {
+  / ReturnToken __ argument:SingleExpression EOS {
       return wrap({ type: "ReturnStatement", argument: argument });
     }
 
@@ -1041,7 +1040,7 @@ LabelledStatement
     }
 
 ThrowStatement
-  = ThrowToken _ argument:SingleExpression EOS {
+  = ThrowToken __ argument:SingleExpression EOS {
       return wrap({ type: "ThrowStatement", argument: argument });
     }
 
