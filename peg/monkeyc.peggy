@@ -464,6 +464,7 @@ TrueToken       = "true"       !IdentifierPart
 TryToken        = "try"        !IdentifierPart
 TypeofToken     = "typeof"     !IdentifierPart
 TypedefToken    = "typedef"    !IdentifierPart
+UsingToken      = "using"      !IdentifierPart
 VarToken        = "var"        !IdentifierPart
 VoidToken       = "void"       !IdentifierPart
 WhileToken      = "while"      !IdentifierPart
@@ -1124,6 +1125,13 @@ ImportStatement
         id: id
       })
     }
+  / UsingToken __ id:ScopedName __ as:( AsToken __ @Identifier __ )? ";" {
+    return wrap({
+      type: "Using",
+      id,
+      as
+    })
+  }
 
 ModuleDeclaration
   = ModuleToken __ Identifier __ "{" __ module:Module __ "}" { return module; }
