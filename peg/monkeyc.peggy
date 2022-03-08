@@ -554,7 +554,6 @@ PropertySetParameterList
 MemberExpression
   = head:(
         PrimaryExpression
-      / FunctionExpression
       / NewToken __ callee:MemberExpression __ args:Arguments {
           return wrap({ type: "NewExpression", callee: callee, arguments: args });
         }
@@ -631,23 +630,8 @@ LeftHandSideExpression
   = CallExpression
   / NewExpression
 
-PostfixExpression
-  = argument:LeftHandSideExpression _ operator:PostfixOperator {
-      return wrap({
-        type: "UpdateExpression",
-        operator: operator,
-        argument: argument,
-        prefix: false
-      });
-    }
-  / LeftHandSideExpression
-
-PostfixOperator
-  = "++"
-  / "--"
-
 UnaryExpression
-  = PostfixExpression
+  = LeftHandSideExpression
   / operator:UnaryOperator __ argument:UnaryExpression {
       var type = (operator === "++" || operator === "--")
         ? "UpdateExpression"
@@ -781,28 +765,32 @@ ConditionalExpression
 
 AssignmentExpression
   = left:LeftHandSideExpression __
-    "=" !"=" __
+    operator:($("=" !"=") / AssignmentOperator) __
     right:SingleExpression
     {
       return wrap({
         type: "AssignmentExpression",
-        operator: "=",
-        left: left,
-        right: right
+        operator,
+        left,
+        right
       });
     }
-  / left:LeftHandSideExpression __
-    operator:AssignmentOperator __
-    right:SingleExpression
-    {
+  / argument:LeftHandSideExpression _ operator:UpdateOperator {
       return wrap({
-        type: "AssignmentExpression",
-        operator: operator,
-        left: left,
-        right: right
+        type: "UpdateStatement",
+        operator,
+        argument,
+        prefix: false
       });
     }
-  / ConditionalExpression
+  / operator:UpdateOperator _ argument:LeftHandSideExpression {
+      return wrap({
+        type: "UpdateStatement",
+        operator,
+        argument,
+        prefix: false
+      });
+    }
 
 AssignmentOperator
   = "*="
@@ -816,14 +804,26 @@ AssignmentOperator
   / "^="
   / "|="
 
+UpdateOperator
+  = "++"
+  / "--"
+
 SingleExpression
-  = expr:AssignmentExpression ts:AsTypeSpec? {
+  = expr:ConditionalExpression ts:AsTypeSpec? {
     expr.ts = ts;
     return expr;
   }
 
-Expression
-  = SingleExpression
+ExpressionLike
+  = AssignmentExpression / SingleExpression
+
+ExpressionLikeList
+  = head: ExpressionLike tail:(__ "," ExpressionLike)* {
+    return wrap({
+      type: "ExpressionLikeList",
+      exprs: [head, ...tail]
+    });
+  }
 
 // ----- A.4 Statements -----
 
@@ -883,10 +883,10 @@ Initialiser
   = "=" !"=" __ expression:SingleExpression { return expression; }
 
 ExpressionStatement
-  = !("{" / FunctionToken) expression:Expression EOS {
+  = !("{" / FunctionToken) expression:ExpressionLike EOS {
       return wrap({
         type: "ExpressionStatement",
-        expression: expression
+        expression
       });
     }
 
@@ -923,9 +923,9 @@ IterationStatement
     { return wrap({ type: "WhileStatement", test: test, body: body }); }
   / ForToken __
     "(" __
-    init:(@Expression __)? ";" __
+    init:(@ExpressionLikeList __)? ";" __
     test:(@SingleExpression __)? ";" __
-    update:(@Expression __)?
+    update:(@ExpressionLikeList __)?
     ")" __
     body:Statement
     {
@@ -941,7 +941,7 @@ IterationStatement
     "(" __
     VarToken __ declarations:VariableDeclarationList __ ";" __
     test:(@SingleExpression __)? ";" __
-    update:(@Expression __)?
+    update:(@ExpressionLikeList __)?
     ")" __
     body:Statement
     {
@@ -1204,19 +1204,6 @@ FunctionDeclaration
         id,
         attrs,
         ts,
-        params: optionalList(params),
-        body
-      });
-    }
-
-FunctionExpression
-  = FunctionToken __ id:(@Identifier __)?
-    "(" __ params:(@FormalParameterList __)? ")" __
-    "{" __ body:FunctionBody __ "}"
-    {
-      return wrap({
-        type: "FunctionExpression",
-        id,
         params: optionalList(params),
         body
       });
