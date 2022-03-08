@@ -457,6 +457,7 @@ NewToken        = "new"        !IdentifierPart
 NullToken       = "null"       !IdentifierPart
 ReturnToken     = "return"     !IdentifierPart
 SelfToken       = "self"       !IdentifierPart
+StaticToken     = "static"     !IdentifierPart
 SuperToken      = "super"      !IdentifierPart
 SwitchToken     = "switch"     !IdentifierPart
 ThrowToken      = "throw"      !IdentifierPart
@@ -1152,7 +1153,7 @@ ClassDeclaration
     }
 
 ClassElement
-  = access:(@AccessSpecifier __)? item:(FunctionDeclaration / EnumDeclaration / VariableStatement) {
+  = access:(@AccessSpecifier __)? item:(MethodDeclaration / EnumDeclaration / VariableStatement) {
     return wrap({
       type: "ClassElement",
       access,
@@ -1165,6 +1166,12 @@ AccessSpecifier
   / "protected"
   / "hidden"
   / "private"
+
+MethodDeclaration
+  = stat:(@StaticToken __)? func:FunctionDeclaration {
+    func.static = stat != null;
+    return wrap(func);
+  }
 
 EnumDeclaration
   = EnumToken __ id:Identifier? __ "{" __ head:Enum __ tail:("," __ @Enum)* __ "}" {
