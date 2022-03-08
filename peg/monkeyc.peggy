@@ -57,23 +57,31 @@
 
   function buildBinaryExpression(head, tail) {
     return tail.reduce(function (result, element) {
-      return wrap({
+      return {
         type: "BinaryExpression",
         operator: element[1],
         left: result,
         right: element[3],
-      });
+        location: {
+          start: result.location.start,
+          end: element[3].location.end,
+        },
+      };
     }, head);
   }
 
   function buildLogicalExpression(head, tail) {
     return tail.reduce(function (result, element) {
-      return wrap({
+      return {
         type: "LogicalExpression",
         operator: element[1],
         left: result,
         right: element[3],
-      });
+        location: {
+          start: result.location.start,
+          end: element[3].location.end,
+        },
+      };
     }, head);
   }
 }
