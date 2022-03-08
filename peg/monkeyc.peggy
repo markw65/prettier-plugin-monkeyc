@@ -226,11 +226,12 @@ Literal
   / StringLiteral
   / RegularExpressionLiteral
 
-NullLiteral = NullToken { return wrap({ type: "Literal", value: null }); }
+NullLiteral
+  = NullToken { return wrap({ type: "Literal", value: null, raw: text() }); }
 
 BooleanLiteral
-  = TrueToken { return wrap({ type: "Literal", value: true }); }
-  / FalseToken { return wrap({ type: "Literal", value: false }); }
+  = TrueToken { return wrap({ type: "Literal", value: true, raw: text() }); }
+  / FalseToken { return wrap({ type: "Literal", value: false, raw: text() }); }
 
 // The "!(IdentifierStart / DecimalDigit)" predicate is not part of the official
 // grammar, it comes from text in section 7.8.3.
@@ -242,13 +243,13 @@ NumericLiteral "number"
 
 DecimalLiteral
   = DecimalIntegerLiteral "." DecimalDigit* ExponentPart? {
-      return wrap({ type: "Literal", value: parseFloat(text()) });
+      return wrap({ type: "Literal", value: parseFloat(text()), raw: text() });
     }
   / "." DecimalDigit+ ExponentPart? {
-      return wrap({ type: "Literal", value: parseFloat(text()) });
+      return wrap({ type: "Literal", value: parseFloat(text()), raw: text() });
     }
   / DecimalIntegerLiteral ExponentPart? {
-      return wrap({ type: "Literal", value: parseFloat(text()) });
+      return wrap({ type: "Literal", value: parseFloat(text()), raw: text() });
     }
 
 DecimalIntegerLiteral
@@ -267,17 +268,21 @@ SignedInteger = [+-]? DecimalDigit+
 
 HexIntegerLiteral
   = "0x"i digits:$HexDigit+ {
-      return wrap({ type: "Literal", value: parseInt(digits, 16) });
+      return wrap({
+        type: "Literal",
+        value: parseInt(digits, 16),
+        raw: text(),
+      });
     }
 
 HexDigit = [0-9a-f]i
 
 StringLiteral "string"
   = "\"" chars:DoubleStringCharacter* "\"" {
-      return wrap({ type: "Literal", value: chars.join("") });
+      return wrap({ type: "Literal", value: chars.join(""), raw: text() });
     }
   / "'" chars:SingleStringCharacter* "'" {
-      return wrap({ type: "Literal", value: chars.join("") });
+      return wrap({ type: "Literal", value: chars.join(""), raw: text() });
     }
 
 DoubleStringCharacter
@@ -342,7 +347,7 @@ RegularExpressionLiteral "regular expression"
         error(e.message);
       }
 
-      return wrap({ type: "Literal", value: value });
+      return wrap({ type: "Literal", value: value, raw: text() });
     }
 
 RegularExpressionBody = RegularExpressionFirstChar RegularExpressionChar*
@@ -1018,7 +1023,15 @@ IterationStatement
     __
     VarToken
     __
-    declarations:VariableDeclarationList
+    init:(
+      declarations:VariableDeclarationList {
+          return wrap({
+            type: "VariableDeclaration",
+            declarations,
+            kind: "var",
+          });
+        }
+    )
     __
     ";"
     __
@@ -1031,11 +1044,7 @@ IterationStatement
     body:Statement {
       return wrap({
         type: "ForStatement",
-        init: {
-          type: "VariableDeclaration",
-          declarations: declarations,
-          kind: "var",
-        },
+        init,
         test,
         update,
         body,
@@ -1181,7 +1190,7 @@ DebuggerStatement
 Symbol
   = ":" id:Identifier {
       return wrap({
-        type: "Symbol",
+        type: "Identifier",
         name: ":" + id.name,
       });
     }
@@ -1199,10 +1208,10 @@ Attribute
       return wrap({ type: "Attribute", name: sym.name, arg });
     }
 
-Attributes
-  = head:Attribute tail:(__ "," __ @Attribute)* { return [head, ...tail]; }
-
-AttributeList = "(" __ attrs:Attributes __ ")" __ { return attrs; }
+AttributeList
+  = "(" __ head:Attribute tail:(__ "," __ @Attribute)* __ ")" __ {
+      return wrap({ type: "AttributeList", attrs: [head, ...tail] });
+    }
 
 ScopedName
   = head:Identifier tail:(__ "." __ @Identifier)* {
@@ -1228,24 +1237,39 @@ ImportStatement
     }
 
 ModuleDeclaration
-  = ModuleToken __ Identifier __ "{" __ module:Module __ "}" { return module; }
+  = ModuleToken __ id:Identifier __ "{" __ body:Module __ "}" {
+      return wrap({
+        type: "ModuleDeclaration",
+        body,
+        id,
+      });
+    }
 
 ClassDeclaration
   = attrs:AttributeList?
     ClassToken
     __
-    Identifier
-    parent:(__ ExtendsToken __ @ScopedName)?
+    id:Identifier
+    superClass:(__ ExtendsToken __ @ScopedName)?
     __
     "{"
-    body:(__ @ClassElement)*
+    body:ClassElements
     __
     "}" {
       return wrap({
-        type: "Class",
-        parent,
+        type: "ClassDeclaration",
+        id,
+        superClass,
         body,
         attrs,
+      });
+    }
+
+ClassElements
+  = body:(__ @ClassElement)* {
+      return wrap({
+        type: "BlockStatement",
+        body,
       });
     }
 
@@ -1302,7 +1326,7 @@ Enum
 TypedefDeclaration
   = TypedefToken __ id:Identifier __ ts:AsTypeSpec __ ";" {
       return wrap({
-        type: "typedef",
+        type: "TypedefDeclaration",
         id,
         ts,
       });
@@ -1339,7 +1363,7 @@ ArrayTypeSpec
   = name:("Array" / "Lang.Array" / "Toybox.Lang.Array" / "$.Toybox.Lang.Array")
     arg:(__ "<" __ @TypeSpecList __ ">")? {
       return wrap({
-        type: "typespec",
+        type: "TypeSpecPart",
         name,
         arg,
       });
@@ -1348,7 +1372,7 @@ ArrayTypeSpec
 SimpleTypeSpec
   = id:ScopedName {
       return wrap({
-        type: "typespec",
+        type: "TypeSpecPart",
         name: id.name,
       });
     }
@@ -1361,10 +1385,11 @@ SingleTypeSpec
 
 TypeSpecList
   = head:SingleTypeSpec tail:(__ "or" __ @SingleTypeSpec)* {
-      return [head, ...tail];
+      return wrap({ type: "TypeSpecList", ts: [head, ...tail] });
     }
 
-AsTypeSpec = AsToken __ ts:TypeSpecList { return ts; }
+AsTypeSpec
+  = AsToken __ ts:TypeSpecList { return wrap({ type: "AsTypeSpec", ts }); }
 
 FormalParameter
   = id:Identifier ts:(__ @AsTypeSpec)? {
@@ -1403,7 +1428,7 @@ ProgramElement
 Module
   = body:ModuleElements? {
       return wrap({
-        type: "Module",
+        type: "BlockStatement",
         body: optionalList(body),
       });
     }

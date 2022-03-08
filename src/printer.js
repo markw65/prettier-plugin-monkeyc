@@ -11,7 +11,7 @@ const {
   concat,
   group,
   //fill,
-  //ifBreak,
+  ifBreak,
   line,
   softline,
   hardline,
@@ -70,163 +70,102 @@ function nodeExpressionNeedsWrapping(node) {
 // plugin API.
 export function printMonkeyCAst(path, options, print) {
   const node = path.getValue();
+  if (!node) {
+    return "";
+  }
+
+  if (typeof node === "string") {
+    return node;
+  }
+
+  console.log(`node: ${node.type} at line ${node.location.start.line}`);
+  const estree = options.plugins[0].printers.estree;
 
   let lhs, rhs, label, prefix, suffix, body, delimiters, parent;
   switch (node.type) {
-    case "Program":
-      // This is the root node of a Pegjs grammar
-      return join(concat([hardline, hardline]), path.map(print, "body"));
+    default:
+      return estree.print(path, options, print);
 
-      if (!node.initializer) {
-        // A `hardline` is inserted at the end so that any trailing comments
-        // are printed
-        return concat([body, hardline]);
-      }
-
-      // A `hardline` is inserted at the end so that any trailing comments
-      // are printed
-      return concat([
-        path.call(print, "initializer"),
-        hardline,
-        hardline,
-        body,
-        hardline,
+    case "ModuleDeclaration":
+      return group([
+        group(["module", line, node.id.name, line, "{"]),
+        indent(path.call(print, "body")),
+        "}",
       ]);
-    case "rule":
-      lhs = [node.name];
-      if (node.displayName) {
-        lhs.push(" ", path.call(print, "displayName"));
-      }
-
-      rhs = concat([
+    case "TypedefDeclaration":
+      return group([
+        group(["typedef", line, node.id.name, line, "as"]),
         line,
-        path.call(print, "delimiter"),
-        " ",
-        path.call(print, "expression"),
+        path.call(print, "ts"),
       ]);
-      return group(concat(lhs.concat(indent(rhs))));
 
-    case "rule_ref":
+    case "Import":
+      return group(concat(["import", line, node.id.name, ";"]));
+
+    case "Using":
+      body = ["using", line, node.id.name];
+      if (node.as != null) {
+        body.push(line, "as", line, node.as.name);
+      }
+      body.push(";");
+      return group(concat(body));
+
+    case "AttributeList":
+      return concat([
+        "(",
+        group(join([",", softline], path.map(print, "attrs"))),
+        ")",
+        hardline,
+      ]);
+
+    case "Attribute":
+      body = [node.name];
+      if (node.arg) {
+        body.push("(", softline, path.call(print, "arg"), ")");
+      }
+      return group(concat(body));
+
+    case "Identifier":
+      if (node.ts) {
+        return group([node.name, line, path.call(print, "ts")]);
+      }
       return node.name;
 
-    // This is a string a quoted string. E.g., literally `"abc"`
-    case "stringliteral":
-      return util.makeString(node.value, '"');
-
-    case "delimiter":
-      return node.value;
-
-    case "any":
-      return ".";
-
-    case "choice":
-      rhs = path.map(print, "alternatives");
-      if (rhs.length === 0) {
-        return "";
-      }
-      // Delimiters (i.e., "/") are theoretically all the same,
-      // but they may have comments surrounding them. To preserve these
-      // comments, we actually print them.
-      delimiters = path.map(print, "delimiters");
-
-      body = [rhs[0]];
-      for (let i = 0; i < delimiters.length; i++) {
-        body.push(line, delimiters[i], " ", rhs[i + 1]);
-      }
-
-      parent = path.getParentNode();
-      if (parent && parent.type === "rule") {
-        // Rules are the top-level objects of a grammar. If we are the child
-        // of a rule, we want to line-break nomatter what.
-        body.push(breakParent);
-      }
-
-      return concat(body);
-
-    case "literal":
-      if (node.ignoreCase) {
-        return concat([util.makeString(node.value, '"'), "i"]);
-      }
-      return util.makeString(node.value, '"');
-
-    case "group":
-      return wrapInParenGroup(path.call(print, "expression"));
-
-    case "sequence":
-      body = path.map(print, "elements");
-      // Any `action` or `choice` that appears in a sequence needs to
-      // be wrapped in parens.
-      body = body.map((printed, i) => {
-        const child = node.elements[i];
-        if (["action", "choice"].includes(child.type)) {
-          return wrapInParenGroup(printed);
-        }
-        return printed;
-      });
-      return group(indent(join(line, body)));
-
-    case "labeled":
-      label = node.label;
-      rhs = path.call(print, "expression");
-      if (nodeExpressionNeedsWrapping(node)) {
-        rhs = wrapInParenGroup(rhs);
-      }
-      lhs = [];
-      if (node.pick) {
-        lhs.push("@");
-      }
-      if (label) {
-        lhs.push(label, ":");
-      }
-      return concat([...lhs, rhs]);
-
-    // suffix operators
-    case "optional":
-    case "zero_or_more":
-    case "one_or_more":
-      suffix = SUFFIX_MAP[node.type];
-      body = path.call(print, "expression");
-      if (nodeExpressionNeedsWrapping(node)) {
-        return concat([wrapInParenGroup(body), suffix]);
-      }
-      return concat([body, suffix]);
-
-    // prefix operators
-    case "text":
-    case "simple_and":
-    case "simple_not":
-      prefix = PREFIX_MAP[node.type];
-      if (nodeExpressionNeedsWrapping(node)) {
-        return concat([
-          prefix,
-          wrapInParenGroup(path.call(print, "expression")),
-        ]);
-      }
-      return concat([prefix, path.call(print, "expression")]);
-
-    // Things in square brackets (e.g. `[a-zUVW]`)
-    case "class":
-      prefix = node.inverted ? "^" : "";
-      suffix = node.ignoreCase ? "i" : "";
-      lhs = node.parts.map((part) => {
-        if (Array.isArray(part)) {
-          return part.join("-");
-        }
-        return part;
-      });
-
-      return concat(["[", prefix, ...lhs, "]", suffix]);
-
-    case "comment":
-      // XXX I'm not sure why this is here. I don't think this code is ever reached.
-      return concat(["A COMMENT", node.value]);
-
-    default:
-      return concat(["[--> ", JSON.stringify(node), " <--]"]);
-      console.warn(
-        `Found node with unknown type '${node.type}'`,
-        JSON.stringify(node)
+    case "AttributeArgList":
+      return group(
+        concat(["[", join([",", softbreak], path.map(print, "args"), "]")])
       );
+
+    case "AsTypeSpec":
+      return group(["as", line, path.call(print, "ts")]);
+    case "TypeSpecList":
+      return group(join([" or", line], path.map(print, "ts")));
+    case "TypeSpecPart":
+      body = [node.name];
+      if (node.arg) {
+        body.push(
+          group([
+            "<",
+            softline,
+            ifBreak(indent(path.call(print, "arg")), path.call(print, "arg")),
+            softline,
+            ">",
+          ])
+        );
+      }
+      return concat(body);
+    case "VariableDeclaration":
+      body = estree.print(path, options, print);
+      if (node.attrs) {
+        body = [path.call(print, "attrs"), hardline, body];
+      }
+      return body;
+    case "ClassElement":
+      body = path.call(print, "item");
+      if (node.access) {
+        body = [node.access, line, body];
+      }
+      return group(body);
   }
 
   throw new Error(`Could not find printer for node ${JSON.stringify(node)}`);
