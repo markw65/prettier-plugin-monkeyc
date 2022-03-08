@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build",
+      "label": "Build Parser",
       "type": "process",
       "command": "npx",
       "args": [
@@ -14,6 +14,15 @@
         "peg/monkeyc.peggy"
       ],
       "problemMatcher": ["$jshint"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "type": "npm",
+      "dependsOn": "Build Parser",
+      "script": "build",
       "group": {
         "kind": "build",
         "isDefault": true

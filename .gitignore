@@ -1,4 +1,5 @@
 /bin/
+/build/
 /generated/
 /out*
 /node_modules/

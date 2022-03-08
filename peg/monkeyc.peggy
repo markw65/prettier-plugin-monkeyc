@@ -47,11 +47,24 @@
   }
 
   const comments = [];
+  function addComment(value, multiline) {
+    const loc = location();
+    // If there is a node already stored with our starting location,
+    // we are being processed a second time, so just ignore it
+    if (comments.find((c) => c.loc.start.offset === loc.start.offset)) {
+      return text;
+    }
+    comments.push({
+      type: "comment",
+      value,
+      multiline,
+      loc,
+    });
+    return text;
+  }
+
   function wrap(value) {
     value.location = location();
-    if (comments.length) {
-      value.comments = comments.splice(0);
-    }
     return value;
   }
 
@@ -86,7 +99,11 @@
   }
 }
 
-Start = __ program:Program __ { return program; }
+Start
+  = __ program:Program __ {
+      program.comments = comments;
+      return program;
+    }
 
 // ----- A.1 Lexical Grammar -----
 
@@ -110,12 +127,13 @@ LineTerminatorSequence "end of line"
   / "\u2028"
   / "\u2029"
 
-Comment "comment"
-  = comment:$(MultiLineComment / SingleLineComment) { comments.push(comment); }
+Comment "comment" = comment:$(MultiLineComment / SingleLineComment)
 
-MultiLineComment = "/*" (!"*/" SourceCharacter)* "*/"
+MultiLineComment
+  = "/*" text:$(!"*/" SourceCharacter)* "*/" { addComment(text, true); }
 
-SingleLineComment = "//" (!LineTerminator SourceCharacter)*
+SingleLineComment
+  = "//" text:$(!LineTerminator SourceCharacter)* { addComment(text, false); }
 
 Identifier = !ReservedWord name:IdentifierName { return name; }
 
