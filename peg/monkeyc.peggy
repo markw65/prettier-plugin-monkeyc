@@ -632,12 +632,8 @@ LeftHandSideExpression
 UnaryExpression
   = LeftHandSideExpression
   / operator:UnaryOperator __ argument:UnaryExpression {
-      var type = (operator === "++" || operator === "--")
-        ? "UpdateExpression"
-        : "UnaryExpression";
-
       return wrap({
-        type: type,
+        type: "UnaryExpression",
         operator: operator,
         argument: argument,
         prefix: true
@@ -648,8 +644,6 @@ UnaryOperator
   = $DeleteToken
   / $VoidToken
   / $TypeofToken
-  / "++"
-  / "--"
   / $("+" !"=")
   / $("-" !"=")
   / "~"
@@ -681,7 +675,6 @@ ShiftExpression
 
 ShiftOperator
   = $("<<"  !"=")
-  / $(">>>" !"=")
   / $(">>"  !"=")
 
 RelationalExpression
@@ -764,7 +757,7 @@ ConditionalExpression
 
 AssignmentExpression
   = left:LeftHandSideExpression __
-    operator:($("=" !"=") / AssignmentOperator) __
+    operator:AssignmentOperator __
     right:SingleExpression
     {
       return wrap({
@@ -787,12 +780,13 @@ AssignmentExpression
         type: "UpdateStatement",
         operator,
         argument,
-        prefix: false
+        prefix: true
       });
     }
 
 AssignmentOperator
-  = "*="
+  = $("=" !"=")
+  / "*="
   / "/="
   / "%="
   / "+="
