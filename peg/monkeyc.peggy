@@ -843,7 +843,7 @@ UpdateOperator
   / "--"
 
 SingleExpression
-  = expr:ConditionalExpression ts:AsTypeSpec? {
+  = expr:ConditionalExpression ts:(__ @AsTypeSpec)? {
       expr.ts = ts;
       return expr;
     }
@@ -907,7 +907,7 @@ VariableDeclarationList
     }
 
 VariableDeclaration
-  = id:Identifier ts:(__ AsTypeSpec)? init:(__ @Initialiser)? {
+  = id:Identifier ts:(__ @AsTypeSpec)? init:(__ @Initialiser)? {
       return wrap({
         type: "VariableDeclarator",
         id,
@@ -1300,8 +1300,7 @@ FunctionDeclaration
     __
     params:(@FormalParameterList __)?
     ")"
-    __
-    ts:AsTypeSpec?
+    ts:(__ @AsTypeSpec)?
     __
     "{"
     __
@@ -1347,10 +1346,10 @@ TypeSpecList
       return [head, ...tail];
     }
 
-AsTypeSpec = __ AsToken __ ts:TypeSpecList { return ts; }
+AsTypeSpec = AsToken __ ts:TypeSpecList { return ts; }
 
 FormalParameter
-  = id:Identifier ts:AsTypeSpec? {
+  = id:Identifier ts:(__ @AsTypeSpec)? {
       id.ts = ts;
       return id;
     }
