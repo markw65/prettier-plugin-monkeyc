@@ -10,7 +10,7 @@ const { builders, utils } = Prettier.doc;
 const {
   concat,
   group,
-  //fill,
+  fill,
   ifBreak,
   line,
   softline,
@@ -22,49 +22,6 @@ const {
   //markAsRoot,
   breakParent,
 } = builders;
-
-function wrapInParenGroup(doc) {
-  return group(concat(["(", indent(concat([softline, doc])), softline, ")"]));
-}
-
-/**
- * Returns true if `node.expression` should be wrapped in
- * parens to avoid potential confusion (e.g., because
- * the reader has forgotten the precedence of operations)
- *
- * @param {*} node
- */
-function nodeExpressionNeedsWrapping(node) {
-  if (!node.expression || true) {
-    return false;
-  }
-  // Most of the time we want to wrap expressions like `&foo?` in
-  // parenthesis like `&(foo?)`. The exceptions are `$foo*`, etc., whose meaning
-  // should be clear
-  if (
-    isPrefixOperator(node) &&
-    node.type !== "text" &&
-    isSuffixOperator(node.expression)
-  ) {
-    if (node.type === "") return true;
-  }
-  if (node.type === "labeled" && isSuffixOperator(node.expression)) {
-    // Suffix operators will wrap their arguments in parenthesis if needed
-    // so we don't need to wrap them in another set
-    return false;
-  }
-  // Normally `labeled` expressions are wrapped in parens, but
-  // if they are part of a choice, we don't want them wrapped.
-  // For example `a:Rule {return a}` should *not* become
-  // `(a:Rule) {return a}`.
-  if (node.type === "action" && node.expression.type === "labeled") {
-    return false;
-  }
-  if (["choice", "labeled", "action"].includes(node.expression.type)) {
-    return true;
-  }
-  return false;
-}
 
 // The signature of this function is determined by the Prettier
 // plugin API.
@@ -78,25 +35,34 @@ export function printMonkeyCAst(path, options, print) {
     return node;
   }
 
-  console.log(`node: ${node.type} at line ${node.location.start.line}`);
+  // console.log(`node: ${node.type} at line ${node.location.start.line}`);
   const estree = options.plugins[0].printers.estree;
 
   let lhs, rhs, label, prefix, suffix, body, delimiters, parent;
   switch (node.type) {
-    default:
-      return estree.print(path, options, print);
-
     case "ModuleDeclaration":
       return group([
-        group(["module", line, node.id.name, line, "{"]),
-        indent(path.call(print, "body")),
-        "}",
+        group(["module", line, indent(node.id.name), line]),
+        path.call(print, "body"),
       ]);
+
     case "TypedefDeclaration":
       return group([
-        group(["typedef", line, node.id.name, line, "as"]),
-        line,
+        group(["typedef", line, node.id.name]),
         path.call(print, "ts"),
+        ";",
+      ]);
+
+    case "EnumDeclaration":
+      return ["enum ", node.id ? [print("id"), " "] : "", print("body")];
+
+    case "Property":
+      return group([
+        path.call(print, "key"),
+        line,
+        "=>",
+        line,
+        path.call(print, "value"),
       ]);
 
     case "Import":
@@ -127,48 +93,115 @@ export function printMonkeyCAst(path, options, print) {
 
     case "Identifier":
       if (node.ts) {
-        return group([node.name, line, path.call(print, "ts")]);
+        return group([node.name, path.call(print, "ts")]);
       }
       return node.name;
 
     case "AttributeArgList":
       return group(
-        concat(["[", join([",", softbreak], path.map(print, "args"), "]")])
+        concat(["[", join([",", line], path.map(print, "args"), "]")])
       );
 
     case "AsTypeSpec":
-      return group(["as", line, path.call(print, "ts")]);
+      return indent(fill([line, "as", line, path.call(print, "ts")]));
+
+    case "AsExpression":
+      body = [path.call(print, "expr"), path.call(print, "ts")];
+      if (nodeNeedsParens(node, path.getParentNode())) {
+        body.unshift("(");
+        body.push(")");
+      }
+      return group(body);
+      case "NewExpression":
+        body = estree.print(path, options, print);
+        if (nodeNeedsParens(node, path.getParentNode())) {
+          body = concat(["(", body, ")"]);
+        }
+        return body;
+
     case "TypeSpecList":
       return group(join([" or", line], path.map(print, "ts")));
+
     case "TypeSpecPart":
       body = [node.name];
       if (node.arg) {
         body.push(
-          group([
-            "<",
-            softline,
-            ifBreak(indent(path.call(print, "arg")), path.call(print, "arg")),
-            softline,
-            ">",
-          ])
+          group(["<", softline, indent(path.call(print, "arg")), softline, ">"])
         );
       }
+      if (node.optional) {
+        body.push("?");
+      }
       return concat(body);
+
+    case "ArrayLiteral":
+      if (!node.size) break;
+      return group(["new [", indent(path.call(print, "size")), "]"]);
+
     case "VariableDeclaration":
+    case "FunctionDeclaration":
+    case "MethodDeclaration":
+    case "ClassDeclaration":
       body = estree.print(path, options, print);
       if (node.attrs) {
-        body = [path.call(print, "attrs"), hardline, body];
+        body = [path.call(print, "attrs"), body];
       }
       return body;
+
     case "ClassElement":
-      body = path.call(print, "item");
+      body = [];
       if (node.access) {
-        body = [node.access, line, body];
+        body.push(node.access, line);
       }
-      return group(body);
+      if (node.item.static) {
+        body.push("static", line);
+      }
+      rhs = path.call(print, "item");
+      if (!body.length) {
+        return rhs;
+      }
+      if (Array.isArray(rhs)) {
+        body = body.concat(rhs);
+      } else {
+        body.push(rhs);
+      }
+      return fill(body);
+
+    case "ThisExpression":
+      return node.text;
+
+    case "InstanceOfCase":
+      return concat(["instanceof ", path.call(print, "id")]);
   }
 
-  throw new Error(`Could not find printer for node ${JSON.stringify(node)}`);
+  return estree.print(path, options, print);
+}
+
+function nodeNeedsParens(node, parent) {
+  if (node.type == "AsExpression") {
+    switch (parent.type) {
+      case "AssignmentExpression":
+      case "ReturnStatement":
+      case "ConditionalExpression":
+      case "VariableDeclarator":
+        return false;
+      case "MemberExpression":
+        return node != parent.property;
+      case "CallExpression":
+        return node == parent.callee;
+    }
+    return true;
+  }
+
+  if (node.type == "NewExpression") {
+    return parent.type == "MemberExpression";
+  }
+
+  if (parent.type == "AsExpression") {
+    switch (node.type) {
+      // pretty much everything except primary, call, new, member
+    }
+  }
 }
 
 /**
@@ -180,13 +213,8 @@ export function printMonkeyCAst(path, options, print) {
  * @param {*} commentPath
  * @param {*} options
  */
-export function printComment(commentPath) {
-  const comment = commentPath.getValue();
+export function printComment(commentPath, options) {
+  const estree = options.plugins[0].printers.estree;
 
-  const prefix = comment.forceBreakAfter ? hardline : "";
-
-  if (comment.multiline) {
-    return concat([prefix, "/*", comment.value, "*/"]);
-  }
-  return concat([prefix, "//", comment.value]);
+  return estree.printComment(commentPath, options);
 }

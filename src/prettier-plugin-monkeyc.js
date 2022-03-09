@@ -126,8 +126,8 @@ export const parsers = {
   "monkeyc-parser": {
     parse,
     astFormat: "monkeyc-ast",
-    locStart: (node) => (node.loc ? node.loc.start.offset : 0),
-    locEnd: (node) => (node.loc ? node.loc.end.offset : 0),
+    locStart: (node) => (node.start || 0),
+    locEnd: (node) => (node.end || 0),
   },
 };
 
@@ -158,7 +158,7 @@ export const options = {
 };
 
 export const defaultOptions = {
-  tabWidth: 2,
+  tabWidth: 4,
   // actionParser: "babel",
 };
 

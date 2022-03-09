@@ -55,9 +55,10 @@
       return text;
     }
     comments.push({
-      type: "comment",
+      type: multiline ? "MultiLine" : "Line",
       value,
-      multiline,
+      start: loc.start.offset,
+      end: loc.end.offset,
       loc,
     });
     return text;
@@ -65,6 +66,8 @@
 
   function wrap(value) {
     value.location = location();
+    value.start = value.location.start.offset;
+    value.end = value.location.end.offset;
     return value;
   }
 
@@ -546,7 +549,7 @@ PrimaryExpression
   / Literal
   / ArrayLiteral
   / ObjectLiteral
-  / "(" __ expression:SingleExpression __ ")" { return expression; }
+  / "(" __ expression:SingleExpression __ ")" { return wrap(expression); }
 
 ArrayLiteral
   = "[" __ elision:(@Elision __)? "]" {
@@ -606,6 +609,12 @@ PropertySetParameterList = id:Identifier { return [id]; }
 MemberExpression
   = head:(
       PrimaryExpression
+      / NewToken __ '[' __ size:SingleExpression __ ']' {
+        return wrap({
+          type: "ArrayLiteral",
+          size
+        })
+      }
       / NewToken __ callee:MemberExpression __ args:Arguments {
           return wrap({
             type: "NewExpression",
@@ -833,7 +842,7 @@ AssignmentExpression
     }
   / argument:LeftHandSideExpression __ operator:UpdateOperator {
       return wrap({
-        type: "UpdateStatement",
+        type: "UpdateExpression",
         operator,
         argument,
         prefix: false,
@@ -841,7 +850,7 @@ AssignmentExpression
     }
   / operator:UpdateOperator __ argument:LeftHandSideExpression {
       return wrap({
-        type: "UpdateStatement",
+        type: "UpdateExpression",
         operator,
         argument,
         prefix: true,
@@ -867,8 +876,13 @@ UpdateOperator
 
 SingleExpression
   = expr:ConditionalExpression ts:(__ @AsTypeSpec)? {
-      expr.ts = ts;
-      return expr;
+      return ts
+        ? wrap({
+            type: "AsExpression",
+            expr,
+            ts,
+          })
+        : expr;
     }
 
 ExpressionLike
@@ -876,11 +890,15 @@ ExpressionLike
   / SingleExpression
 
 ExpressionLikeList
-  = head:ExpressionLike tail:(__ "," ExpressionLike)* {
-      return wrap({
-        type: "ExpressionLikeList",
-        exprs: [head, ...tail],
-      });
+  = head:ExpressionLike tail:(__ "," @ExpressionLike)* {
+      return wrap(
+        tail.length
+          ? {
+              type: "SequenceExpression",
+              expressions: [head, ...tail],
+            }
+          : head
+      );
     }
 
 // ----- A.4 Statements -----
@@ -931,10 +949,10 @@ VariableDeclarationList
 
 VariableDeclaration
   = id:Identifier ts:(__ @AsTypeSpec)? init:(__ @Initialiser)? {
+      id.ts = ts;
       return wrap({
         type: "VariableDeclarator",
         id,
-        ts,
         init,
       });
     }
@@ -1216,7 +1234,7 @@ AttributeList
 ScopedName
   = head:Identifier tail:(__ "." __ @Identifier)* {
       return wrap({
-        type: "ScopedIdentifier",
+        type: "Identifier",
         name: [head, ...tail].map((v) => v.name).join("."),
       });
     }
@@ -1237,7 +1255,7 @@ ImportStatement
     }
 
 ModuleDeclaration
-  = ModuleToken __ id:Identifier __ "{" __ body:Module __ "}" {
+  = ModuleToken __ id:Identifier __ body:ModuleBody {
       return wrap({
         type: "ModuleDeclaration",
         body,
@@ -1291,36 +1309,38 @@ AccessSpecifier
 
 MethodDeclaration
   = stat:(@StaticToken __)? func:FunctionDeclaration {
+      // func.type = "MethodDefinition";
       func.static = stat != null;
+      // func.kind = "method";
+      // func.key = func.id;
       return wrap(func);
     }
 
 EnumDeclaration
-  = EnumToken
-    __
-    id:Identifier?
-    __
-    "{"
-    __
-    head:Enum
-    __
-    tail:("," __ @Enum)*
-    __
-    "}" {
+  = EnumToken __ id:Identifier? __ body:EnumBody {
       return wrap({
         type: "EnumDeclaration",
         id: id,
-        enums: [head, ...tail],
+        body,
       });
     }
 
+// EnumStringBody, and EnumStringMember isn't really right, but
+// the estree printer doesn't care about the actual types, so...
+EnumBody
+  = "{" __ head:Enum __ tail:("," __ @Enum)* __ ("," __)? "}" {
+      return wrap({ type: "EnumStringBody", members: [head, ...tail] });
+    }
+
 Enum
-  = id:Identifier value:(__ "=" __ SingleExpression)? {
-      return wrap({
-        type: "Enum",
-        value,
-        id,
-      });
+  = id:Identifier init:(__ "=" __ @SingleExpression)? {
+      return init
+        ? wrap({
+            type: "EnumStringMember",
+            id,
+            init,
+          })
+        : id;
     }
 
 TypedefDeclaration
@@ -1344,16 +1364,12 @@ FunctionDeclaration
     ")"
     ts:(__ @AsTypeSpec)?
     __
-    "{"
-    __
-    body:FunctionBody
-    __
-    "}" {
+    body:FunctionBody {
       return wrap({
         type: "FunctionDeclaration",
         id,
         attrs,
-        ts,
+        returnType: ts,
         params: optionalList(params),
         body,
       });
@@ -1385,7 +1401,31 @@ SingleTypeSpec
 
 TypeSpecList
   = head:SingleTypeSpec tail:(__ "or" __ @SingleTypeSpec)* {
-      return wrap({ type: "TypeSpecList", ts: [head, ...tail] });
+      let list = [head, ...tail];
+      if (list.length > 1) {
+        let hasNull = false;
+        list = list
+          .map((v) => {
+            if (v.type == "Identifier" && v.name == "Null") {
+              hasNull = true;
+              return null;
+            }
+            if (v.optional) {
+              hasNull = true;
+            }
+            return v;
+          })
+          .filter((v) => v != null);
+        if (hasNull) {
+          if (list.length) {
+            list[list.length - 1].optional = true;
+          } else {
+            // every element was "Null"
+            list = [head];
+          }
+        }
+      }
+      return wrap({ type: "TypeSpecList", ts: list });
     }
 
 AsTypeSpec
@@ -1403,7 +1443,7 @@ FormalParameterList
     }
 
 FunctionBody
-  = body:FunctionElements? {
+  = "{" __ body:FunctionElements? __ "}" {
       return wrap({
         type: "BlockStatement",
         body: optionalList(body),
@@ -1425,8 +1465,8 @@ ProgramElement
   = ModuleElement
   / ImportStatement
 
-Module
-  = body:ModuleElements? {
+ModuleBody
+  = "{" __ body:ModuleElements? __ "}" {
       return wrap({
         type: "BlockStatement",
         body: optionalList(body),
