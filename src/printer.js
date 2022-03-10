@@ -170,6 +170,9 @@ export function printMonkeyCAst(path, options, print) {
       }
       return fill(body);
 
+    case "CatchClauses":
+      return join(" ", path.map(print, "catches"));
+
     case "ThisExpression":
       return node.text;
 

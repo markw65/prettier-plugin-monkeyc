@@ -1173,38 +1173,44 @@ ThrowStatement
     }
 
 TryStatement
-  = TryToken __ block:Block __ handler:Catch __ finalizer:Finally {
+  = TryToken __ block:Block __ handler:Catches? __ finalizer:Finally? {
       return wrap({
         type: "TryStatement",
-        block: block,
-        handler: handler,
-        finalizer: finalizer,
-      });
-    }
-  / TryToken __ block:Block __ handler:Catch {
-      return wrap({
-        type: "TryStatement",
-        block: block,
-        handler: handler,
-        finalizer: null,
-      });
-    }
-  / TryToken __ block:Block __ finalizer:Finally {
-      return wrap({
-        type: "TryStatement",
-        block: block,
-        handler: null,
-        finalizer: finalizer,
+        block,
+        handler,
+        finalizer,
       });
     }
 
+Catches
+  = catches:(@Catch __)+ {
+      return catches.length == 1
+        ? catches[0]
+        : wrap({
+            type: "CatchClauses",
+            catches,
+          });
+    }
+
 Catch
-  = CatchToken __ "(" __ param:Identifier __ ")" __ body:Block {
+  = CatchToken __ "(" __ param:CatchArg ")" __ body:Block {
       return wrap({
         type: "CatchClause",
-        param: param,
-        body: body,
+        param,
+        body,
       });
+    }
+
+CatchArg
+  = id:Identifier paramType:(__ @$InstanceofToken __ @ScopedName)? {
+      return paramType
+        ? wrap({
+            type: "BinaryExpression",
+            operator: paramType[0],
+            left: id,
+            right: paramType[1],
+          })
+        : id;
     }
 
 Finally = FinallyToken __ block:Block { return block; }
