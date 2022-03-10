@@ -126,7 +126,21 @@ export function printMonkeyCAst(path, options, print) {
       return group(join([" or", line], path.map(print, "ts")));
 
     case "TypeSpecPart":
-      body = [node.name];
+      body = [];
+
+      if (node.name) {
+        body.push(node.name)
+      } else {
+        body.push(
+          group([
+            "{",
+            line,
+            indent(join([",", line], path.map(print, "object"))),
+            line,
+            "}",
+          ])
+        );
+      }
       if (node.generics) {
         body.push(
           group([

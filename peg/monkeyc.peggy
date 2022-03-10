@@ -1413,6 +1413,14 @@ SingleTypeSpec
       });
     }
   / "(" __ @NullableTypeSpec __ ")"
+  / "{" __ head:ObjectAsExpression tail:(__ "," __ @ObjectAsExpression)* "}" {
+      return wrap({
+        type: "TypeSpecPart",
+        object: [head, ...tail],
+      });
+    }
+
+ObjectAsExpression = &((Symbol / Literal) __ AsToken) @AsExpression
 
 NullableTypeSpec
   = ts:SingleTypeSpec n:(__ "?")? {
@@ -1468,7 +1476,7 @@ AsTypeSpec
 FormalParameter
   = id:Identifier ts:(__ @AsTypeSpec)? {
       id.ts = ts;
-      return id;
+      return wrap(id);
     }
 
 FormalParameterList
