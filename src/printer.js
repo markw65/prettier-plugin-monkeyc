@@ -169,13 +169,16 @@ export function printMonkeyCAst(path, options, print) {
       return concat(body);
 
     case "ArrayExpression":
-      if (!node.size) break;
+      if (!node.size) {
+        return concat([estree.print(path, options, print), node.byte || ""]);
+      }
       return group([
         "new",
         node.ts ? [" ", path.call(print, "ts")] : "",
         " [",
         indent(path.call(print, "size")),
         "]",
+        node.byte || ""
       ]);
 
     case "VariableDeclaration":

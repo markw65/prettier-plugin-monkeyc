@@ -181,7 +181,8 @@ ReservedWord
   / BooleanLiteral
 
 Keyword
-  = AsToken
+  = AndToken
+  / AsToken
   / BreakToken
   / CaseToken
   / CatchToken
@@ -204,6 +205,7 @@ Keyword
   / InterfaceToken
   / MeToken
   / NewToken
+  / OrToken
   / ReturnToken
   / SelfToken
   / SwitchToken
@@ -269,7 +271,7 @@ ExponentIndicator = "e"i
 SignedInteger = [+-]? DecimalDigit+
 
 HexIntegerLiteral
-  = "0x"i digits:$HexDigit+ {
+  = "0x"i digits:$HexDigit+ "l"i? {
       return wrap({
         type: "Literal",
         value: parseInt(digits, 16),
@@ -443,6 +445,8 @@ Zs = [\u0020\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]
 
 // Tokens
 
+AndToken = "and" !IdentifierPart
+
 AsToken = "as" !IdentifierPart
 
 BreakToken = "break" !IdentifierPart
@@ -499,6 +503,8 @@ NewToken = "new" !IdentifierPart
 
 NullToken = "null" !IdentifierPart
 
+OrToken = "or" !IdentifierPart
+
 ReturnToken = "return" !IdentifierPart
 
 SelfToken = "self" !IdentifierPart
@@ -553,22 +559,25 @@ PrimaryExpression
   / "(" __ expression:SingleExpression __ ")" { return wrap(expression); }
 
 ArrayLiteral
-  = "[" __ elision:(@Elision __)? "]" {
+  = "[" __ elision:(@Elision __)? "]" byte:"b"? {
       return wrap({
         type: "ArrayExpression",
         elements: optionalList(elision),
+        byte,
       });
     }
-  / "[" __ elements:ElementList __ "]" {
+  / "[" __ elements:ElementList __ "]" byte:"b"? {
       return wrap({
         type: "ArrayExpression",
         elements: elements,
+        byte,
       });
     }
-  / "[" __ elements:ElementList __ "," __ elision:(@Elision __)? "]" {
+  / "[" __ elements:ElementList __ "," __ elision:(@Elision __)? "]" byte:"b"? {
       return wrap({
         type: "ArrayExpression",
         elements: elements.concat(optionalList(elision)),
+        byte,
       });
     }
 
@@ -610,11 +619,18 @@ PropertySetParameterList = id:Identifier { return [id]; }
 MemberExpression
   = head:(
       PrimaryExpression
-      / NewToken ts:(__ @SingleTypeSpec)? __ "[" __ size:SingleExpression __ "]" {
+      / NewToken
+        ts:(__ @SingleTypeSpec)?
+        __
+        "["
+        __
+        size:SingleExpression
+        __
+        "]" {
           return wrap({
             type: "ArrayExpression",
             size,
-            ts
+            ts,
           });
         }
       / NewToken __ callee:MemberExpression __ args:Arguments {
@@ -813,7 +829,7 @@ LogicalANDExpression
       return buildLogicalExpression(head, tail);
     }
 
-LogicalANDOperator = "&&"
+LogicalANDOperator = "&&" / $AndToken
 
 LogicalORExpression
   = head:LogicalANDExpression
@@ -821,7 +837,7 @@ LogicalORExpression
       return buildLogicalExpression(head, tail);
     }
 
-LogicalOROperator = "||"
+LogicalOROperator = "||" / $OrToken
 
 ConditionalExpression
   = test:LogicalORExpression
@@ -936,6 +952,7 @@ StatementList = head:Statement tail:(__ @Statement)* { return [head, ...tail]; }
 
 VariableStatement
   = attrs:AttributeList?
+    (AccessSpecifier __)?
     kind:($VarToken / $ConstToken)
     __
     declarations:VariableDeclarationList
@@ -1307,6 +1324,7 @@ ClassElement
       / EnumDeclaration
       / VariableStatement
       / ClassDeclaration
+      / TypedefDeclaration
     ) {
       return wrap({
         type: "ClassElement",
