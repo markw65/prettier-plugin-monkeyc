@@ -18,6 +18,7 @@ const {
   //lineSuffix,
   //lineSuffixBoundary,
   indent,
+  dedent,
   join,
   //markAsRoot,
   breakParent,
@@ -126,20 +127,10 @@ export function printMonkeyCAst(path, options, print) {
       return group(join([" or", line], path.map(print, "ts")));
 
     case "TypeSpecPart":
-      body = [];
+      body = [node.name || ""];
 
-      if (node.name) {
-        body.push(node.name)
-      } else {
-        body.push(
-          group([
-            "{",
-            line,
-            indent(join([",", line], path.map(print, "object"))),
-            line,
-            "}",
-          ])
-        );
+      if (node.body) {
+        body.push(" ", dedent(path.call(print, "body")));
       }
       if (node.generics) {
         body.push(
@@ -149,6 +140,17 @@ export function printMonkeyCAst(path, options, print) {
             indent(join([",", line], path.map(print, "generics"))),
             softline,
             ">",
+          ])
+        );
+      }
+      if (node.dictionary) {
+        body.push(
+          group([
+            "{",
+            line,
+            indent(join([",", line], path.map(print, "dictionary"))),
+            line,
+            "}",
           ])
         );
       }

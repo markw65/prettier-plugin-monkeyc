@@ -201,6 +201,7 @@ Keyword
   / HasToken
   / IfToken
   / InstanceofToken
+  / InterfaceToken
   / MeToken
   / NewToken
   / ReturnToken
@@ -490,6 +491,8 @@ IfToken = "if" !IdentifierPart
 ImportToken = "import" !IdentifierPart
 
 InstanceofToken = "instanceof" !IdentifierPart
+
+InterfaceToken = "interface" !IdentifierPart
 
 MeToken = "me" !IdentifierPart
 
@@ -1281,10 +1284,7 @@ ClassDeclaration
     id:Identifier
     superClass:(__ ExtendsToken __ @ScopedName)?
     __
-    "{"
-    body:ClassElements
-    __
-    "}" {
+    body:ClassElements {
       return wrap({
         type: "ClassDeclaration",
         id,
@@ -1295,7 +1295,7 @@ ClassDeclaration
     }
 
 ClassElements
-  = body:(__ @ClassElement)* {
+  = "{" body:(__ @ClassElement)* __ "}" {
       return wrap({
         type: "BlockStatement",
         body,
@@ -1380,7 +1380,7 @@ FunctionDeclaration
     ")"
     ts:(__ @AsTypeSpec)?
     __
-    body:FunctionBody {
+    body:(FunctionBody / ";" { return null; }) {
       return wrap({
         type: "FunctionDeclaration",
         id,
@@ -1416,7 +1416,14 @@ SingleTypeSpec
   / "{" __ head:ObjectAsExpression tail:(__ "," __ @ObjectAsExpression)* "}" {
       return wrap({
         type: "TypeSpecPart",
-        object: [head, ...tail],
+        dictionary: [head, ...tail],
+      });
+    }
+  / name:$InterfaceToken __ body:ClassElements {
+      return wrap({
+        type: "TypeSpecPart",
+        name,
+        body,
       });
     }
 
