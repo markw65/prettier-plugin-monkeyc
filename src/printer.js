@@ -127,12 +127,27 @@ export function printMonkeyCAst(path, options, print) {
 
     case "TypeSpecPart":
       body = [node.name];
-      if (node.arg) {
+      if (node.generics) {
         body.push(
-          group(["<", softline, indent(path.call(print, "arg")), softline, ">"])
+          group([
+            "<",
+            softline,
+            indent(join([",", line], path.map(print, "generics"))),
+            softline,
+            ">",
+          ])
         );
       }
-      if (node.optional) {
+      if (node.callspec) {
+        options.semi = false;
+        body.push(path.call(print, "callspec"));
+        options.semi = true;
+      }
+      if (node.nullable) {
+        if (node.callspec) {
+          body.unshift("(");
+          body.push(")");
+        }
         body.push("?");
       }
       return concat(body);

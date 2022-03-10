@@ -65,9 +65,9 @@
   }
 
   function wrap(value) {
-    value.location = location();
-    value.start = value.location.start.offset;
-    value.end = value.location.end.offset;
+    var loc = location();
+    value.start = loc.start.offset;
+    value.end = loc.end.offset;
     return value;
   }
 
@@ -78,10 +78,8 @@
         operator: element[1],
         left: result,
         right: element[3],
-        location: {
-          start: result.location.start,
-          end: element[3].location.end,
-        },
+        start: result.start,
+        end: element[3].end,
       };
     }, head);
   }
@@ -93,10 +91,8 @@
         operator: element[1],
         left: result,
         right: element[3],
-        location: {
-          start: result.location.start,
-          end: element[3].location.end,
-        },
+        start: result.start,
+        end: element[3].end,
       };
     }, head);
   }
@@ -1395,32 +1391,50 @@ FunctionDeclaration
       });
     }
 
-ArrayTypeSpec
-  = name:("Array" / "Lang.Array" / "Toybox.Lang.Array" / "$.Toybox.Lang.Array")
-    arg:(__ "<" __ @TypeSpecList __ ">")? {
-      return wrap({
-        type: "TypeSpecPart",
-        name,
-        arg,
-      });
-    }
-
-SimpleTypeSpec
-  = id:ScopedName {
+SingleTypeSpec
+  = id:ScopedName
+    generics:(
+      __
+        "<"
+        __
+        @(
+          head:TypeSpecList tail:(__ "," __ @TypeSpecList)* {
+              return [head, ...tail];
+            }
+        )
+        ">"
+    )?
+    callspec:CallSpec? {
       return wrap({
         type: "TypeSpecPart",
         name: id.name,
+        generics,
+        callspec,
+      });
+    }
+  / "(" __ @NullableTypeSpec __ ")"
+
+NullableTypeSpec
+  = ts:SingleTypeSpec n:(__ "?")? {
+      if (!n) return ts;
+      ts.nullable = true;
+      return wrap(ts);
+    }
+
+CallSpec
+  = "(" __ params:(@FormalParameterList __)? ")" returnType:(__ @AsTypeSpec)? {
+      // hack - but the estree printer does exactly the right thing with it
+      return wrap({
+        type: "MethodDefinition",
+        kind: "method",
+        key: "",
+        params,
+        returnType,
       });
     }
 
-SingleTypeSpec
-  = ts:(ArrayTypeSpec / SimpleTypeSpec) opt:"?"? {
-      ts.optional = opt != null;
-      return ts;
-    }
-
 TypeSpecList
-  = head:SingleTypeSpec tail:(__ "or" __ @SingleTypeSpec)* {
+  = head:NullableTypeSpec tail:(__ "or" __ @NullableTypeSpec)* {
       let list = [head, ...tail];
       if (list.length > 1) {
         let hasNull = false;
