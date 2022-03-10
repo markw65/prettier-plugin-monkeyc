@@ -609,12 +609,12 @@ PropertySetParameterList = id:Identifier { return [id]; }
 MemberExpression
   = head:(
       PrimaryExpression
-      / NewToken __ '[' __ size:SingleExpression __ ']' {
-        return wrap({
-          type: "ArrayLiteral",
-          size
-        })
-      }
+      / NewToken __ "[" __ size:SingleExpression __ "]" {
+          return wrap({
+            type: "ArrayExpression",
+            size,
+          });
+        }
       / NewToken __ callee:MemberExpression __ args:Arguments {
           return wrap({
             type: "NewExpression",
@@ -714,8 +714,21 @@ UnaryOperator
   / "~"
   / "!"
 
+AsExpression
+  = expr:UnaryExpression ts:(__ @AsTypeSpec)? {
+      return ts
+        ? wrap({
+            type: "AsExpression",
+            expr,
+            ts,
+          })
+        : expr;
+    }
+
+// There seems to be a bug in MonkeyC. The right operand should
+// (logically) be an AsExpression; but in fact its not.
 MultiplicativeExpression
-  = head:UnaryExpression tail:(__ MultiplicativeOperator __ UnaryExpression)* {
+  = head:AsExpression tail:(__ MultiplicativeOperator __ UnaryExpression)* {
       return buildBinaryExpression(head, tail);
     }
 
@@ -874,16 +887,7 @@ UpdateOperator
   = "++"
   / "--"
 
-SingleExpression
-  = expr:ConditionalExpression ts:(__ @AsTypeSpec)? {
-      return ts
-        ? wrap({
-            type: "AsExpression",
-            expr,
-            ts,
-          })
-        : expr;
-    }
+SingleExpression = ConditionalExpression
 
 ExpressionLike
   = AssignmentExpression

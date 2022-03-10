@@ -107,17 +107,20 @@ export function printMonkeyCAst(path, options, print) {
 
     case "AsExpression":
       body = [path.call(print, "expr"), path.call(print, "ts")];
+      if (nodeNeedsParens(node.expr, node)) {
+        body = [concat(["(", body[0], ")"]), body[1]];
+      }
       if (nodeNeedsParens(node, path.getParentNode())) {
         body.unshift("(");
         body.push(")");
       }
       return group(body);
-      case "NewExpression":
-        body = estree.print(path, options, print);
-        if (nodeNeedsParens(node, path.getParentNode())) {
-          body = concat(["(", body, ")"]);
-        }
-        return body;
+    case "NewExpression":
+      body = estree.print(path, options, print);
+      if (nodeNeedsParens(node, path.getParentNode())) {
+        body = concat(["(", body, ")"]);
+      }
+      return body;
 
     case "TypeSpecList":
       return group(join([" or", line], path.map(print, "ts")));
@@ -134,7 +137,7 @@ export function printMonkeyCAst(path, options, print) {
       }
       return concat(body);
 
-    case "ArrayLiteral":
+    case "ArrayExpression":
       if (!node.size) break;
       return group(["new [", indent(path.call(print, "size")), "]"]);
 
@@ -180,27 +183,37 @@ export function printMonkeyCAst(path, options, print) {
 function nodeNeedsParens(node, parent) {
   if (node.type == "AsExpression") {
     switch (parent.type) {
-      case "AssignmentExpression":
-      case "ReturnStatement":
-      case "ConditionalExpression":
-      case "VariableDeclarator":
-        return false;
+      case "BinaryExpression":
+        // there's a bug handling multiplicative ops
+        // in the monkeyc parser, but the precedence is
+        // confusing enough anyway. Just wrap them all.
+        return true;
       case "MemberExpression":
-        return node != parent.property;
+        return node == parent.object;
+      case "NewExpression":
       case "CallExpression":
         return node == parent.callee;
+    }
+    return false;
+  }
+  if (parent.type == "AsExpression") {
+    switch (node.type) {
+      // pretty much everything except primary, call, new, member
+      case "ThisExpression":
+      case "Identifier":
+      case "ArrayExpression":
+      case "ObjectExpression":
+      case "Literal":
+      case "MemberExpression":
+      case "NewExpression":
+      case "CallExpression":
+        return false;
     }
     return true;
   }
 
   if (node.type == "NewExpression") {
     return parent.type == "MemberExpression";
-  }
-
-  if (parent.type == "AsExpression") {
-    switch (node.type) {
-      // pretty much everything except primary, call, new, member
-    }
   }
 }
 
