@@ -244,15 +244,20 @@ NumericLiteral "number"
     }
   / literal:DecimalLiteral !(IdentifierStart / DecimalDigit) { return literal; }
 
+FloatSuffix
+  = "f"
+  / "d"
+
 DecimalLiteral
-  = DecimalIntegerLiteral "." DecimalDigit* ExponentPart? {
-      return wrap({ type: "Literal", value: parseFloat(text()), raw: text() });
+  = txt:$(DecimalIntegerLiteral "." DecimalDigit* ExponentPart?)
+    suffix:FloatSuffix? {
+      return wrap({ type: "Literal", value: parseFloat(txt), raw: text() });
     }
-  / "." DecimalDigit+ ExponentPart? {
-      return wrap({ type: "Literal", value: parseFloat(text()), raw: text() });
+  / txt:$("." DecimalDigit+ ExponentPart?) suffix:FloatSuffix? {
+      return wrap({ type: "Literal", value: parseFloat(txt), raw: text() });
     }
-  / DecimalIntegerLiteral ExponentPart? {
-      return wrap({ type: "Literal", value: parseFloat(text()), raw: text() });
+  / txt:$(DecimalIntegerLiteral ExponentPart?) suffix:FloatSuffix? {
+      return wrap({ type: "Literal", value: parseFloat(txt), raw: text() });
     }
 
 DecimalIntegerLiteral
@@ -1297,7 +1302,12 @@ ClassElements
 
 ClassElement
   = access:(@AccessSpecifier __)?
-    item:(MethodDeclaration / EnumDeclaration / VariableStatement) {
+    item:(
+      MethodDeclaration
+      / EnumDeclaration
+      / VariableStatement
+      / ClassDeclaration
+    ) {
       return wrap({
         type: "ClassElement",
         access,
