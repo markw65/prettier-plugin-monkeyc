@@ -1413,7 +1413,7 @@ SingleTypeSpec
       });
     }
   / "(" __ @NullableTypeSpec __ ")"
-  / "{" __ head:ObjectAsExpression tail:(__ "," __ @ObjectAsExpression)* "}" {
+  / "{" __ head:ObjectAsExpression tail:(__ "," __ @ObjectAsExpression)* __ "}" {
       return wrap({
         type: "TypeSpecPart",
         dictionary: [head, ...tail],

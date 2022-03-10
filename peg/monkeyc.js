@@ -12852,14 +12852,15 @@ function peg$parse(input, options) {
                 s5 = peg$FAILED;
               }
             }
+            s5 = peg$parse__();
             if (input.charCodeAt(peg$currPos) === 125) {
-              s5 = peg$c84;
+              s6 = peg$c84;
               peg$currPos++;
             } else {
-              s5 = peg$FAILED;
+              s6 = peg$FAILED;
               if (peg$silentFails === 0) { peg$fail(peg$e111); }
             }
-            if (s5 !== peg$FAILED) {
+            if (s6 !== peg$FAILED) {
               peg$savedPos = s0;
               s0 = peg$f112(s3, s4);
             } else {
