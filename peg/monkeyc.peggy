@@ -242,18 +242,15 @@ NumericLiteral "number"
   / literal:DecimalLiteral !(IdentifierStart / DecimalDigit) { return literal; }
 
 FloatSuffix
-  = "f"
-  / "d"
+  = "f"i
+  / "d"i
 
 DecimalLiteral
-  = txt:$(DecimalIntegerLiteral "." DecimalDigit* ExponentPart?)
-    suffix:FloatSuffix? {
-      return wrap({ type: "Literal", value: parseFloat(txt), raw: text() });
-    }
+  = txt:$(
+    DecimalIntegerLiteral
+      ("l"i / (("." DecimalDigit*)? ExponentPart?) FloatSuffix?)?
+  ) { return wrap({ type: "Literal", value: parseFloat(txt), raw: text() }); }
   / txt:$("." DecimalDigit+ ExponentPart?) suffix:FloatSuffix? {
-      return wrap({ type: "Literal", value: parseFloat(txt), raw: text() });
-    }
-  / txt:$(DecimalIntegerLiteral ExponentPart?) suffix:FloatSuffix? {
       return wrap({ type: "Literal", value: parseFloat(txt), raw: text() });
     }
 
@@ -613,10 +610,11 @@ PropertySetParameterList = id:Identifier { return [id]; }
 MemberExpression
   = head:(
       PrimaryExpression
-      / NewToken __ "[" __ size:SingleExpression __ "]" {
+      / NewToken ts:(__ @SingleTypeSpec)? __ "[" __ size:SingleExpression __ "]" {
           return wrap({
             type: "ArrayExpression",
             size,
+            ts
           });
         }
       / NewToken __ callee:MemberExpression __ args:Arguments {
@@ -1333,7 +1331,7 @@ MethodDeclaration
     }
 
 EnumDeclaration
-  = EnumToken __ id:Identifier? __ body:EnumBody {
+  = (AccessSpecifier __)? EnumToken id:(__ @Identifier)? __ body:EnumBody {
       return wrap({
         type: "EnumDeclaration",
         id: id,
@@ -1402,6 +1400,7 @@ SingleTypeSpec
               return [head, ...tail];
             }
         )
+        __
         ">"
     )?
     callspec:CallSpec? {
@@ -1413,7 +1412,12 @@ SingleTypeSpec
       });
     }
   / "(" __ @NullableTypeSpec __ ")"
-  / "{" __ head:ObjectAsExpression tail:(__ "," __ @ObjectAsExpression)* __ "}" {
+  / "{"
+    __
+    head:ObjectAsExpression
+    tail:(__ "," __ @ObjectAsExpression)*
+    __
+    "}" {
       return wrap({
         type: "TypeSpecPart",
         dictionary: [head, ...tail],

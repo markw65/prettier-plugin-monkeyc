@@ -170,7 +170,13 @@ export function printMonkeyCAst(path, options, print) {
 
     case "ArrayExpression":
       if (!node.size) break;
-      return group(["new [", indent(path.call(print, "size")), "]"]);
+      return group([
+        "new",
+        node.ts ? [" ", path.call(print, "ts")] : "",
+        " [",
+        indent(path.call(print, "size")),
+        "]",
+      ]);
 
     case "VariableDeclaration":
     case "FunctionDeclaration":
