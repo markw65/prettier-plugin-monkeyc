@@ -4,10 +4,12 @@
     "eslint": "^8.10.0",
     "globby": "^13.1.1",
     "peggy": "^1.2.0",
-    "prettier": "^2.5.1",
     "prettier-plugin-pegjs": "^0.5.0",
     "webpack": "5.65.0",
     "webpack-cli": "^4.9.1"
+  },
+  "dependencies": {
+    "prettier": "^2.5.1"
   },
   "scripts": {
     "test": "node test/test.js",
@@ -15,21 +17,25 @@
     "build-release": "webpack --mode production",
     "pretty": "prettier --plugin build/prettier-plugin-monkeyc.cjs example/AnalogView.mc"
   },
-  "name": "prettier-plugin-monkeyc",
+  "name": "@markw65/prettier-plugin-monkeyc",
   "version": "1.0.0",
   "description": "A prettier plugin for Garmin monkey-c",
   "main": "build/prettier-plugin-monkeyc.cjs",
-  "directories": {
-    "example": "example",
-    "test": "test"
-  },
+  "files": [
+    "build/prettier-plugin-monkeyc.cjs"
+  ],
   "repository": {
-    "type": "git"
+    "type": "git",
+    "url": "git+https://github.com/markw65/prettier-plugin-monkeyc.git"
   },
   "keywords": [
     "prettier",
     "monkeyc"
   ],
   "author": "Mark Williams",
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/markw65/prettier-plugin-monkeyc/issues"
+  },
+  "homepage": "https://github.com/markw65/prettier-plugin-monkeyc#readme"
 }
