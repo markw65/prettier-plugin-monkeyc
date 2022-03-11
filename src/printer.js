@@ -133,12 +133,15 @@ export function printMonkeyCAst(path, options, print) {
         body.push(" ", dedent(path.call(print, "body")));
       }
       if (node.generics) {
+        const final_space = node.generics.slice(-1)[0].ts.slice(-1)[0].generics
+          ? line
+          : softline;
         body.push(
           group([
             "<",
             softline,
             indent(join([",", line], path.map(print, "generics"))),
-            softline,
+            final_space,
             ">",
           ])
         );
