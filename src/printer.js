@@ -176,12 +176,12 @@ export function printMonkeyCAst(path, options, print) {
         return concat([estree.print(path, options, print), node.byte || ""]);
       }
       return group([
-        "new",
-        node.ts ? [" ", path.call(print, "ts")] : "",
-        " [",
+        "new ",
+        node.ts ? [path.call(print, "ts"), node.ts.generics ? "" : " "] : "",
+        "[",
         indent(path.call(print, "size")),
         "]",
-        node.byte || ""
+        node.byte || "",
       ]);
 
     case "VariableDeclaration":
