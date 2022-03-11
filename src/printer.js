@@ -25,9 +25,21 @@ const {
 
 let estree_print;
 
-// The signature of this function is determined by the Prettier
-// plugin API.
-export function printMonkeyCAst(path, options, print) {
+// We set this as the parser's preprocess function. That lets
+// us grab the estree printer early on, and munge our printer,
+// before any printing starts
+export default function printerIntialize(text, options) {
+  if (!estree_print) {
+    const find = (name) =>
+      options.plugins.find((p) => p.printers[name]).printers[name];
+    const { print, canAttachComment, ...rest } = find("estree");
+    Object.assign(find("monkeyc-ast"), rest, { print: printMonkeyCAst });
+    estree_print = print;
+  }
+  return text;
+}
+
+function printMonkeyCAst(path, options, print) {
   const node = path.getValue();
   if (!node) {
     return "";
@@ -265,15 +277,4 @@ function nodeNeedsParens(node, parent) {
   if (node.type == "NewExpression") {
     return parent.type == "MemberExpression";
   }
-}
-
-export function parserPreprocess(text, options) {
-  if (!estree_print) {
-    const find = (name) =>
-      options.plugins.find((p) => p.printers[name]).printers[name];
-    const { print, canAttachComment, ...rest } = find("estree");
-    Object.assign(find("monkeyc-ast"), rest);
-    estree_print = print;
-  }
-  return text;
 }

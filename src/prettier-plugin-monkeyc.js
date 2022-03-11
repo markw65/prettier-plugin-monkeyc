@@ -1,5 +1,5 @@
 import { parse } from "../peg/monkeyc.js";
-import { printMonkeyCAst, parserPreprocess } from "./printer.js";
+import preprocess from "./printer.js";
 
 export const languages = [
   {
@@ -15,13 +15,13 @@ export const parsers = {
     astFormat: "monkeyc-ast",
     locStart: (node) => node.start || 0,
     locEnd: (node) => node.end || 0,
-    preprocess : parserPreprocess,
+    preprocess,
   },
 };
 
 export const printers = {
   "monkeyc-ast": {
-    print: printMonkeyCAst,
+    print: () => { throw "Something went wrong: printer not initialized!" },
     canAttachComment: (node) =>
       node && node.type && node.type !== "Line" && node.type != "MultiLine",
   },
