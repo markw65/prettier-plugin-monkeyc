@@ -22,8 +22,6 @@ export const parsers = {
 export const printers = {
   "monkeyc-ast": {
     print: () => { throw "Something went wrong: printer not initialized!" },
-    canAttachComment: (node) =>
-      node && node.type && node.type !== "Line" && node.type != "MultiLine",
   },
 };
 

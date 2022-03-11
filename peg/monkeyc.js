@@ -897,7 +897,7 @@ function peg$parse(input, options) {
       };
   var peg$f98 = function(id) {
         return wrap({
-          type: "Import",
+          type: "ImportModule",
           id: id,
         });
       };

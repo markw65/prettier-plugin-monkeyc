@@ -1271,7 +1271,7 @@ ScopedName
 ImportStatement
   = ImportToken __ id:ScopedName __ ";" {
       return wrap({
-        type: "Import",
+        type: "ImportModule",
         id: id,
       });
     }

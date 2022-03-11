@@ -32,7 +32,7 @@ export default function printerIntialize(text, options) {
   if (!estree_print) {
     const find = (name) =>
       options.plugins.find((p) => p.printers[name]).printers[name];
-    const { print, canAttachComment, ...rest } = find("estree");
+    const { print, ...rest } = find("estree");
     Object.assign(find("monkeyc-ast"), rest, { print: printMonkeyCAst });
     estree_print = print;
   }
@@ -76,7 +76,7 @@ function printMonkeyCAst(path, options, print) {
         path.call(print, "value"),
       ]);
 
-    case "Import":
+    case "ImportModule":
       return group(concat(["import", line, node.id.name, ";"]));
 
     case "Using":
