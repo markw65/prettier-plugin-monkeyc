@@ -546,7 +546,7 @@ function peg$parse(input, options) {
   var peg$f26 = function(text) {
         return wrap({ type: "ThisExpression", text });
       };
-  var peg$f27 = function(expression) { return wrap(expression); };
+  var peg$f27 = function(expression) { return wrap({...expression}); };
   var peg$f28 = function(elision, byte) {
         return wrap({
           type: "ArrayExpression",
@@ -733,7 +733,7 @@ function peg$parse(input, options) {
         });
       };
   var peg$f64 = function(id, ts, init) {
-        id.ts = ts;
+        id = { ...id, ts };
         return wrap({
           type: "VariableDeclarator",
           id,
@@ -939,10 +939,9 @@ function peg$parse(input, options) {
       };
   var peg$f104 = function(stat, func) {
         // func.type = "MethodDefinition";
-        func.static = stat != null;
         // func.kind = "method";
         // func.key = func.id;
-        return wrap(func);
+        return wrap({...func, static: stat != null});
       };
   var peg$f105 = function(id, body) {
         return wrap({
@@ -1007,8 +1006,7 @@ function peg$parse(input, options) {
       };
   var peg$f115 = function(ts, n) {
         if (!n) return ts;
-        ts.nullable = true;
-        return wrap(ts);
+        return wrap({...ts, nullable: true});
       };
   var peg$f116 = function(params, returnType) {
         // hack - but the estree printer does exactly the right thing with it
@@ -1049,8 +1047,7 @@ function peg$parse(input, options) {
       };
   var peg$f118 = function(ts) { return wrap({ type: "AsTypeSpec", ts }); };
   var peg$f119 = function(id, ts) {
-        id.ts = ts;
-        return wrap(id);
+        return wrap({...id, ts});
       };
   var peg$f120 = function(body) {
         return wrap({

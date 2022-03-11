@@ -556,7 +556,7 @@ PrimaryExpression
   / Literal
   / ArrayLiteral
   / ObjectLiteral
-  / "(" __ expression:SingleExpression __ ")" { return wrap(expression); }
+  / "(" __ expression:SingleExpression __ ")" { return wrap({...expression}); }
 
 ArrayLiteral
   = "[" __ elision:(@Elision __)? "]" byte:"b"? {
@@ -972,7 +972,7 @@ VariableDeclarationList
 
 VariableDeclaration
   = id:Identifier ts:(__ @AsTypeSpec)? init:(__ @Initialiser)? {
-      id.ts = ts;
+      id = { ...id, ts };
       return wrap({
         type: "VariableDeclarator",
         id,
@@ -1342,10 +1342,9 @@ AccessSpecifier
 MethodDeclaration
   = stat:(@StaticToken __)? func:FunctionDeclaration {
       // func.type = "MethodDefinition";
-      func.static = stat != null;
       // func.kind = "method";
       // func.key = func.id;
-      return wrap(func);
+      return wrap({...func, static: stat != null});
     }
 
 EnumDeclaration
@@ -1454,8 +1453,7 @@ ObjectAsExpression = &((Symbol / Literal) __ AsToken) @AsExpression
 NullableTypeSpec
   = ts:SingleTypeSpec n:(__ "?")? {
       if (!n) return ts;
-      ts.nullable = true;
-      return wrap(ts);
+      return wrap({...ts, nullable: true});
     }
 
 CallSpec
@@ -1504,8 +1502,7 @@ AsTypeSpec
 
 FormalParameter
   = id:Identifier ts:(__ @AsTypeSpec)? {
-      id.ts = ts;
-      return wrap(id);
+      return wrap({...id, ts});
     }
 
 FormalParameterList
