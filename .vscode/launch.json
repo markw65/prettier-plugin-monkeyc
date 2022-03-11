@@ -13,6 +13,14 @@
       "type": "pwa-node"
     },
     {
+      "name": "Run Build",
+      "request": "launch",
+      "runtimeArgs": ["run-script", "build-debug"],
+      "runtimeExecutable": "npm",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "pwa-node"
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "Run parser",

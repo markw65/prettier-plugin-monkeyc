@@ -2,30 +2,19 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build Parser",
-      "type": "process",
-      "command": "npx",
-      "args": [
-        "peggy",
-        "-o",
-        "peg/monkeyc.js",
-        "--extra-options",
-        "{\"cache\":true, \"format\":\"es\"}",
-        "peg/monkeyc.peggy"
-      ],
-      "problemMatcher": ["$jshint"],
+      "type": "npm",
+      "script": "build-debug",
       "group": {
         "kind": "build",
-        "isDefault": false
+        "isDefault": true
       }
     },
     {
       "type": "npm",
-      "dependsOn": "Build Parser",
-      "script": "build",
+      "script": "build-release",
       "group": {
         "kind": "build",
-        "isDefault": true
+        "isDefault": false
       }
     },
     {
