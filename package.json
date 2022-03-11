@@ -1,6 +1,7 @@
 {
   "type": "module",
   "devDependencies": {
+    "globby": "^13.1.1",
     "peggy": "^1.2.0",
     "prettier": "^2.5.1",
     "prettier-plugin-pegjs": "^0.5.0",
