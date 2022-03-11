@@ -4,9 +4,11 @@ import * as readline from "readline";
 
 const isWin = process.platform == "win32";
 
-export const connectiq = isWin
-  ? `${process.env.APPDATA}/Garmin/ConnectIQ`.replace(/\\/g, "/")
-  : `${process.env.HOME}/Library/Application Support/Garmin/ConnectIQ`;
+export const appSupport = isWin
+  ? `${process.env.APPDATA}`.replace(/\\/g, "/")
+  : `${process.env.HOME}/Library/Application Support`;
+
+export const connectiq = `${appSupport}/Garmin/ConnectIQ`;
 
 export function getSdkPath() {
   return fs

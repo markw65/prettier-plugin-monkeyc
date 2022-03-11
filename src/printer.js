@@ -10,7 +10,7 @@ const {
   concat,
   group,
   fill,
-  ifBreak,
+  // ifBreak,
   line,
   softline,
   hardline,
@@ -20,7 +20,7 @@ const {
   dedent,
   join,
   //markAsRoot,
-  breakParent,
+  //breakParent,
 } = builders;
 
 let estree_print;
@@ -49,7 +49,7 @@ function printMonkeyCAst(path, options, print) {
     return node;
   }
 
-  let rhs, body, save;
+  let rhs, body;
   switch (node.type) {
     case "ModuleDeclaration":
       return group([

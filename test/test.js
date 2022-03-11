@@ -1,13 +1,31 @@
 import * as fs from "fs/promises";
 import path from "path";
-import { getSdkPath, spawnByLine, readByLine } from "./util.js";
+import { getSdkPath, spawnByLine, readByLine, appSupport } from "./util.js";
 import { globby } from "globby";
 
 let developer_key;
 if (process.argv.length >= 3) {
   developer_key = process.argv[2];
 }
+
+async function getDevKey(path) {
+  try {
+    const settings = await fs.readFile(path);
+    return JSON.parse(settings.toString())["monkeyC.developerKeyPath"];
+  } catch (e) {
+    return null;
+  }
+}
+
 async function test() {
+  if (!developer_key) {
+    developer_key =
+      (await getDevKey(".vscode/settings.json")) ||
+      (await getDevKey(`${appSupport}/Code/User/settings.json`));
+  }
+  if (!developer_key) {
+    throw "Failed to find developer key; please specify its location as the first argument to this script";
+  }
   const sdk = await getSdkPath();
   const samples = path.resolve(sdk, "samples");
   const dest = "./generated/test";
@@ -40,11 +58,13 @@ async function test() {
   }
 
   const results = [];
-  if (true) {
+  // change true to false below to re-run the checking portion
+  // without having to rebuild everything.
+  if (true /* eslint-disable-line */) {
     await fs.rm(dest, { recursive: true, force: true });
     await fs.cp(samples, dest, { recursive: true });
 
-    let promises = [];
+    const promises = [];
     const build_some = async (root, bin) => {
       (await globby(`${root}/*/manifest.xml`)).forEach((manifest, index) => {
         const MAX_CONCURRENT_COMPILES = 4;
