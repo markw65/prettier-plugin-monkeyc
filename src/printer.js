@@ -39,7 +39,7 @@ export function printMonkeyCAst(path, options, print) {
   // console.log(`node: ${node.type} at line ${node.location.start.line}`);
   const estree = options.plugins[0].printers.estree;
 
-  let lhs, rhs, label, prefix, suffix, body, delimiters, parent;
+  let rhs, body, save;
   switch (node.type) {
     case "ModuleDeclaration":
       return group([
@@ -221,6 +221,12 @@ export function printMonkeyCAst(path, options, print) {
 
     case "InstanceOfCase":
       return concat(["instanceof ", path.call(print, "id")]);
+
+    case "Literal":
+      if (typeof node.value === "string") {
+        return node.raw;
+      }
+      break;
   }
 
   return estree.print(path, options, print);
