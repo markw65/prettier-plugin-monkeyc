@@ -3,8 +3,7 @@
 // pull in the standalone version.
 import Prettier from "prettier/standalone.js";
 
-const { util } = Prettier;
-const { builders, utils } = Prettier.doc;
+const { builders } = Prettier.doc;
 
 // Commands to build the prettier syntax tree
 const {
@@ -24,6 +23,8 @@ const {
   breakParent,
 } = builders;
 
+let estree_print;
+
 // The signature of this function is determined by the Prettier
 // plugin API.
 export function printMonkeyCAst(path, options, print) {
@@ -35,9 +36,6 @@ export function printMonkeyCAst(path, options, print) {
   if (typeof node === "string") {
     return node;
   }
-
-  // console.log(`node: ${node.type} at line ${node.location.start.line}`);
-  const estree = options.plugins[0].printers.estree;
 
   let rhs, body, save;
   switch (node.type) {
@@ -117,7 +115,7 @@ export function printMonkeyCAst(path, options, print) {
       }
       return group(body);
     case "NewExpression":
-      body = estree.print(path, options, print);
+      body = estree_print(path, options, print);
       if (nodeNeedsParens(node, path.getParentNode())) {
         body = concat(["(", body, ")"]);
       }
@@ -173,7 +171,7 @@ export function printMonkeyCAst(path, options, print) {
 
     case "ArrayExpression":
       if (!node.size) {
-        return concat([estree.print(path, options, print), node.byte || ""]);
+        return concat([estree_print(path, options, print), node.byte || ""]);
       }
       return group([
         "new ",
@@ -188,7 +186,7 @@ export function printMonkeyCAst(path, options, print) {
     case "FunctionDeclaration":
     case "MethodDeclaration":
     case "ClassDeclaration":
-      body = estree.print(path, options, print);
+      body = estree_print(path, options, print);
       if (node.attrs) {
         body = [path.call(print, "attrs"), body];
       }
@@ -229,7 +227,7 @@ export function printMonkeyCAst(path, options, print) {
       break;
   }
 
-  return estree.print(path, options, print);
+  return estree_print(path, options, print);
 }
 
 function nodeNeedsParens(node, parent) {
@@ -269,17 +267,13 @@ function nodeNeedsParens(node, parent) {
   }
 }
 
-/**
- * This is called by Prettier whenever a comment is to be printed.
- * Comments are stored outside of the AST, but Prettier will make its best guess
- * about which node a comment "belongs to". The return Doc of this function
- * is inserted in the appropriate place.
- *
- * @param {*} commentPath
- * @param {*} options
- */
-export function printComment(commentPath, options) {
-  const estree = options.plugins[0].printers.estree;
-
-  return estree.printComment(commentPath, options);
+export function parserPreprocess(text, options) {
+  if (!estree_print) {
+    const find = (name) =>
+      options.plugins.find((p) => p.printers[name]).printers[name];
+    const { print, canAttachComment, ...rest } = find("estree");
+    Object.assign(find("monkeyc-ast"), rest);
+    estree_print = print;
+  }
+  return text;
 }

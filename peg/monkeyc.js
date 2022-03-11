@@ -13887,7 +13887,7 @@ function peg$parse(input, options) {
       const loc = location();
       // If there is a node already stored with our starting location,
       // we are being processed a second time, so just ignore it
-      if (comments.find((c) => c.loc.start.offset === loc.start.offset)) {
+      if (comments.find((c) => c.start === loc.start.offset)) {
         return text;
       }
       comments.push({
