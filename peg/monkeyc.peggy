@@ -1205,10 +1205,12 @@ DebuggerStatement
 // ----- A.5 Functions and Programs -----
 
 Symbol
-  = ":" id:Identifier {
+  = ":" __ id:Identifier {
       return wrap({
-        type: "Identifier",
-        name: ":" + id.name,
+        type: "UnaryExpression",
+        operator: ":",
+        argument: id,
+        prefix: true,
       });
     }
 
@@ -1222,7 +1224,7 @@ AttributeArgList
 
 Attribute
   = sym:Symbol arg:(__ "(" __ @(IdentifierName / AttributeArgList) __ ")")? {
-      return wrap({ type: "Attribute", name: sym.name, arg });
+      return wrap({ type: "Attribute", name: ":" + sym.argument.name, arg });
     }
 
 AttributeList
