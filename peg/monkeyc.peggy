@@ -226,7 +226,6 @@ Literal
   / BooleanLiteral
   / NumericLiteral
   / StringLiteral
-  / RegularExpressionLiteral
 
 NullLiteral
   = NullToken { return wrap({ type: "Literal", value: null, raw: text() }); }
@@ -340,43 +339,6 @@ UnicodeEscapeSequence
   = "u" digits:$(HexDigit HexDigit HexDigit HexDigit) {
       return String.fromCharCode(parseInt(digits, 16));
     }
-
-RegularExpressionLiteral "regular expression"
-  = "/" pattern:$RegularExpressionBody "/" flags:$RegularExpressionFlags {
-      var value;
-
-      try {
-        value = new RegExp(pattern, flags);
-      } catch (e) {
-        error(e.message);
-      }
-
-      return wrap({ type: "Literal", value: value, raw: text() });
-    }
-
-RegularExpressionBody = RegularExpressionFirstChar RegularExpressionChar*
-
-RegularExpressionFirstChar
-  = ![*\\/[] RegularExpressionNonTerminator
-  / RegularExpressionBackslashSequence
-  / RegularExpressionClass
-
-RegularExpressionChar
-  = ![\\/[] RegularExpressionNonTerminator
-  / RegularExpressionBackslashSequence
-  / RegularExpressionClass
-
-RegularExpressionBackslashSequence = "\\" RegularExpressionNonTerminator
-
-RegularExpressionNonTerminator = !LineTerminator SourceCharacter
-
-RegularExpressionClass = "[" RegularExpressionClassChar* "]"
-
-RegularExpressionClassChar
-  = ![\]\\] RegularExpressionNonTerminator
-  / RegularExpressionBackslashSequence
-
-RegularExpressionFlags = IdentifierPart*
 
 // Unicode Character Categories
 //
