@@ -1217,14 +1217,20 @@ Symbol
 AttributeArgList
   = "[" __ head:IdentifierName tail:(__ "," __ @IdentifierName)* __ "]" {
       return wrap({
-        type: "AttributeArgList",
-        list: [head, ...tail],
+        type: "ArrayExpression",
+        elements: [head, ...tail],
       });
     }
 
 Attribute
   = sym:Symbol arg:(__ "(" __ @(IdentifierName / AttributeArgList) __ ")")? {
-      return wrap({ type: "Attribute", name: ":" + sym.argument.name, arg });
+      return arg
+        ? wrap({
+            type: "CallExpression",
+            callee: { ...sym.argument, name: ":" + sym.argument.name },
+            arguments: [arg],
+          })
+        : sym;
     }
 
 AttributeList

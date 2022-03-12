@@ -95,23 +95,11 @@ function printMonkeyCAst(path, options, print) {
         hardline,
       ]);
 
-    case "Attribute":
-      body = [node.name];
-      if (node.arg) {
-        body.push("(", softline, path.call(print, "arg"), ")");
-      }
-      return group(concat(body));
-
     case "Identifier":
       if (node.ts) {
         return group([node.name, path.call(print, "ts")]);
       }
       return node.name;
-
-    case "AttributeArgList":
-      return group(
-        concat(["[", join([",", line], path.map(print, "args"), "]")])
-      );
 
     case "AsTypeSpec":
       return indent(fill([line, "as", line, path.call(print, "ts")]));
