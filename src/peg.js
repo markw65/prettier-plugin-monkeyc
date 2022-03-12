@@ -1,6 +1,6 @@
 import * as fs from "fs/promises";
 import { argv } from "process";
-import { parse } from "../generated/monkeyc.js";
+import parse from "../build/monkeyc.cjs";
 
 if (process.argv.length <= 2) {
   console.error("No files to process!");
@@ -14,7 +14,7 @@ Promise.all(
       .then((data) => {
         return {
           file,
-          ast: parse(data.toString()),
+          ast: parse.parse(data.toString()),
         };
       })
       .catch((data) => {

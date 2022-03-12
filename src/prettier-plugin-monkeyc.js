@@ -1,4 +1,4 @@
-import { parse } from "../generated/monkeyc.js";
+import { parse } from "../peg/monkeyc.peggy";
 import preprocess from "./printer.js";
 
 export const languages = [

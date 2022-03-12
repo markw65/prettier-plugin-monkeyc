@@ -13,6 +13,7 @@
   },
   "scripts": {
     "test": "node test/test.js",
+    "watch": "webpack --mode development --watch",
     "build-debug": "webpack --mode development",
     "build-release": "webpack --mode production",
     "pretty": "prettier --plugin build/prettier-plugin-monkeyc.cjs example/AnalogView.mc"

@@ -76,10 +76,10 @@ npm run build-release
 To develop, run
 
 ```
-npm run build-debug
+npm run watch
 ```
 
-You can then execute Prettier with
+This will keep your build up to date as you make changes. You can then execute Prettier with
 
 ```
 npx prettier [ --write ] --plugin build/prettier-plugin-monkeyc.cjs ...
