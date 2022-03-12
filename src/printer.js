@@ -269,6 +269,7 @@ function nodeNeedsParens(node, parent) {
       case "MemberExpression":
       case "NewExpression":
       case "CallExpression":
+      case "UnaryExpression":
         return false;
     }
     return true;
