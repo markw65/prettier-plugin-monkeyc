@@ -40,7 +40,12 @@ npm install --global @markw65/prettier-plugin-monkeyc
 
 ### With VSCode
 
-Install the Prettier extension from https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode. If you installed globally, it should just work. VSCode's `Format Document` command (`Option-Shift-F`) will reformat your .mc files for you. If you installed locally, you'll need to tell the extension to use the local prettier. Put `"prettier.prettierPath": "./node_modules/prettier"` in your `.vscode/settings.json` file.
+Install the Prettier extension from https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode.
+
+ - if you installed the plugin globally, you need to enable `prettier.resolveGlobalModules` in your settings.
+ - if you installed locally, [the documentation](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) says it should just work, but I've found you need to tell the extension how to find the local copy of prettier. Put `"prettier.prettierPath": "./node_modules/prettier"` in your `.vscode/settings.json`.
+
+Once configured as above, VSCode's `Format Document` command (`Option-Shift-F`) will reformat your .mc files for you.
 
 ### With Node.js
 
@@ -85,12 +90,11 @@ npx prettier [ --write ] --plugin build/prettier-plugin-monkeyc.cjs ...
 `@markw65/prettier-plugin-monkeyc` uses a Peggy grammar (located in `peg/`)
 to parse monkeyc. This grammar was originally copied from the Peggy sample javascript grammar, and still has some javascript features that aren't relevant to monkeyc. I'm planning to clean that up, but for now it shouldn't matter.
 
-`@markw65/prettier-plugin-monkeyc` is written in native ES6 javascript, and uses webpack to dynamically compile to commonjs, because thats what prettier wants.
+`@markw65/prettier-plugin-monkeyc` is written in native ES6 javascript, but uses webpack to dynamically compile to commonjs, because thats what prettier wants.
 
 The plugin is organized as follows:
 
--   `prettier-plugin-monkeyc.js` This file exports the objects required of a
-    Prettier plugin.
--   `peg/monkeyc.peggy` The Peggy grammar for monkey-c.
--   `src/printer.js` Printers take an AST and produce a Doc (the intermediate
-    format that Prettier uses). This is currently a thin wrapper around Prettier's default, estree printer. It handles just the nodes that it needs to, and delegates to "javascript-like" behavior for everything else.
+ -   `prettier-plugin-monkeyc.js` This file exports the objects required of a Prettier plugin.
+ -   `peg/monkeyc.peggy` The Peggy grammar for monkey-c.
+ -   `src/printer.js` Printers take an AST and produce a Doc (the intermediate
+format that Prettier uses). The current implementation is a thin wrapper around Prettier's default, estree printer. It handles just the nodes that it needs to, and delegates to "javascript-like" behavior for everything else.
