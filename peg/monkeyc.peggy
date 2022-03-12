@@ -556,7 +556,9 @@ PrimaryExpression
   / Literal
   / ArrayLiteral
   / ObjectLiteral
-  / "(" __ expression:SingleExpression __ ")" { return wrap({...expression}); }
+  / "(" __ expression:SingleExpression __ ")" {
+      return wrap({ ...expression });
+    }
 
 ArrayLiteral
   = "[" __ elision:(@Elision __)? "]" byte:"b"? {
@@ -743,10 +745,12 @@ AsExpression
         : expr;
     }
 
-// There seems to be a bug in MonkeyC. The right operand should
-// (logically) be an AsExpression; but in fact its not.
+// The monkey-c compiler treats `a [*/%] b as Type` as a syntax error,
+// but every other binary operator is fine. I think thats a bug, but
+// there's no need to replicate it here. If we get `a * b as Type` we'll
+// just fix it to `a * (b as Type)`.
 MultiplicativeExpression
-  = head:AsExpression tail:(__ MultiplicativeOperator __ UnaryExpression)* {
+  = head:AsExpression tail:(__ MultiplicativeOperator __ AsExpression)* {
       return buildBinaryExpression(head, tail);
     }
 
@@ -829,7 +833,9 @@ LogicalANDExpression
       return buildLogicalExpression(head, tail);
     }
 
-LogicalANDOperator = "&&" / $AndToken
+LogicalANDOperator
+  = "&&"
+  / $AndToken
 
 LogicalORExpression
   = head:LogicalANDExpression
@@ -837,7 +843,9 @@ LogicalORExpression
       return buildLogicalExpression(head, tail);
     }
 
-LogicalOROperator = "||" / $OrToken
+LogicalOROperator
+  = "||"
+  / $OrToken
 
 ConditionalExpression
   = test:LogicalORExpression
@@ -1344,7 +1352,7 @@ MethodDeclaration
       // func.type = "MethodDefinition";
       // func.kind = "method";
       // func.key = func.id;
-      return wrap({...func, static: stat != null});
+      return wrap({ ...func, static: stat != null });
     }
 
 EnumDeclaration
@@ -1453,7 +1461,7 @@ ObjectAsExpression = &((Symbol / Literal) __ AsToken) @AsExpression
 NullableTypeSpec
   = ts:SingleTypeSpec n:(__ "?")? {
       if (!n) return ts;
-      return wrap({...ts, nullable: true});
+      return wrap({ ...ts, nullable: true });
     }
 
 CallSpec
@@ -1501,9 +1509,7 @@ AsTypeSpec
   = AsToken __ ts:TypeSpecList { return wrap({ type: "AsTypeSpec", ts }); }
 
 FormalParameter
-  = id:Identifier ts:(__ @AsTypeSpec)? {
-      return wrap({...id, ts});
-    }
+  = id:Identifier ts:(__ @AsTypeSpec)? { return wrap({ ...id, ts }); }
 
 FormalParameterList
   = head:FormalParameter tail:(__ "," __ @FormalParameter)* {
