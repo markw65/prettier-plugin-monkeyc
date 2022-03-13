@@ -242,23 +242,33 @@ const BinaryOpPrecedence = {
   "*": [0, 0],
   "/": [0, 0],
   "%": [0, 0],
-  "+": [1, 1],
-  "-": [1, 1],
-  "<<": [2, 0],
-  ">>": [2, 0],
-  "<": [3, 3],
-  "<=": [3, 3],
-  ">": [3, 3],
-  ">=": [3, 3],
-  instanceof: [3, 3],
-  "==": [4, 3],
-  "!=": [4, 3],
-  "&": [5, 0],
-  "^": [6, 1],
-  "|": [7, 1],
+  "+": [10, 10],
+  "-": [10, 10],
+  "<<": [20, 0],
+  ">>": [20, 0],
+  "<": [30, 30],
+  "<=": [30, 30],
+  ">": [30, 30],
+  ">=": [30, 30],
+  instanceof: [30, 5],
+  has: [99, 5],
+  "==": [40, 30],
+  "!=": [40, 30],
+  "&": [50, 0],
+  "^": [60, 10],
+  "|": [70, 10],
 };
 
 function nodeNeedsParens(node, parent) {
+  if (node.parenthesized) return false;
+  if (nodeNeedsParensHelper(node, parent)) {
+    node.parenthesized = true;
+    return true;
+  }
+  return false;
+}
+
+function nodeNeedsParensHelper(node, parent) {
   if (node.type == "AsExpression") {
     switch (parent.type) {
       case "BinaryExpression":

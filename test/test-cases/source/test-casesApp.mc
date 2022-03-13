@@ -71,7 +71,9 @@ function check(logger, i, expected, actual) {
 function getExprs() as Array<Array> {
     return [
         [4, 1 << (2 % 3)],
-        [1, (1 << 2) % 3]
+        [1, (1 << 2) % 3],
+        [true, (4 + 5) instanceof Lang.Number],
+        [true, ((4 + 5) has :toString) as Boolean]
     ] as Array<Array>;
 }
 

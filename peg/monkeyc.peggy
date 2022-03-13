@@ -724,9 +724,15 @@ MultiplicativeOperator
   / $("<<" !"=")
   / $(">>" !"=")
 
-AdditiveExpression
+InstanceHasExpression
   = head:MultiplicativeExpression
-    tail:(__ AdditiveOperator __ MultiplicativeExpression)* {
+    tail:(__ ($InstanceofToken / $HasToken) __ AsExpression)* {
+      return buildBinaryExpression(head, tail);
+    }
+
+AdditiveExpression
+  = head:InstanceHasExpression
+    tail:(__ AdditiveOperator __ InstanceHasExpression)* {
       return buildBinaryExpression(head, tail);
     }
 
@@ -749,7 +755,6 @@ RelationalOperator
   / $(">" !">")
   / "=="
   / "!="
-  / $InstanceofToken
   / $HasToken
 
 LogicalANDExpression
