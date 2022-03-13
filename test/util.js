@@ -39,9 +39,9 @@ export async function first_modified(inputs) {
 
 // return a promise that will process the output of command
 // line-by-line via lineHandler.
-export function spawnByLine(command, args, lineHandler) {
+export function spawnByLine(command, args, lineHandler, options) {
   return new Promise((resolve, reject) => {
-    const proc = child_process.spawn(command, args, { shell: false });
+    const proc = child_process.spawn(command, args, { ...(options || {}), shell: false });
     const rl = readline.createInterface({
       input: proc.stdout,
     });

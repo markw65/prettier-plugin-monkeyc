@@ -34,7 +34,7 @@
       "name": "Run tests",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/test/test.js",
-      "args": ["${config:monkeyC.developerKeyPath}"]
+      "args": ["--dev-key=${config:monkeyC.developerKeyPath}"]
     }
   ]
 }
