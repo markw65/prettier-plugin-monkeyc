@@ -5,6 +5,7 @@ import Toybox.System;
 import Toybox.Test;
 import Toybox.Time;
 import Toybox.WatchUi;
+import Toybox.System;
 
 class testCasesApp extends Application.AppBase {
     function initialize() {
@@ -69,6 +70,8 @@ function check(logger, i, expected, actual) {
 
 function getExprs() as Array<Array> {
     return [
+        [4, 1 << (2 % 3)],
+        [1, (1 << 2) % 3]
     ] as Array<Array>;
 }
 

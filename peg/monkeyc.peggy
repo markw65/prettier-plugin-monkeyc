@@ -720,6 +720,9 @@ MultiplicativeOperator
   = $("*" !"=")
   / $("/" !"=")
   / $("%" !"=")
+  / $("&" !"=")
+  / $("<<" !"=")
+  / $(">>" !"=")
 
 AdditiveExpression
   = head:MultiplicativeExpression
@@ -730,18 +733,12 @@ AdditiveExpression
 AdditiveOperator
   = $("+" ![+=])
   / $("-" ![-=])
-
-ShiftExpression
-  = head:AdditiveExpression tail:(__ ShiftOperator __ AdditiveExpression)* {
-      return buildBinaryExpression(head, tail);
-    }
-
-ShiftOperator
-  = $("<<" !"=")
-  / $(">>" !"=")
+  / $("|" ![-=])
+  / $("^" ![-=])
 
 RelationalExpression
-  = head:ShiftExpression tail:(__ RelationalOperator __ ShiftExpression)* {
+  = head:AdditiveExpression
+    tail:(__ RelationalOperator __ AdditiveExpression)* {
       return buildBinaryExpression(head, tail);
     }
 
@@ -750,48 +747,14 @@ RelationalOperator
   / ">="
   / $("<" !"<")
   / $(">" !">")
+  / "=="
+  / "!="
   / $InstanceofToken
   / $HasToken
 
-EqualityExpression
-  = head:RelationalExpression
-    tail:(__ EqualityOperator __ RelationalExpression)* {
-      return buildBinaryExpression(head, tail);
-    }
-
-EqualityOperator
-  = "==="
-  / "!=="
-  / "=="
-  / "!="
-
-BitwiseANDExpression
-  = head:EqualityExpression
-    tail:(__ BitwiseANDOperator __ EqualityExpression)* {
-      return buildBinaryExpression(head, tail);
-    }
-
-BitwiseANDOperator = $("&" ![&=])
-
-BitwiseXORExpression
-  = head:BitwiseANDExpression
-    tail:(__ BitwiseXOROperator __ BitwiseANDExpression)* {
-      return buildBinaryExpression(head, tail);
-    }
-
-BitwiseXOROperator = $("^" !"=")
-
-BitwiseORExpression
-  = head:BitwiseXORExpression
-    tail:(__ BitwiseOROperator __ BitwiseXORExpression)* {
-      return buildBinaryExpression(head, tail);
-    }
-
-BitwiseOROperator = $("|" ![|=])
-
 LogicalANDExpression
-  = head:BitwiseORExpression
-    tail:(__ LogicalANDOperator __ BitwiseORExpression)* {
+  = head:RelationalExpression
+    tail:(__ LogicalANDOperator __ RelationalExpression)* {
       return buildLogicalExpression(head, tail);
     }
 

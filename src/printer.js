@@ -120,7 +120,12 @@ function printMonkeyCAst(path, options, print) {
         body = concat(["(", body, ")"]);
       }
       return body;
-
+    case "BinaryExpression":
+      body = estree_print(path, options, print);
+      if (nodeNeedsParens(node, path.getParentNode())) {
+        body = concat(["(", body, ")"]);
+      }
+      return body;
     case "TypeSpecList":
       return group(join([" or", line], path.map(print, "ts")));
 
@@ -230,6 +235,29 @@ function printMonkeyCAst(path, options, print) {
   return estree_print(path, options, print);
 }
 
+// Table of operators to their precedences in [js, mc]
+// Prettier tends to remove parens if it thinks they're
+// not needed in js.
+const BinaryOpPrecedence = {
+  "*": [0, 0],
+  "/": [0, 0],
+  "%": [0, 0],
+  "+": [1, 1],
+  "-": [1, 1],
+  "<<": [2, 0],
+  ">>": [2, 0],
+  "<": [3, 3],
+  "<=": [3, 3],
+  ">": [3, 3],
+  ">=": [3, 3],
+  instanceof: [3, 3],
+  "==": [4, 3],
+  "!=": [4, 3],
+  "&": [5, 0],
+  "^": [6, 1],
+  "|": [7, 1],
+};
+
 function nodeNeedsParens(node, parent) {
   if (node.type == "AsExpression") {
     switch (parent.type) {
@@ -261,6 +289,21 @@ function nodeNeedsParens(node, parent) {
         return false;
     }
     return true;
+  }
+
+  if (node.type == "BinaryExpression" && parent.type == "BinaryExpression") {
+    const nprec = BinaryOpPrecedence[node.operator];
+    const pprec = BinaryOpPrecedence[parent.operator];
+    if (nprec && pprec) {
+      const needsParensInMC =
+        pprec[1] < nprec[1] || (node == parent.right && pprec[1] == nprec[1]);
+      const needsParensInJS =
+        pprec[0] < nprec[0] || (node == parent.right && pprec[0] == nprec[0]);
+      if (needsParensInMC && !needsParensInJS) {
+        return true;
+      }
+    }
+    return false;
   }
 
   if (node.type == "NewExpression") {
