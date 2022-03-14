@@ -1,3 +1,21 @@
+/*
+ * The main test method is to compile all the garmin samples before and after
+ * prettying the source, and then verifying that the binaries are identical.
+ *
+ * It turns out that debug builds tend to differ anyway, so we have to do release
+ * builds. Also, builds in different locations differ, so both builds have to
+ * have the sources in the same place (ie you can't make two copies of the samples,
+ * and compile them separately).
+ *
+ * I've created a project that I can add problem cases to - eg at one point
+ * '1 << (x % 3)' incorrectly dropped the parentheses because the precedence
+ * is different in monkeyc vs javascript. For those, it both compares the
+ * binaries and runs the project in unit test mode. The latter /should/ be
+ * redundant, but I had some issues at one point where my code was (apparently)
+ * being optimized out entirely in release mode - so the binaries were identical
+ * even though the source code had changed (beyond just formatting).
+ */
+
 import * as fs from "fs/promises";
 import path from "path";
 import { getSdkPath, spawnByLine, readByLine, appSupport } from "./util.js";
