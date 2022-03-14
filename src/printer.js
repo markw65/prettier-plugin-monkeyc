@@ -23,7 +23,7 @@ const {
   //breakParent,
 } = builders;
 
-let estree_print;
+let estree_print, estree_preprocess;
 
 // We set this as the parser's preprocess function. That lets
 // us grab the estree printer early on, and munge our printer,
@@ -32,14 +32,28 @@ export default function printerIntialize(text, options) {
   if (!estree_print) {
     const find = (name) =>
       options.plugins.find((p) => p.printers[name]).printers[name];
-    const { print, ...rest } = find("estree");
-    Object.assign(find("monkeyc-ast"), rest, { print: printMonkeyCAst });
-    estree_print = print;
+    let rest;
+    ({
+      print: estree_print,
+      preprocess: estree_preprocess,
+      ...rest
+    } = find("estree"));
+    Object.assign(find("monkeyc-ast"), rest, {
+      print: printAst,
+      preprocess: preprocessAst,
+    });
   }
   return text;
 }
 
-function printMonkeyCAst(path, options, print) {
+function preprocessAst(ast, options) {
+  return preprocessHelper(
+    estree_preprocess ? estree_preprocess(ast, options) : ast,
+    options
+  );
+}
+
+function printAst(path, options, print) {
   const node = path.getValue();
   if (!node) {
     return "";
@@ -106,26 +120,7 @@ function printMonkeyCAst(path, options, print) {
 
     case "AsExpression":
       body = [path.call(print, "expr"), path.call(print, "ts")];
-      if (nodeNeedsParens(node.expr, node)) {
-        body = [concat(["(", body[0], ")"]), body[1]];
-      }
-      if (nodeNeedsParens(node, path.getParentNode())) {
-        body.unshift("(");
-        body.push(")");
-      }
       return group(body);
-    case "NewExpression":
-      body = estree_print(path, options, print);
-      if (nodeNeedsParens(node, path.getParentNode())) {
-        body = concat(["(", body, ")"]);
-      }
-      return body;
-    case "BinaryExpression":
-      body = estree_print(path, options, print);
-      if (nodeNeedsParens(node, path.getParentNode())) {
-        body = concat(["(", body, ")"]);
-      }
-      return body;
     case "TypeSpecList":
       return group(join([" or", line], path.map(print, "ts")));
 
@@ -259,16 +254,29 @@ const BinaryOpPrecedence = {
   "|": [70, 10],
 };
 
-function nodeNeedsParens(node, parent) {
-  if (node.parenthesized) return false;
-  if (nodeNeedsParensHelper(node, parent)) {
-    node.parenthesized = true;
-    return true;
+function preprocessHelper(node, parent, options) {
+  for (const [key, value] of Object.entries(node)) {
+    if (!value) continue;
+    if (Array.isArray(value)) {
+      value.forEach((obj) => preprocessHelper(obj, null, options));
+    } else if (typeof value == "object" && value.type) {
+      node[key] = preprocessHelper(value, node, options);
+    }
   }
-  return false;
+
+  if (parent && nodeNeedsParens(node, parent)) {
+    return {
+      type: "ParenthesizedExpression",
+      expression: node,
+      start: node.start,
+      end: node.end,
+    };
+  }
+
+  return node;
 }
 
-function nodeNeedsParensHelper(node, parent) {
+function nodeNeedsParens(node, parent) {
   if (node.type == "AsExpression") {
     switch (parent.type) {
       case "BinaryExpression":
@@ -285,6 +293,7 @@ function nodeNeedsParensHelper(node, parent) {
     return false;
   }
   if (parent.type == "AsExpression") {
+    if (node == parent.ts) return false;
     switch (node.type) {
       // pretty much everything except primary, call, new, member
       case "ThisExpression":
