@@ -6,6 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default (env, argv) => {
   const config = {
+    mode: argv.mode || "development",
     entry: {
       "prettier-plugin-monkeyc": "./src/prettier-plugin-monkeyc.js",
       monkeyc: "./peg/monkeyc.peggy",

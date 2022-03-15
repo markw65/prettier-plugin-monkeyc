@@ -136,6 +136,9 @@ SingleLineComment
 
 Identifier = !ReservedWord name:IdentifierName { return name; }
 
+TypedIdentifier
+  = id:Identifier ts:(__ @AsTypeSpec)? { return ts ? wrap({ ...id, ts }) : id; }
+
 IdentifierName "identifier"
   = head:IdentifierStart tail:IdentifierPart* {
       return wrap({
@@ -697,14 +700,15 @@ UnaryOperator
   / "!"
 
 AsExpression
-  = expr:UnaryExpression ts:(__ @AsTypeSpec)? {
-      return ts
+  = left:UnaryExpression right:(__ AsToken __ @TypeSpecList)? {
+      return right
         ? wrap({
-            type: "AsExpression",
-            expr,
-            ts,
+            type: "BinaryExpression",
+            operator: "as",
+            left,
+            right,
           })
-        : expr;
+        : left;
     }
 
 // The monkey-c compiler treats `a [*/%] b as Type` as a syntax error,
@@ -909,8 +913,7 @@ VariableDeclarationList
     }
 
 VariableDeclaration
-  = id:Identifier ts:(__ @AsTypeSpec)? init:(__ @Initialiser)? {
-      id = { ...id, ts };
+  = id:TypedIdentifier init:(__ @Initialiser)? {
       return wrap({
         type: "VariableDeclarator",
         id,
@@ -1353,37 +1356,30 @@ FunctionDeclaration
     }
 
 SingleTypeSpec
-  = id:ScopedName
-    generics:(
-      __
-        "<"
-        __
-        @(
-          head:TypeSpecList tail:(__ "," __ @TypeSpecList)* {
-              return [head, ...tail];
-            }
-        )
-        __
-        ">"
-    )?
-    callspec:CallSpec? {
-      return wrap({
+  = id:ScopedName suffix:(__ @(GenericList / CallSpec))? {
+      const result = wrap({
         type: "TypeSpecPart",
         name: id.name,
-        generics,
-        callspec,
       });
+      if (suffix) {
+        if (Array.isArray(suffix)) {
+          result.generics = suffix;
+        } else {
+          result.callspec = suffix;
+        }
+      }
+      return result;
     }
-  / "(" __ @NullableTypeSpec __ ")"
+  / "(" __ callspec:UnwrappedCallSpec __ ")" { return wrap({ ...callspec }); }
   / "{"
     __
     head:ObjectAsExpression
     tail:(__ "," __ @ObjectAsExpression)*
-    __
+    __ ("," __)?
     "}" {
       return wrap({
-        type: "TypeSpecPart",
-        dictionary: [head, ...tail],
+        type: "ObjectExpression",
+        properties: [head, ...tail],
       });
     }
   / name:$InterfaceToken __ body:ClassElements {
@@ -1402,6 +1398,26 @@ NullableTypeSpec
       return wrap({ ...ts, nullable: true });
     }
 
+UnwrappedCallSpec
+  = id:ScopedName __ callspec:CallSpec {
+      return wrap({
+        type: "TypeSpecPart",
+        name: id.name,
+        callspec,
+      });
+    }
+
+GenericList
+  = "<"
+    __
+    @(
+      head:TypeSpecList tail:(__ "," __ @TypeSpecList)* {
+          return [head, ...tail];
+        }
+    )
+    __
+    ">"
+
 CallSpec
   = "(" __ params:(@FormalParameterList __)? ")" returnType:(__ @AsTypeSpec)? {
       // hack - but the estree printer does exactly the right thing with it
@@ -1415,39 +1431,30 @@ CallSpec
     }
 
 TypeSpecList
-  = head:NullableTypeSpec tail:(__ "or" __ @NullableTypeSpec)* {
-      let list = [head, ...tail];
-      if (list.length > 1) {
-        let hasNull = false;
-        list = list
-          .map((v) => {
-            if (v.type == "Identifier" && v.name == "Null") {
-              hasNull = true;
-              return null;
-            }
-            if (v.optional) {
-              hasNull = true;
-            }
-            return v;
-          })
-          .filter((v) => v != null);
-        if (hasNull) {
-          if (list.length) {
-            list[list.length - 1].optional = true;
-          } else {
-            // every element was "Null"
-            list = [head];
-          }
-        }
+  = head:SingleTypeSpec
+    tail:(
+      __ "?" { return wrap({ type: "TypeSpecPart", name: "Null" }); }
+      / (__ "or" __ @SingleTypeSpec)+
+    )? {
+      if (tail == null) {
+        tail = [];
+      } else if (!Array.isArray(tail)) {
+        tail = [tail];
       }
-      return wrap({ type: "TypeSpecList", ts: list });
+      return wrap({ type: "TypeSpecList", ts: [head, ...tail] });
     }
 
 AsTypeSpec
-  = AsToken __ ts:TypeSpecList { return wrap({ type: "AsTypeSpec", ts }); }
+  = AsToken __ argument:TypeSpecList {
+      return wrap({
+        type: "UnaryExpression",
+        argument,
+        prefix: true,
+        operator: " as",
+      });
+    }
 
-FormalParameter
-  = id:Identifier ts:(__ @AsTypeSpec)? { return wrap({ ...id, ts }); }
+FormalParameter = TypedIdentifier
 
 FormalParameterList
   = head:FormalParameter tail:(__ "," __ @FormalParameter)* {

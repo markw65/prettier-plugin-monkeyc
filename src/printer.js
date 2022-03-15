@@ -3,7 +3,7 @@
 // pull in the standalone version.
 import Prettier from "prettier/standalone.js";
 
-const { builders } = Prettier.doc;
+const { doc } = Prettier;
 
 // Commands to build the prettier syntax tree
 const {
@@ -21,7 +21,7 @@ const {
   join,
   //markAsRoot,
   //breakParent,
-} = builders;
+} = doc.builders;
 
 let estree_print, estree_preprocess;
 
@@ -63,6 +63,10 @@ function printAst(path, options, print) {
     return node;
   }
 
+  if (options.debugFoobar) {
+    return doc;
+  }
+
   let rhs, body;
   switch (node.type) {
     case "ModuleDeclaration":
@@ -72,9 +76,9 @@ function printAst(path, options, print) {
       ]);
 
     case "TypedefDeclaration":
-      return group([
+      return concat([
         group(["typedef", line, node.id.name]),
-        path.call(print, "ts"),
+        indent(path.call(print, "ts")),
         ";",
       ]);
 
@@ -115,14 +119,20 @@ function printAst(path, options, print) {
       }
       return node.name;
 
-    case "AsTypeSpec":
-      return indent(fill([line, "as", line, path.call(print, "ts")]));
-
-    case "AsExpression":
-      body = [path.call(print, "expr"), path.call(print, "ts")];
-      return group(body);
     case "TypeSpecList":
+      if (
+        node.ts.length == 2 &&
+        node.ts[1].type == "TypeSpecPart" &&
+        node.ts[1].name == "Null"
+      ) {
+        return concat(
+          path.map((sub, index) => (index > 0 ? "?" : print(sub)), "ts")
+        );
+      }
       return group(join([" or", line], path.map(print, "ts")));
+
+    case "ObjectExpression":
+      return estree_print(path, options, print);
 
     case "TypeSpecPart":
       body = [node.name || ""];
@@ -137,35 +147,21 @@ function printAst(path, options, print) {
         body.push(
           group([
             "<",
-            softline,
-            indent(join([",", line], path.map(print, "generics"))),
+            indent([softline, join([",", line], path.map(print, "generics"))]),
             final_space,
             ">",
           ])
         );
       }
-      if (node.dictionary) {
-        body.push(
-          group([
-            "{",
-            line,
-            indent(join([",", line], path.map(print, "dictionary"))),
-            line,
-            "}",
-          ])
-        );
-      }
       if (node.callspec) {
         options.semi = false;
-        body.push(path.call(print, "callspec"));
+        body.unshift("(");
+        body.push(
+          indent([softline, path.call(print, "callspec")]),
+          softline,
+          ")"
+        );
         options.semi = true;
-      }
-      if (node.nullable) {
-        if (node.callspec) {
-          body.unshift("(");
-          body.push(")");
-        }
-        body.push("?");
       }
       return concat(body);
 
@@ -247,6 +243,8 @@ const BinaryOpPrecedence = {
   ">=": [30, 30],
   instanceof: [30, 5],
   has: [99, 5],
+  // Force parens when an "as" is a child of a binary operator
+  as: [-1, 99],
   "==": [40, 30],
   "!=": [40, 30],
   "&": [50, 0],
@@ -277,23 +275,8 @@ function preprocessHelper(node, parent, options) {
 }
 
 function nodeNeedsParens(node, parent) {
-  if (node.type == "AsExpression") {
-    switch (parent.type) {
-      case "BinaryExpression":
-        // there's a bug handling multiplicative ops
-        // in the monkeyc parser, but the precedence is
-        // confusing enough anyway. Just wrap them all.
-        return true;
-      case "MemberExpression":
-        return node == parent.object;
-      case "NewExpression":
-      case "CallExpression":
-        return node == parent.callee;
-    }
-    return false;
-  }
-  if (parent.type == "AsExpression") {
-    if (node == parent.ts) return false;
+  if (parent.type == "BinaryExpression" && parent.operator == "as") {
+    if (node == parent.right) return false;
     switch (node.type) {
       // pretty much everything except primary, call, new, member
       case "ThisExpression":
@@ -305,22 +288,35 @@ function nodeNeedsParens(node, parent) {
       case "NewExpression":
       case "CallExpression":
       case "UnaryExpression":
+      case "ParenthesizedExpression":
         return false;
     }
     return true;
   }
 
-  if (node.type == "BinaryExpression" && parent.type == "BinaryExpression") {
-    const nprec = BinaryOpPrecedence[node.operator];
-    const pprec = BinaryOpPrecedence[parent.operator];
-    if (nprec && pprec) {
-      const needsParensInMC =
-        pprec[1] < nprec[1] || (node == parent.right && pprec[1] == nprec[1]);
-      const needsParensInJS =
-        pprec[0] < nprec[0] || (node == parent.right && pprec[0] == nprec[0]);
-      if (needsParensInMC && !needsParensInJS) {
-        return true;
+  if (node.type == "BinaryExpression") {
+    switch (parent.type) {
+      case "BinaryExpression": {
+        const nprec = BinaryOpPrecedence[node.operator];
+        const pprec = BinaryOpPrecedence[parent.operator];
+        if (nprec && pprec) {
+          const needsParensInMC =
+            pprec[1] < nprec[1] ||
+            (node == parent.right && pprec[1] == nprec[1]);
+          const needsParensInJS =
+            pprec[0] < nprec[0] ||
+            (node == parent.right && pprec[0] == nprec[0]);
+          if (needsParensInMC && !needsParensInJS) {
+            return true;
+          }
+        }
+        break;
       }
+      case "MemberExpression":
+        return node.operator == "as" && node == parent.object;
+      case "NewExpression":
+      case "CallExpression":
+        return node.operator == "as" && node == parent.callee;
     }
     return false;
   }
