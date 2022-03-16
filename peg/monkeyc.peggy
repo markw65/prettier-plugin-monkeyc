@@ -1220,7 +1220,7 @@ Attributes
     }
 
 AccessList
-  = head:$AccessSpecifier tail:(__ $AccessSpecifier)* {
+  = head:$AccessSpecifier tail:(__ @$AccessSpecifier)* {
       return [head, ...tail];
     }
 
