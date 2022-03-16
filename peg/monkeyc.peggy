@@ -73,30 +73,35 @@
     return value;
   }
 
+  function reduce(head, tail, fn) {
+    return tail.reduce((result, element) => {
+      const res = fn(result, element);
+      return { ...res, start: result.start };
+    }, head);
+  }
+
   function buildBinaryExpression(head, tail) {
-    return tail.reduce(function (result, element) {
+    return reduce(head, tail, (result, element) => {
       return {
         type: "BinaryExpression",
         operator: element[1],
         left: result,
         right: element[3],
-        start: result.start,
         end: element[3].end,
       };
-    }, head);
+    });
   }
 
   function buildLogicalExpression(head, tail) {
-    return tail.reduce(function (result, element) {
+    return reduce(head, tail, (result, element) => {
       return {
         type: "LogicalExpression",
         operator: element[1],
         left: result,
         right: element[3],
-        start: result.start,
         end: element[3].end,
       };
-    }, head);
+    });
   }
 }
 
@@ -618,14 +623,13 @@ MemberExpression
           return wrap({ property: property, computed: false });
         }
     )* {
-      return tail.reduce(function (result, element) {
-        return wrap({
+      return reduce(head, tail, (result, element) => {
+        return {
+          ...element,
           type: "MemberExpression",
           object: result,
-          property: element.property,
-          computed: element.computed,
-        });
-      }, head);
+        };
+      });
     }
 
 NewExpression
@@ -663,11 +667,11 @@ CallExpression
           });
         }
     )* {
-      return tail.reduce(function (result, element) {
-        element[TYPES_TO_PROPERTY_NAMES[element.type]] = result;
-
-        return element;
-      }, head);
+      return reduce(head, tail, (result, element) => {
+        const e = { ...element };
+        e[TYPES_TO_PROPERTY_NAMES[element.type]] = result;
+        return e;
+      });
     }
 
 Arguments = "(" __ args:(@ArgumentList __)? ")" { return optionalList(args); }
@@ -1225,10 +1229,18 @@ AccessList
     }
 
 ScopedName
-  = head:Identifier tail:(__ "." __ @Identifier)* {
-      return wrap({
-        type: "Identifier",
-        name: [head, ...tail].map((v) => v.name).join("."),
+  = head:Identifier
+    tail:(
+      __ "." __ property:IdentifierName {
+          return wrap({ property, computed: false });
+        }
+    )* {
+      return reduce(head, tail, (result, element) => {
+        return {
+          ...element,
+          type: "MemberExpression",
+          object: result,
+        };
       });
     }
 
@@ -1381,7 +1393,7 @@ SingleTypeSpec
   = id:ScopedName suffix:(__ @(GenericList / CallSpec))? {
       const result = wrap({
         type: "TypeSpecPart",
-        name: id.name,
+        name: id,
       });
       if (suffix) {
         if (Array.isArray(suffix)) {
@@ -1425,7 +1437,7 @@ UnwrappedCallSpec
   = id:ScopedName __ callspec:CallSpec {
       return wrap({
         type: "TypeSpecPart",
-        name: id.name,
+        name: id,
         callspec,
       });
     }

@@ -56,7 +56,10 @@ function preprocessAst(ast, options) {
 function printAttributeList(path, options, print, body) {
   const node = path.getValue();
   if (node.access) {
-    const access = path.map(print, "access").sort().filter((item, index, arr) => !index || item != arr[index - 1]);
+    const access = path
+      .map(print, "access")
+      .sort()
+      .filter((item, index, arr) => !index || item != arr[index - 1]);
     access.push(body);
     body = join(" ", access);
   }
@@ -115,10 +118,10 @@ function printAst(path, options, print) {
       ]);
 
     case "ImportModule":
-      return group(concat(["import", line, node.id.name, ";"]));
+      return group(concat(["import", line, path.call(print, "id"), ";"]));
 
     case "Using":
-      body = ["using", line, node.id.name];
+      body = ["using", line, path.call(print, "id")];
       if (node.as != null) {
         body.push(line, "as", line, node.as.name);
       }
@@ -132,22 +135,18 @@ function printAst(path, options, print) {
       return node.name;
 
     case "TypeSpecList":
-      if (
-        node.ts.length == 2 &&
-        node.ts[1].type == "TypeSpecPart" &&
-        node.ts[1].name == "Null"
-      ) {
-        return concat(
-          path.map((sub, index) => (index > 0 ? "?" : print(sub)), "ts")
-        );
+      body = path.map(print, "ts");
+      if (body.length == 2 && body[1] == "Null") {
+        body[1] = "?";
+        return body;
       }
-      return group(join([" or", line], path.map(print, "ts")));
+      return group(join([" or", line], body));
 
     case "ObjectExpression":
       return estree_print(path, options, print);
 
     case "TypeSpecPart":
-      body = [node.name || ""];
+      body = [node.name ? path.call(print, "name") : ""];
 
       if (node.body) {
         body.push(" ", dedent(path.call(print, "body")));
@@ -175,7 +174,7 @@ function printAst(path, options, print) {
         );
         options.semi = true;
       }
-      return concat(body);
+      return body.length == 1 ? body[0] : body;
 
     case "ArrayExpression":
       if (!node.size) {
