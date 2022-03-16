@@ -13,6 +13,19 @@
       "type": "pwa-node"
     },
     {
+      "name": "Prettify Current File",
+      "request": "launch",
+      "runtimeArgs": [
+        "prettier",
+        "--plugin",
+        "build/prettier-plugin-monkeyc.cjs",
+        "${file}"
+      ],
+      "runtimeExecutable": "npx",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "pwa-node"
+    },
+    {
       "name": "Run Build",
       "request": "launch",
       "runtimeArgs": ["run-script", "build-debug"],
@@ -23,10 +36,18 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Run parser",
+      "name": "Parse example/AnalogView.mc",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/src/peg.js",
       "args": ["example/AnalogView.mc"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Parse Current File",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/src/peg.js",
+      "args": ["${file}"]
     },
     {
       "type": "node",
