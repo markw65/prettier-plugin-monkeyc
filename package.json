@@ -16,7 +16,8 @@
     "watch": "webpack --mode development --watch",
     "build-debug": "webpack --mode development",
     "build-release": "webpack --mode production",
-    "pretty": "prettier --plugin build/prettier-plugin-monkeyc.cjs example/AnalogView.mc"
+    "pretty": "prettier --plugin build/prettier-plugin-monkeyc.cjs example/AnalogView.mc",
+    "prepack": "webpack --mode production"
   },
   "name": "@markw65/prettier-plugin-monkeyc",
   "version": "1.0.3",

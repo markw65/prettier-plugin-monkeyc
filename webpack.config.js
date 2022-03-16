@@ -11,6 +11,9 @@ export default (env, argv) => {
       "prettier-plugin-monkeyc": "./src/prettier-plugin-monkeyc.js",
       monkeyc: "./peg/monkeyc.peggy",
     },
+    performance: {
+      hints: false
+    },
     module: {
       rules: [
         {
