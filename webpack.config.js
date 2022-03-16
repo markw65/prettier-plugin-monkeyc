@@ -8,7 +8,7 @@ export default (env, argv) => {
   const config = {
     entry: {
       "prettier-plugin-monkeyc": "./src/prettier-plugin-monkeyc.js",
-      "monkeyc": "./peg/monkeyc.peggy"
+      monkeyc: "./peg/monkeyc.peggy",
     },
     module: {
       rules: [
@@ -36,9 +36,22 @@ export default (env, argv) => {
           })()`,
       libraryTarget: "umd",
     },
+    plugins: [],
   };
   if (argv.mode != "production") {
     config.devtool = "source-map";
   }
+  config.plugins.push(
+    new (function () {
+      this.apply = (compiler) => {
+        compiler.hooks.done.tap("Log On Done Plugin", () => {
+          console.log(
+            `\n[${new Date().toLocaleString()}] Begin a new compilation.\n`
+          );
+        });
+      };
+    })()
+  );
+
   return config;
 };
