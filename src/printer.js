@@ -53,6 +53,29 @@ function preprocessAst(ast, options) {
   );
 }
 
+function printAttributeList(path, options, print, body) {
+  const node = path.getValue();
+  if (node.access) {
+    const access = path.map(print, "access").sort().filter((item, index, arr) => !index || item != arr[index - 1]);
+    access.push(body);
+    body = join(" ", access);
+  }
+  if (!node.attrs) return body;
+  return concat([
+    group([
+      "(",
+      indent([
+        softline,
+        group(join([",", softline], path.map(print, "attrs"))),
+      ]),
+      softline,
+      ")",
+    ]),
+    hardline,
+    body,
+  ]);
+}
+
 function printAst(path, options, print) {
   const node = path.getValue();
   if (!node) {
@@ -82,9 +105,6 @@ function printAst(path, options, print) {
         ";",
       ]);
 
-    case "EnumDeclaration":
-      return ["enum ", node.id ? [print("id"), " "] : "", print("body")];
-
     case "Property":
       return group([
         path.call(print, "key"),
@@ -104,14 +124,6 @@ function printAst(path, options, print) {
       }
       body.push(";");
       return group(concat(body));
-
-    case "AttributeList":
-      return concat([
-        "(",
-        group(join([",", softline], path.map(print, "attrs"))),
-        ")",
-        hardline,
-      ]);
 
     case "Identifier":
       if (node.ts) {
@@ -180,14 +192,32 @@ function printAst(path, options, print) {
 
     case "VariableDeclaration":
     case "FunctionDeclaration":
-    case "MethodDeclaration":
     case "ClassDeclaration":
       body = estree_print(path, options, print);
       if (node.attrs) {
-        body = [path.call(print, "attrs"), body];
+        body = path.call(
+          (p) => printAttributeList(p, options, print, body),
+          "attrs"
+        );
       }
       return body;
 
+    case "EnumDeclaration":
+      body = ["enum"];
+      if (node.id) {
+        body.push(path.call(print, "id"));
+      }
+      body = join(" ", body);
+      if (node.attrs) {
+        body = path.call(
+          (p) => printAttributeList(p, options, print, body),
+          "attrs"
+        );
+      }
+      return concat([body, " ", path.call(print, "body")]);
+
+    case "AttributeList":
+      return concat(printAttributeList(path, options, print, ""));
     case "ClassElement":
       body = [];
       if (node.access) {

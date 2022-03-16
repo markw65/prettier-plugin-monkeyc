@@ -31,6 +31,8 @@
 // [4] http://boshi.inimino.org/3box/asof/1270029991384/PEG/ECMAScript_unified.peg
 
 {
+  var allow_static = false;
+
   var TYPES_TO_PROPERTY_NAMES = {
     CallExpression: "callee",
     MemberExpression: "object",
@@ -893,8 +895,7 @@ Block
 StatementList = head:Statement tail:(__ @Statement)* { return [head, ...tail]; }
 
 VariableStatement
-  = attrs:AttributeList?
-    (AccessSpecifier __)?
+  = attrs:(@AttributeList __)?
     kind:($VarToken / $ConstToken)
     __
     declarations:VariableDeclarationList
@@ -1205,8 +1206,22 @@ Attribute
     }
 
 AttributeList
-  = "(" __ head:Attribute tail:(__ "," __ @Attribute)* __ ")" __ {
-      return wrap({ type: "AttributeList", attrs: [head, ...tail] });
+  = attrs:(@Attributes __)? access:AccessList? {
+      return wrap({
+        type: "AttributeList",
+        attrs,
+        access,
+      });
+    }
+
+Attributes
+  = "(" __ head:Attribute tail:(__ "," __ @Attribute)* __ ")" {
+      return [head, ...tail];
+    }
+
+AccessList
+  = head:$AccessSpecifier tail:(__ $AccessSpecifier)* {
+      return [head, ...tail];
     }
 
 ScopedName
@@ -1233,16 +1248,17 @@ ImportStatement
     }
 
 ModuleDeclaration
-  = ModuleToken __ id:Identifier __ body:ModuleBody {
+  = attrs:(@AttributeList __)? ModuleToken __ id:Identifier __ body:ModuleBody {
       return wrap({
         type: "ModuleDeclaration",
         body,
         id,
+        attrs,
       });
     }
 
 ClassDeclaration
-  = attrs:AttributeList?
+  = attrs:(@AttributeList __)?
     ClassToken
     __
     id:Identifier
@@ -1267,41 +1283,43 @@ ClassElements
     }
 
 ClassElement
-  = access:(@AccessSpecifier __)?
-    item:(
-      MethodDeclaration
-      / EnumDeclaration
-      / VariableStatement
-      / ClassDeclaration
-      / TypedefDeclaration
-    ) {
+  = item:(
+    MethodDeclaration
+    / EnumDeclaration
+    / VariableStatement
+    / ClassDeclaration
+    / TypedefDeclaration
+  ) {
       return wrap({
         type: "ClassElement",
-        access,
         item,
       });
     }
 
 AccessSpecifier
-  = "public"
-  / "protected"
-  / "hidden"
-  / "private"
+  = @(
+      "public"
+      / "protected"
+      / "hidden"
+      / "private"
+      / & { return allow_static; } @"static"
+    )
+    !IdentifierPart
 
 MethodDeclaration
-  = stat:(@StaticToken __)? func:FunctionDeclaration {
-      // func.type = "MethodDefinition";
-      // func.kind = "method";
-      // func.key = func.id;
-      return wrap({ ...func, static: stat != null });
-    }
+  = & {
+        allow_static = true;
+        return true;
+      }
+    @FunctionDeclaration
 
 EnumDeclaration
-  = (AccessSpecifier __)? EnumToken id:(__ @Identifier)? __ body:EnumBody {
+  = attrs:(@AttributeList __)? EnumToken id:(__ @Identifier)? __ body:EnumBody {
       return wrap({
         type: "EnumDeclaration",
         id: id,
         body,
+        attrs,
       });
     }
 
@@ -1333,8 +1351,12 @@ TypedefDeclaration
     }
 
 FunctionDeclaration
-  = attrs:AttributeList?
+  = attrs:(@AttributeList __)?
     FunctionToken
+    & {
+        allow_static = false;
+        return true;
+      }
     __
     id:Identifier
     __
@@ -1375,7 +1397,8 @@ SingleTypeSpec
     __
     head:ObjectAsExpression
     tail:(__ "," __ @ObjectAsExpression)*
-    __ ("," __)?
+    __
+    ("," __)?
     "}" {
       return wrap({
         type: "ObjectExpression",
