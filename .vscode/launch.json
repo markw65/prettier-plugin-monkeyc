@@ -10,7 +10,8 @@
       "runtimeArgs": ["run-script", "pretty"],
       "runtimeExecutable": "npm",
       "skipFiles": ["<node_internals>/**"],
-      "type": "pwa-node"
+      "type": "pwa-node",
+      "outputCapture": "std"
     },
     {
       "name": "Prettify Current File",
@@ -23,7 +24,8 @@
       ],
       "runtimeExecutable": "npx",
       "skipFiles": ["<node_internals>/**"],
-      "type": "pwa-node"
+      "type": "pwa-node",
+      "outputCapture": "std"
     },
     {
       "name": "Run Build",
