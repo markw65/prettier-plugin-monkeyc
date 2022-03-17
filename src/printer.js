@@ -7,7 +7,6 @@ const { doc } = Prettier;
 
 // Commands to build the prettier syntax tree
 const {
-  concat,
   group,
   fill,
   // ifBreak,
@@ -64,7 +63,7 @@ function printAttributeList(path, options, print, body) {
     body = join(" ", access);
   }
   if (!node.attrs) return body;
-  return concat([
+  return [
     group([
       "(",
       indent([
@@ -76,7 +75,7 @@ function printAttributeList(path, options, print, body) {
     ]),
     hardline,
     body,
-  ]);
+  ];
 }
 
 function printAst(path, options, print) {
@@ -102,11 +101,11 @@ function printAst(path, options, print) {
       ]);
 
     case "TypedefDeclaration":
-      return concat([
+      return [
         group(["typedef", line, node.id.name]),
         indent(path.call(print, "ts")),
         ";",
-      ]);
+      ];
 
     case "Property":
       return group([
@@ -118,7 +117,7 @@ function printAst(path, options, print) {
       ]);
 
     case "ImportModule":
-      return group(concat(["import", line, path.call(print, "id"), ";"]));
+      return group(["import", line, path.call(print, "id"), ";"]);
 
     case "Using":
       body = ["using", line, path.call(print, "id")];
@@ -126,7 +125,7 @@ function printAst(path, options, print) {
         body.push(line, "as", line, node.as.name);
       }
       body.push(";");
-      return group(concat(body));
+      return group(body);
 
     case "Identifier":
       if (node.ts) {
@@ -178,7 +177,7 @@ function printAst(path, options, print) {
 
     case "ArrayExpression":
       if (!node.size) {
-        return concat([estree_print(path, options, print), node.byte || ""]);
+        return [estree_print(path, options, print), node.byte || ""];
       }
       return group([
         "new ",
@@ -213,10 +212,10 @@ function printAst(path, options, print) {
           "attrs"
         );
       }
-      return concat([body, " ", path.call(print, "body")]);
+      return [body, " ", path.call(print, "body")];
 
     case "AttributeList":
-      return concat(printAttributeList(path, options, print, ""));
+      return printAttributeList(path, options, print, "");
     case "ClassElement":
       body = [];
       if (node.access) {
@@ -243,7 +242,7 @@ function printAst(path, options, print) {
       return node.text;
 
     case "InstanceOfCase":
-      return concat(["instanceof ", path.call(print, "id")]);
+      return ["instanceof ", path.call(print, "id")];
 
     case "Literal":
       if (typeof node.value === "string") {
