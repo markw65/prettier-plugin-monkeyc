@@ -1,4 +1,4 @@
-import { parse } from "../peg/monkeyc.peggy";
+import { parse } from "../build/monkeyc.js";
 import preprocess from "./printer.js";
 
 export const languages = [
@@ -21,7 +21,9 @@ export const parsers = {
 
 export const printers = {
   "monkeyc-ast": {
-    print: () => { throw "Something went wrong: printer not initialized!" },
+    print: () => {
+      throw "Something went wrong: printer not initialized!";
+    },
   },
 };
 

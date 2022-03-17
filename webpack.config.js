@@ -5,57 +5,110 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default (env, argv) => {
-  const config = {
-    mode: argv.mode || "development",
+  function getConfig(extra) {
+    const config = {
+      mode: argv.mode || "development",
+      performance: {
+        hints: false,
+      },
+      output: {
+        filename: "[name].cjs",
+        path: path.resolve(__dirname, "build"),
+        libraryTarget: "commonjs",
+      },
+      devtool: argv.mode != "production" ? "source-map" : false,
+    };
+    return { ...config, ...extra };
+  }
+  const monkeyc = getConfig({
+    name: "monkeyc",
     entry: {
-      "prettier-plugin-monkeyc": "./src/prettier-plugin-monkeyc.js",
       monkeyc: "./peg/monkeyc.peggy",
-    },
-    performance: {
-      hints: false
     },
     module: {
       rules: [
         {
           test: /\.peggy$/,
+          // Set the type so that the raw .js file is generated
+          type: "asset/resource",
           use: [{ loader: path.resolve(__dirname, "src/peggy-loader.cjs") }],
+          generator: {
+            // name the raw .js file
+            filename: "[name].js",
+          },
         },
       ],
     },
-
-    output: {
-      filename: "[name].cjs",
-      path: path.resolve(__dirname, "build"),
-      library: "prettierPluginMonkeyC",
-      globalObject: `(() => {
-              if (typeof self !== 'undefined') {
-                  return self;
-              } else if (typeof window !== 'undefined') {
-                  return window;
-              } else if (typeof global !== 'undefined') {
-                  return global;
-              } else {
-                  return Function('return this')();
+    plugins: [
+      {
+        /*
+         * Probably overthinking this. I want "webpack watch" to work,
+         * so I want the parser generation to be part of the build.
+         * My previous attempt worked, but we ended up generating the
+         * parser twice (once as part of the main library, and once
+         * standalone), and since peggy doesn't generate SourceMaps,
+         * there was nothing for the generated .js code to refer back
+         * to.
+         *
+         * So I wanted to just generate the standalone file,
+         * and use it as an input to the main library.
+         * So it has to happen in a separate, dependent config.
+         *
+         * So far, so good... but Peggy generates a perfectly good es
+         * module, which peg.js could import - but webpack insists on
+         * converting it to commonjs. This isn't really a problem, but
+         * I'd prefer to have the SourceMap refer back to a clean es
+         * module, rather than the webpackified version.
+         *
+         * If I mark it "asset/resource" it will at least generate both
+         * the raw output of peggy, and the "wrapped" version. But now
+         * I also have an unwanted .cjs version. I use the following
+         * plugin to remove that from the build before it's emitted.
+         *
+         * There has to be a better way...
+         */
+        apply(compiler) {
+          const pluginName = "Assets Plugin";
+          compiler.hooks.compilation.tap(pluginName, function (compilation) {
+            compilation.hooks.processAssets.tap(
+              {
+                name: pluginName,
+                stage:
+                  compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_PRE_PROCESS,
+                additionalAssets: false,
+              },
+              function (assets) {
+                Object.keys(assets).forEach((file) => {
+                  if (/\.cjs$/.test(file)) {
+                    compilation.deleteAsset(file);
+                  }
+                });
               }
-          })()`,
-      libraryTarget: "umd",
-    },
-    plugins: [],
-  };
-  if (argv.mode != "production") {
-    config.devtool = "source-map";
-  }
-  config.plugins.push(
-    new (function () {
-      this.apply = (compiler) => {
-        compiler.hooks.done.tap("Log On Done Plugin", () => {
-          console.log(
-            `\n[${new Date().toLocaleString()}] Begin a new compilation.\n`
-          );
-        });
-      };
-    })()
-  );
+            );
+          });
+        },
+      },
+    ],
 
-  return config;
+    devtool: false,
+  });
+  const plugin = getConfig({
+    name: "prettierPluginMonkeyC",
+    entry: {
+      "prettier-plugin-monkeyc": "./src/prettier-plugin-monkeyc.js",
+    },
+    dependencies: ["monkeyc"],
+    plugins: [
+      {
+        apply(compiler) {
+          const pluginName = "Log On Done Plugin";
+          compiler.hooks.afterDone.tap(pluginName, () => {
+            console.log(`\n[${new Date().toLocaleString()}] Build finished.\n`);
+          });
+        },
+      },
+    ],
+  });
+
+  return [monkeyc, plugin];
 };
