@@ -107,14 +107,12 @@ function printAst(path, options, print) {
         ";",
       ];
 
-    case "Property":
+    case "Property": {
       return group([
-        path.call(print, "key"),
-        line,
-        "=>",
-        line,
+        group([path.call(print, "key"), line, "=>", line]),
         path.call(print, "value"),
       ]);
+    }
 
     case "ImportModule":
       return group(["import", line, path.call(print, "id"), ";"]);
