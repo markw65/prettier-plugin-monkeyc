@@ -1,34 +1,18 @@
-// JavaScript Grammar
+// Monkey C Grammar
 // ==================
 //
-// Based on grammar from ECMA-262, 5.1 Edition [1]. Generated parser builds a
-// syntax tree compatible with the ESTree spec [2].
+// Based on a grammar for javascript, provided as an example by peggyjs:
+// https://github.com/peggyjs/peggy/blob/main/examples/javascript.pegjs.
+//
+// Generated parser builds a syntax tree largely compatible with the
+// ESTree spec [2].
 //
 // Limitations:
 //
-//   * Non-BMP characters are completely ignored to avoid surrogate pair
-//     handling.
-//
-//   * One can create identifiers containing illegal characters using Unicode
-//     escape sequences. For example, "abcd\u0020efgh" is not a valid
-//     identifier, but it is accepted by the parser.
-//
-//   * Strict mode is not recognized. This means that within strict mode code,
-//     "implements", "interface", "let", "package", "private", "protected",
-//     "public", "static" and "yield" can be used as names. Many other
-//     restrictions and exceptions from Annex C are also not applied.
-//
-// All the limitations could be resolved, but the costs would likely outweigh
-// the benefits.
-//
-// Many thanks to inimino [3] for his grammar [4] which helped me to solve some
-// problems (such as automatic semicolon insertion) and also served to double
-// check that I converted the original grammar correctly.
-//
-// [1] http://www.ecma-international.org/publications/standards/Ecma-262.htm
-// [2] https://github.com/estree/estree
-// [3] http://inimino.org/~inimino/blog/
-// [4] http://boshi.inimino.org/3box/asof/1270029991384/PEG/ECMAScript_unified.peg
+//   * Parsing is generally not as strict as monkey-c, so it will accept some
+//     programs that monkey-c would reject (eg Array<Array<Number>> - but note
+//     that prettier will add the required space when formatting that to turn it
+//     into legal monkey-c).
 
 {
   var allow_static = false;
@@ -509,15 +493,9 @@ WhileToken = "while" !IdentifierPart
 
 __ = (WhiteSpace / LineTerminatorSequence / Comment)*
 
-// Automatic Semicolon Insertion
-
 EOS = __ ";"
 
-// ----- A.2 Number Conversions -----
-
-// Irrelevant.
-
-// ----- A.3 Expressions -----
+// ----- Expressions -----
 
 PrimaryExpression
   = text:$(SelfToken / MeToken) {
@@ -871,7 +849,7 @@ ExpressionLikeList
       );
     }
 
-// ----- A.4 Statements -----
+// ----- Statements -----
 
 Statement
   = Block
@@ -1178,7 +1156,7 @@ Finally = FinallyToken __ block:Block { return block; }
 DebuggerStatement
   = DebuggerToken EOS { return wrap({ type: "DebuggerStatement" }); }
 
-// ----- A.5 Functions and Programs -----
+// ----- Functions and Programs -----
 
 Symbol
   = ":" __ id:Identifier {
@@ -1545,15 +1523,3 @@ FunctionElement
   = Statement
   / EnumDeclaration
   / TypedefDeclaration
-
-// ----- A.6 Universal Resource Identifier Character Classes -----
-
-// Irrelevant.
-
-// ----- A.7 Regular Expressions -----
-
-// Irrelevant.
-
-// ----- A.8 JSON -----
-
-// Irrelevant.
