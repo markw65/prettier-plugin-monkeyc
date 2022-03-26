@@ -15,6 +15,7 @@ export default (env, argv) => {
         filename: "[name].cjs",
         path: path.resolve(__dirname, "build"),
         libraryTarget: "commonjs",
+        devtoolModuleFilenameTemplate: "webpack://[resource-path]",
       },
       devtool: argv.mode != "production" ? "source-map" : false,
     };
