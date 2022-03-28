@@ -5,14 +5,14 @@ export const languages = [
   {
     name: "monkeyc",
     extensions: [".mc"],
-    parsers: ["monkeyc-parser"],
+    parsers: ["monkeyc"],
   },
 ];
 
 export const parsers = {
-  "monkeyc-parser": {
+  monkeyc: {
     parse,
-    astFormat: "monkeyc-ast",
+    astFormat: "monkeyc",
     locStart: (node) => node.start || 0,
     locEnd: (node) => node.end || 0,
     preprocess,
@@ -20,7 +20,7 @@ export const parsers = {
 };
 
 export const printers = {
-  "monkeyc-ast": {
+  monkeyc: {
     print: () => {
       throw "Something went wrong: printer not initialized!";
     },

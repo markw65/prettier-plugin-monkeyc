@@ -37,7 +37,7 @@ export default function printerIntialize(text, options) {
       preprocess: estree_preprocess,
       ...rest
     } = find("estree"));
-    Object.assign(find("monkeyc-ast"), rest, {
+    Object.assign(find("monkeyc"), rest, {
       print: printAst,
       preprocess: preprocessAst,
     });
