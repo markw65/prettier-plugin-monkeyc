@@ -17,6 +17,13 @@ export const parsers = {
     locEnd: (node) => node.end || 0,
     preprocess,
   },
+  "monkeyc-json": {
+    parse: (str) => JSON.parse(str),
+    astFormat: "monkeyc",
+    locStart: (node) => node.start || 0,
+    locEnd: (node) => node.end || 0,
+    preprocess,
+  },
 };
 
 export const printers = {
