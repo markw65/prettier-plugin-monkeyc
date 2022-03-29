@@ -94,6 +94,17 @@ function printAst(path, options, print) {
 
   let rhs, body;
   switch (node.type) {
+    case "Program": {
+      const { semi, trailingComma } = options;
+      options.semi = true;
+      if (options.trailingComma == "all") {
+        options.trailingComma = "es5";
+      }
+      body = estree_print(path, options, print);
+      options.semi = semi;
+      options.trailingComma = trailingComma;
+      return body;
+    }
     case "ModuleDeclaration":
       return group([
         group(["module", line, indent(node.id.name), line]),

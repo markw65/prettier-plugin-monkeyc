@@ -655,7 +655,7 @@ CallExpression
 Arguments = "(" __ args:(@ArgumentList __)? ")" { return optionalList(args); }
 
 ArgumentList
-  = head:SingleExpression tail:(__ "," __ @SingleExpression)* {
+  = head:SingleExpression tail:(__ "," __ @SingleExpression)* (__ ",")? {
       return [head, ...tail];
     }
 
@@ -1470,7 +1470,7 @@ AsTypeSpec
 FormalParameter = TypedIdentifier
 
 FormalParameterList
-  = head:FormalParameter tail:(__ "," __ @FormalParameter)* {
+  = head:FormalParameter tail:(__ "," __ @FormalParameter)* (__ ",")? {
       return [head, ...tail];
     }
 
