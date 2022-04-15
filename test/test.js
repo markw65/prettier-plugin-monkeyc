@@ -97,11 +97,14 @@ async function test() {
     if (!build_all) {
       products.splice(1);
     }
-    return Promise.all(
-      products.map(async (product) => {
-        const program = path.resolve(root, bin, `${project}-${product}.prg`);
-        console.log(`Building ${root} into ${program}`);
-        await spawnByLine(
+    let promise = Promise.resolve();
+    const programs = [];
+    products.forEach((product) => {
+      const program = path.resolve(root, bin, `${project}-${product}.prg`);
+      console.log(`Building ${root} into ${program}`);
+      promise = promise.then(() => {
+        programs.push(program);
+        return spawnByLine(
           path.resolve(sdk, "bin", "monkeyc"),
           [
             ["-o", program],
@@ -109,15 +112,16 @@ async function test() {
             ["-y", developer_key],
             // "-w",
             ["-l", "1"],
-            ["-d", `${products[0]}_sim`],
+            ["-d", `${product}_sim`],
             mode || [],
           ].flat(),
           (line) => console.log(line),
           { cwd: root }
         );
-        return program;
-      })
-    );
+      });
+    });
+    await promise;
+    return programs;
   }
 
   const promises = [];

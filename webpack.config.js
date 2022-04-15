@@ -99,6 +99,7 @@ export default (env, argv) => {
       "prettier-plugin-monkeyc": "./src/prettier-plugin-monkeyc.js",
     },
     dependencies: ["monkeyc"],
+    externals: { "prettier/standalone.js": "commonjs prettier/standalone.js" },
     plugins: [
       {
         apply(compiler) {
