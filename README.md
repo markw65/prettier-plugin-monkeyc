@@ -42,8 +42,8 @@ npm install --global @markw65/prettier-plugin-monkeyc
 
 Install the Prettier extension from https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode.
 
- - if you installed the plugin globally, you need to enable `prettier.resolveGlobalModules` in your settings.
- - if you installed locally, [the documentation](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) says it should just work, but I've found you need to tell the extension how to find the local copy of prettier. Put `"prettier.prettierPath": "./node_modules/prettier"` in your `.vscode/settings.json`.
+- if you installed the plugin globally, you need to enable `prettier.resolveGlobalModules` in your settings.
+- if you installed locally, [the documentation](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) says it should just work, but I've found you need to tell the extension how to find the local copy of prettier. Put `"prettier.prettierPath": "./node_modules/prettier"` in your `.vscode/settings.json`.
 
 Once configured as above, VSCode's `Format Document` command (`Option-Shift-F`) will reformat your .mc files for you.
 
@@ -94,7 +94,27 @@ to parse monkeyc. This grammar was originally copied from the Peggy sample javas
 
 The plugin is organized as follows:
 
- -   `prettier-plugin-monkeyc.js` This file exports the objects required of a Prettier plugin.
- -   `peg/monkeyc.peggy` The Peggy grammar for monkey-c.
- -   `src/printer.js` Printers take an AST and produce a Doc (the intermediate
-format that Prettier uses). The current implementation is a thin wrapper around Prettier's default, estree printer. It handles just the nodes that it needs to, and delegates to "javascript-like" behavior for everything else.
+- `prettier-plugin-monkeyc.js` This file exports the objects required of a Prettier plugin.
+- `peg/monkeyc.peggy` The Peggy grammar for monkey-c.
+- `src/printer.js` Printers take an AST and produce a Doc (the intermediate
+  format that Prettier uses). The current implementation is a thin wrapper around Prettier's default, estree printer. It handles just the nodes that it needs to, and delegates to "javascript-like" behavior for everything else.
+
+## Release Notes
+
+#### 1.0.0
+
+- Initial release
+
+#### 1.0.1 - 1.0.7
+
+- Minor tweaks for better consistency with Prettier for javascript
+
+#### 1.0.8
+
+- Fix some issues with the standard prettier options. Eg setting options.semi=false would have produced illegal MonkeyC, as would setting options.trailingComma=all
+- Add a monkeyc-json parser, which just takes the AST (in JSON format) as input. This will allow us to build tools that use the plugin to parse MonkeyC, then change the AST in some way, and then print out the result.
+
+#### 1.0.9
+
+- Don't bundle prettier/standalone.js in the build, since we depend on prettier anyway. This halves the size of the bundle.
+- Improve the monkeyc-json parser to allow passing the original source, followed by the json-ast, so that prettier can still inspect the original source when printing (it does this for comments, and for deciding when to leave blank lines between certain constructs).
