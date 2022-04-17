@@ -118,3 +118,7 @@ The plugin is organized as follows:
 
 - Don't bundle prettier/standalone.js in the build, since we depend on prettier anyway. This halves the size of the bundle.
 - Improve the monkeyc-json parser to allow passing the original source, followed by the json-ast, so that prettier can still inspect the original source when printing (it does this for comments, and for deciding when to leave blank lines between certain constructs).
+
+#### 1.0.10
+
+- Fixed the parser to allow import/using inside modules.

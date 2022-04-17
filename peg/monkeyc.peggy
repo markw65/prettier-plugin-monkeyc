@@ -1493,9 +1493,7 @@ Program
 ProgramElements
   = head:ProgramElement tail:(__ @ProgramElement)* { return [head, ...tail]; }
 
-ProgramElement
-  = ModuleElement
-  / ImportStatement
+ProgramElement = ModuleElement
 
 ModuleBody
   = "{" __ body:ModuleElements? __ "}" {
@@ -1515,6 +1513,7 @@ ModuleElement
   / ModuleDeclaration
   / TypedefDeclaration
   / VariableStatement
+  / ImportStatement
 
 FunctionElements
   = head:FunctionElement tail:(__ @FunctionElement)* { return [head, ...tail]; }
