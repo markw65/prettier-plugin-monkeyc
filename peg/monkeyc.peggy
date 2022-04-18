@@ -562,7 +562,7 @@ PropertyNameAndValueList
     }
 
 PropertyAssignment
-  = key:PrimaryExpression __ "=>" __ value:SingleExpression {
+  = key:SingleExpression __ "=>" __ value:SingleExpression {
       return wrap({ type: "Property", key: key, value: value, kind: "init" });
     }
 

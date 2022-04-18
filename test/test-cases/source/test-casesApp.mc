@@ -45,16 +45,31 @@ function getApp() as testCasesApp {
     return Application.getApp() as testCasesApp;
 }
 
+function checkDict(expected, actual) {
+    for (var i = 0; i < expected.size(); i++) {
+        var e = expected[i];
+        if (actual[e[0]] != e[1]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 function checkStr(i, expected, actual) {
-    var ok = actual has :equals ? actual.equals(expected) : actual == expected;
+    var ok =
+        actual instanceof Lang.Dictionary
+            ? checkDict(expected, actual)
+            : actual has :equals
+            ? actual.equals(expected)
+            : actual == expected;
     return [
         ok,
         Lang.format("tests[$1$]: got $2$, expected $3$. $4$", [
             i,
             actual,
             expected,
-            ok ? "ok" : "FAILED!"
-        ])
+            ok ? "ok" : "FAILED!",
+        ]),
     ];
 }
 
@@ -69,12 +84,15 @@ function check(logger, i, expected, actual) {
 }
 
 function getExprs() as Array<Array> {
-    return [
-        [4, 1 << (2 % 3)],
-        [1, (1 << 2) % 3],
-        [true, (4 + 5) instanceof Lang.Number],
-        [true, ((4 + 5) has :toString) as Boolean]
-    ] as Array<Array>;
+    return (
+        [
+            [4, 1 << (2 % 3)],
+            [1, (1 << 2) % 3],
+            [true, (4 + 5) instanceof Lang.Number],
+            [true, ((4 + 5) has :toString) as Boolean],
+            [[[2, 3]], { 1 ? 2 : 3 => 3 }],
+        ] as Array<Array>
+    );
 }
 
 (:test)
