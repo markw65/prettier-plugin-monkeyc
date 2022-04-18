@@ -122,3 +122,7 @@ The plugin is organized as follows:
 #### 1.0.10
 
 - Fixed the parser to allow import/using inside modules.
+
+#### 1.0.11
+
+- Fixed an issue parsing object literals whose keys were not PrimaryExpressions
