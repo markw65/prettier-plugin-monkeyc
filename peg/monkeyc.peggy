@@ -131,7 +131,7 @@ TypedIdentifier
   = id:Identifier ts:(__ @AsTypeSpec)? { return ts ? wrap({ ...id, ts }) : id; }
 
 IdentifierName "identifier"
-  = head:IdentifierStart tail:IdentifierPart* {
+  = "@"? head:IdentifierStart tail:IdentifierPart* {
       return wrap({
         type: "Identifier",
         name: head + tail.join(""),
@@ -170,8 +170,8 @@ UnicodeConnectorPunctuation = Pc
 
 ReservedWord
   = Keyword
-  / FutureReservedWord
   / NullLiteral
+  / NaNLiteral
   / BooleanLiteral
 
 Keyword
@@ -183,9 +183,7 @@ Keyword
   / ClassToken
   / ConstToken
   / ContinueToken
-  / DebuggerToken
   / DefaultToken
-  / DeleteToken
   / DoToken
   / ElseToken
   / EnumToken
@@ -198,6 +196,7 @@ Keyword
   / InstanceofToken
   / InterfaceToken
   / MeToken
+  / NativeToken
   / NewToken
   / OrToken
   / ReturnToken
@@ -205,24 +204,22 @@ Keyword
   / SwitchToken
   / ThrowToken
   / TryToken
-  / TypeofToken
   / TypedefToken
   / VarToken
-  / VoidToken
   / WhileToken
-
-FutureReservedWord
-  = ExportToken
-  / SuperToken
 
 Literal
   = NullLiteral
+  / NaNLiteral
   / BooleanLiteral
   / NumericLiteral
   / StringLiteral
 
 NullLiteral
   = NullToken { return wrap({ type: "Literal", value: null, raw: text() }); }
+
+NaNLiteral
+  = NaNToken { return wrap({ type: "Literal", value: NaN, raw: text() }); }
 
 BooleanLiteral
   = TrueToken { return wrap({ type: "Literal", value: true, raw: text() }); }
@@ -231,10 +228,9 @@ BooleanLiteral
 // The "!(IdentifierStart / DecimalDigit)" predicate is not part of the official
 // grammar, it comes from text in section 7.8.3.
 NumericLiteral "number"
-  = literal:HexIntegerLiteral !(IdentifierStart / DecimalDigit) {
-      return literal;
-    }
-  / literal:DecimalLiteral !(IdentifierStart / DecimalDigit) { return literal; }
+  = @HexIntegerLiteral !(IdentifierStart / DecimalDigit)
+  / @DecimalLiteral !(IdentifierStart / DecimalDigit)
+  / @OctalIntegerLiteral !(IdentifierStart / DecimalDigit)
 
 FloatSuffix
   = "f"i
@@ -243,14 +239,14 @@ FloatSuffix
 DecimalLiteral
   = txt:$(
     DecimalIntegerLiteral
-      ("l"i / (("." DecimalDigit*)? ExponentPart?) FloatSuffix?)?
+      ("l"i / (("." DecimalDigit+)? ExponentPart?) FloatSuffix?)?
   ) { return wrap({ type: "Literal", value: parseFloat(txt), raw: text() }); }
   / txt:$("." DecimalDigit+ ExponentPart?) suffix:FloatSuffix? {
       return wrap({ type: "Literal", value: parseFloat(txt), raw: text() });
     }
 
 DecimalIntegerLiteral
-  = "0"
+  = "0" !OctalDigit
   / NonZeroDigit DecimalDigit*
 
 DecimalDigit = [0-9]
@@ -273,6 +269,17 @@ HexIntegerLiteral
     }
 
 HexDigit = [0-9a-f]i
+
+OctalIntegerLiteral
+  = "0" digits:$OctalDigit* "l"i? {
+      return wrap({
+        type: "Literal",
+        value: parseInt(digits, 8),
+        raw: text(),
+      });
+    }
+
+OctalDigit = [0-7]
 
 StringLiteral "string"
   = "\"" chars:DoubleStringCharacter* "\"" {
@@ -417,19 +424,13 @@ ConstToken = "const" !IdentifierPart
 
 ContinueToken = "continue" !IdentifierPart
 
-DebuggerToken = "debugger" !IdentifierPart
-
 DefaultToken = "default" !IdentifierPart
-
-DeleteToken = "delete" !IdentifierPart
 
 DoToken = "do" !IdentifierPart
 
 ElseToken = "else" !IdentifierPart
 
 EnumToken = "enum" !IdentifierPart
-
-ExportToken = "export" !IdentifierPart
 
 ExtendsToken = "extends" !IdentifierPart
 
@@ -455,6 +456,10 @@ MeToken = "me" !IdentifierPart
 
 ModuleToken = "module" !IdentifierPart
 
+NativeToken = "native" !IdentifierPart
+
+NaNToken = "NaN" !IdentifierPart
+
 NewToken = "new" !IdentifierPart
 
 NullToken = "null" !IdentifierPart
@@ -477,15 +482,11 @@ TrueToken = "true" !IdentifierPart
 
 TryToken = "try" !IdentifierPart
 
-TypeofToken = "typeof" !IdentifierPart
-
 TypedefToken = "typedef" !IdentifierPart
 
 UsingToken = "using" !IdentifierPart
 
 VarToken = "var" !IdentifierPart
-
-VoidToken = "void" !IdentifierPart
 
 WhileToken = "while" !IdentifierPart
 
@@ -578,10 +579,12 @@ MemberExpression
         __
         size:SingleExpression
         __
-        "]" {
+        "]"
+        byte:"b"? {
           return wrap({
-            type: "ArrayExpression",
+            type: "SizedArrayExpression",
             size,
+            byte,
             ts,
           });
         }
@@ -675,10 +678,7 @@ UnaryExpression
     }
 
 UnaryOperator
-  = $DeleteToken
-  / $VoidToken
-  / $TypeofToken
-  / $("+" !"=")
+  = $("+" !"=")
   / $("-" !"=")
   / "~"
   / "!"
@@ -838,7 +838,7 @@ ExpressionLike
   / SingleExpression
 
 ExpressionLikeList
-  = head:ExpressionLike tail:(__ "," @ExpressionLike)* {
+  = head:ExpressionLike tail:(__ "," __ @ExpressionLike)* {
       return wrap(
         tail.length
           ? {
@@ -864,7 +864,6 @@ Statement
   / SwitchStatement
   / ThrowStatement
   / TryStatement
-  / DebuggerStatement
 
 Block
   = "{" __ body:(@StatementList __)? "}" {
@@ -1131,7 +1130,7 @@ Catches
     }
 
 Catch
-  = CatchToken __ "(" __ param:CatchArg ")" __ body:Block {
+  = CatchToken __ "(" __ param:CatchArg __ ")" __ body:Block {
       return wrap({
         type: "CatchClause",
         param,
@@ -1152,9 +1151,6 @@ CatchArg
     }
 
 Finally = FinallyToken __ block:Block { return block; }
-
-DebuggerStatement
-  = DebuggerToken EOS { return wrap({ type: "DebuggerStatement" }); }
 
 // ----- Functions and Programs -----
 
@@ -1287,14 +1283,7 @@ ClassElement
     }
 
 AccessSpecifier
-  = @(
-      "public"
-      / "protected"
-      / "hidden"
-      / "private"
-      / & { return allow_static; } @"static"
-    )
-    !IdentifierPart
+  = @("public" / "protected" / "hidden" / "private" / "static") !IdentifierPart
 
 MethodDeclaration
   = & {

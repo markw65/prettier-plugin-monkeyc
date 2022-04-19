@@ -185,9 +185,9 @@ function printAst(path, options, print) {
       return body.length == 1 ? body[0] : body;
 
     case "ArrayExpression":
-      if (!node.size) {
-        return [estree_print(path, options, print), node.byte || ""];
-      }
+      return [estree_print(path, options, print), node.byte || ""];
+
+    case "SizedArrayExpression":
       return group([
         "new ",
         node.ts ? [path.call(print, "ts"), node.ts.generics ? "" : " "] : "",

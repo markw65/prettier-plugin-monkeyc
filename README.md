@@ -126,3 +126,21 @@ The plugin is organized as follows:
 #### 1.0.11
 
 - Fixed an issue parsing object literals whose keys were not PrimaryExpressions
+
+#### 1.0.12
+
+Fixed various parser issues:
+
+- Allow space after `arg` in `catch ( arg ) {`
+- Allow space after `,` in `for (i = 0 , j = 0; whatever; i++ , j++ ) {`
+- Don't reuse ArrayLiteral for `new [ size ]` because it can
+  confuse the estree printer
+- Ignore "@" at the beginning of an identifier (is this right? It doesn't
+  seem to do anything)
+- Floating point literals need a digit after the point. Otherwise
+  `42.toChar()` gets misparsed by consuming `42.` as a float literal,
+  and then hitting a syntax error.
+- Allow `static class Foo {}` (but ignore the static)
+- Fixup reserved word lists
+- Handle octal literals
+- Parse `new [size]b`
