@@ -144,3 +144,13 @@ Fixed various parser issues:
 - Fixup reserved word lists
 - Handle octal literals
 - Parse `new [size]b`
+
+#### 1.0.13
+
+A few bug fixes and enhancements
+
+- Bit of parser cleanup
+- Let the parser ignore a missing ";" before a "}", so the printer can add it for us
+- Allow any PrimaryExpression for arguments to attributes
+- Don't let the printer change Floats to Numbers
+- Fix the printer to correctly wrap the bodies of conditional and loop statements
