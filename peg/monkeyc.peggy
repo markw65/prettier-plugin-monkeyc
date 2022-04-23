@@ -15,8 +15,6 @@
 //     into legal monkey-c).
 
 {
-  var allow_static = false;
-
   var TYPES_TO_PROPERTY_NAMES = {
     CallExpression: "callee",
     MemberExpression: "object",
@@ -929,16 +927,16 @@ IfStatement
     alternate:Statement {
       return wrap({
         type: "IfStatement",
-        test: test,
-        consequent: consequent,
-        alternate: alternate,
+        test,
+        consequent,
+        alternate,
       });
     }
   / IfToken __ "(" __ test:SingleExpression __ ")" __ consequent:Statement {
       return wrap({
         type: "IfStatement",
-        test: test,
-        consequent: consequent,
+        test,
+        consequent,
         alternate: null,
       });
     }
@@ -955,9 +953,9 @@ IterationStatement
     test:SingleExpression
     __
     ")"
-    EOS { return wrap({ type: "DoWhileStatement", body: body, test: test }); }
+    EOS { return wrap({ type: "DoWhileStatement", body, test }); }
   / WhileToken __ "(" __ test:SingleExpression __ ")" __ body:Statement {
-      return wrap({ type: "WhileStatement", test: test, body: body });
+      return wrap({ type: "WhileStatement", test, body });
     }
   / ForToken
     __
@@ -1034,7 +1032,7 @@ ReturnStatement
       return wrap({ type: "ReturnStatement", argument: null });
     }
   / ReturnToken __ argument:SingleExpression EOS {
-      return wrap({ type: "ReturnStatement", argument: argument });
+      return wrap({ type: "ReturnStatement", argument });
     }
 
 SwitchStatement
@@ -1049,8 +1047,8 @@ SwitchStatement
     cases:CaseBlock {
       return wrap({
         type: "SwitchStatement",
-        discriminant: discriminant,
-        cases: cases,
+        discriminant,
+        cases,
       });
     }
 
@@ -1072,7 +1070,7 @@ InstanceofCase
   = InstanceofToken __ id:Identifier {
       return wrap({
         type: "InstanceOfCase",
-        id: id,
+        id,
       });
     }
 
@@ -1085,7 +1083,7 @@ CaseClause
     consequent:(__ @StatementList)? {
       return wrap({
         type: "SwitchCase",
-        test: test,
+        test,
         consequent: optionalList(consequent),
       });
     }
@@ -1219,13 +1217,13 @@ ScopedName
     }
 
 ImportStatement
-  = ImportToken __ id:ScopedName __ ";" {
+  = ImportToken __ id:ScopedName EOS {
       return wrap({
         type: "ImportModule",
         id: id,
       });
     }
-  / UsingToken __ id:ScopedName __ as:(AsToken __ @Identifier __)? ";" {
+  / UsingToken __ id:ScopedName as:(__ AsToken __ @Identifier)? EOS {
       return wrap({
         type: "Using",
         id,
@@ -1285,18 +1283,13 @@ ClassElement
 AccessSpecifier
   = @("public" / "protected" / "hidden" / "private" / "static") !IdentifierPart
 
-MethodDeclaration
-  = & {
-        allow_static = true;
-        return true;
-      }
-    @FunctionDeclaration
+MethodDeclaration = FunctionDeclaration
 
 EnumDeclaration
   = attrs:(@AttributeList __)? EnumToken id:(__ @Identifier)? __ body:EnumBody {
       return wrap({
         type: "EnumDeclaration",
-        id: id,
+        id,
         body,
         attrs,
       });
@@ -1321,7 +1314,7 @@ Enum
     }
 
 TypedefDeclaration
-  = TypedefToken __ id:Identifier __ ts:AsTypeSpec __ ";" {
+  = TypedefToken __ id:Identifier __ ts:AsTypeSpec EOS {
       return wrap({
         type: "TypedefDeclaration",
         id,
@@ -1332,10 +1325,6 @@ TypedefDeclaration
 FunctionDeclaration
   = attrs:(@AttributeList __)?
     FunctionToken
-    & {
-        allow_static = false;
-        return true;
-      }
     __
     id:Identifier
     __
