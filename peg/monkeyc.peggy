@@ -1162,16 +1162,8 @@ Symbol
       });
     }
 
-AttributeArgList
-  = "[" __ head:IdentifierName tail:(__ "," __ @IdentifierName)* __ "]" {
-      return wrap({
-        type: "ArrayExpression",
-        elements: [head, ...tail],
-      });
-    }
-
 Attribute
-  = sym:Symbol arg:(__ "(" __ @(IdentifierName / AttributeArgList) __ ")")? {
+  = sym:Symbol arg:(__ "(" __ @PrimaryExpression __ ")")? {
       return arg
         ? wrap({
             type: "CallExpression",
@@ -1182,10 +1174,16 @@ Attribute
     }
 
 AttributeList
-  = attrs:(@Attributes __)? access:AccessList? {
+  = attrs:Attributes access:(__ @AccessList)? {
       return wrap({
         type: "AttributeList",
         attrs,
+        access,
+      });
+    }
+  / access:AccessList {
+      return wrap({
+        type: "AttributeList",
         access,
       });
     }
