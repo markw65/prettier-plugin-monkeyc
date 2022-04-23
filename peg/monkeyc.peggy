@@ -492,7 +492,7 @@ WhileToken = "while" !IdentifierPart
 
 __ = (WhiteSpace / LineTerminatorSequence / Comment)*
 
-EOS = __ ";"
+EOS = __ (";" / &"}")
 
 // ----- Expressions -----
 
