@@ -90,7 +90,8 @@ function getExprs() as Array<Array> {
             [1, (1 << 2) % 3],
             [true, (4 + 5) instanceof Lang.Number],
             [true, ((4 + 5) has :toString) as Boolean],
-            [[[2, 3]], { 1 ? 2 : 3 => 3 }],
+            [[[2, 3], [-1, 4]], { 1 ? 2 : 3 => 3, -1 => 4 }],
+            [true, 4e0 instanceof Lang.Float],
         ] as Array<Array>
     );
 }

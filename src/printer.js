@@ -22,6 +22,8 @@ const {
   //breakParent,
 } = doc.builders;
 
+const LiteralIntegerRe = /^(0x[0-9a-f]+|\d+)(l)?$/i;
+
 let estree_print, estree_preprocess;
 
 // We set this as the parser's preprocess function. That lets
@@ -86,10 +88,6 @@ function printAst(path, options, print) {
 
   if (typeof node === "string") {
     return node;
-  }
-
-  if (options.debugFoobar) {
-    return doc;
   }
 
   let rhs, body;
@@ -256,6 +254,20 @@ function printAst(path, options, print) {
     case "Literal":
       if (typeof node.value === "string") {
         return node.raw;
+      } else if (
+        typeof node.value === "number" &&
+        !LiteralIntegerRe.test(node.raw) &&
+        node.value === Math.floor(node.value)
+      ) {
+        const result = doc.printer.printDocToString(
+          estree_print(path, options, print),
+          options
+        ).formatted;
+        return LiteralIntegerRe.test(result)
+          ? // we started with an integer valued float or double
+            // but ended with an integer. Add a suffix.
+            `${result}${node.raw.endsWith("d") ? "d" : "f"}`
+          : result;
       }
       break;
   }
