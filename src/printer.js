@@ -301,6 +301,16 @@ const BinaryOpPrecedence = {
   "|": [70, 10],
 };
 
+function wrapBody(node) {
+  if (node.type == "BlockStatement") return node;
+  return {
+    type: "BlockStatement",
+    body: [node],
+    start: node.start,
+    end: node.end,
+  };
+}
+
 function preprocessHelper(node, parent, options) {
   for (const [key, value] of Object.entries(node)) {
     if (!value) continue;
@@ -309,6 +319,20 @@ function preprocessHelper(node, parent, options) {
     } else if (typeof value == "object" && value.type) {
       node[key] = preprocessHelper(value, node, options);
     }
+  }
+
+  switch (node.type) {
+    case "IfStatement":
+      node.consequent = wrapBody(node.consequent);
+      if (node.alternate && node.alternate.type != "IfStatement") {
+        node.alternate = wrapBody(node.alternate);
+      }
+      break;
+    case "WhileStatement":
+    case "DoWhileStatement":
+    case "ForStatement":
+      node.body = wrapBody(node.body);
+      break;
   }
 
   if (parent && nodeNeedsParens(node, parent)) {
