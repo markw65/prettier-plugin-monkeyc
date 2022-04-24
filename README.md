@@ -154,3 +154,10 @@ A few bug fixes and enhancements
 - Allow any PrimaryExpression for arguments to attributes
 - Don't let the printer change Floats to Numbers
 - Fix the printer to correctly wrap the bodies of conditional and loop statements
+
+#### 1.0.14
+
+Accept and fix a few more illegal programs
+
+- Allow an omitted semi-colon in more places (then add it in via the printer)
+- Allow numbers outside the 32-bit range, and add an "l" suffix when printing them so the compiler will accept them.
