@@ -492,7 +492,27 @@ WhileToken = "while" !IdentifierPart
 
 __ = (WhiteSpace / LineTerminatorSequence / Comment)*
 
-EOS = __ (";" / &"}")
+StatementBeginTokens
+  = BreakToken
+  / CaseToken
+  / ClassToken
+  / ConstToken
+  / ContinueToken
+  / DefaultToken
+  / DoToken
+  / EnumToken
+  / ForToken
+  / FunctionToken
+  / IfToken
+  / ReturnToken
+  / SwitchToken
+  / ThrowToken
+  / TryToken
+  / TypedefToken
+  / VarToken
+  / WhileToken
+
+EOS = __ (";" / &("}" / StatementBeginTokens))
 
 // ----- Expressions -----
 
