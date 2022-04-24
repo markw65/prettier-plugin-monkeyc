@@ -256,18 +256,24 @@ function printAst(path, options, print) {
         return node.raw;
       } else if (
         typeof node.value === "number" &&
-        !LiteralIntegerRe.test(node.raw) &&
         node.value === Math.floor(node.value)
       ) {
-        const result = doc.printer.printDocToString(
-          estree_print(path, options, print),
-          options
-        ).formatted;
-        return LiteralIntegerRe.test(result)
-          ? // we started with an integer valued float or double
-            // but ended with an integer. Add a suffix.
-            `${result}${node.raw.endsWith("d") ? "d" : "f"}`
-          : result;
+        if (!LiteralIntegerRe.test(node.raw)) {
+          const result = doc.printer.printDocToString(
+            estree_print(path, options, print),
+            options
+          ).formatted;
+          return LiteralIntegerRe.test(result)
+            ? // we started with an integer valued float or double
+              // but ended with an integer. Add a suffix.
+              `${result}${node.raw.endsWith("d") ? "d" : "f"}`
+            : result;
+        } else if (
+          (node.value > 0xffffffff || -node.value > 0xffffffff) &&
+          !/l$/i.test(node.raw)
+        ) {
+          return node.raw.toLowerCase() + "l";
+        }
       }
       break;
   }
