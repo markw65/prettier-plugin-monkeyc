@@ -161,3 +161,8 @@ Accept and fix a few more illegal programs
 
 - Allow an omitted semi-colon in more places (then add it in via the printer)
 - Allow numbers outside the 32-bit range, and add an "l" suffix when printing them so the compiler will accept them.
+
+#### 1.0.15
+
+- Add loc field to nodes
+- Fix a bug that dropped attributes on module declarations
