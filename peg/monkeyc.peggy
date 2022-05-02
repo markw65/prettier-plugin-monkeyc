@@ -52,6 +52,7 @@
     var loc = location();
     value.start = loc.start.offset;
     value.end = loc.end.offset;
+    value.loc = loc;
     return value;
   }
 
