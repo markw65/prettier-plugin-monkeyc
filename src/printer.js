@@ -104,10 +104,17 @@ function printAst(path, options, print) {
       return body;
     }
     case "ModuleDeclaration":
-      return group([
+      body = group([
         group(["module", line, indent(node.id.name), line]),
         path.call(print, "body"),
       ]);
+      if (node.attrs) {
+        body = path.call(
+          (p) => printAttributeList(p, options, print, body),
+          "attrs"
+        );
+      }
+      return body;
 
     case "TypedefDeclaration":
       return [
