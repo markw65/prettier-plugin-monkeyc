@@ -166,3 +166,7 @@ Accept and fix a few more illegal programs
 
 - Add loc field to nodes
 - Fix a bug that dropped attributes on module declarations
+
+#### 1.0.16
+
+- Write a webpack plugin to add a fake module.exports header to build/prettier-plugin-monkeyc.cjs, so that typescript, and node properly recognize what's being exported.
