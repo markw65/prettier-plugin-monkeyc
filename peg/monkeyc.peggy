@@ -59,6 +59,7 @@
   function reduce(head, tail, fn) {
     return tail.reduce((result, element) => {
       const res = fn(result, element);
+      res.loc = { ...res.loc, start: { ...result.loc.start } };
       return { ...res, start: result.start };
     }, head);
   }
@@ -71,6 +72,7 @@
         left: result,
         right: element[3],
         end: element[3].end,
+        loc: element[3].loc,
       };
     });
   }
@@ -83,6 +85,7 @@
         left: result,
         right: element[3],
         end: element[3].end,
+        loc: element[3].loc,
       };
     });
   }
