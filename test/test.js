@@ -111,7 +111,7 @@ async function test() {
             ["-f", settings["monkeyC.jungleFiles"] || "monkey.jungle"],
             ["-y", developer_key],
             // "-w",
-            ["-l", "1"],
+            //["-l", "1"],
             ["-d", `${product}_sim`],
             mode || [],
           ].flat(),
