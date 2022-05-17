@@ -23,8 +23,10 @@
   "version": "1.0.16",
   "description": "A prettier plugin for Garmin monkey-c",
   "main": "build/prettier-plugin-monkeyc.cjs",
+  "types": "index.d.ts",
   "files": [
-    "build/prettier-plugin-monkeyc.cjs"
+    "build/prettier-plugin-monkeyc.cjs",
+    "index.d.ts"
   ],
   "repository": {
     "type": "git",
