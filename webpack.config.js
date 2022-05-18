@@ -96,9 +96,27 @@ export default (env, argv) => {
   const plugin = getConfig({
     name: "prettierPluginMonkeyC",
     entry: {
-      "prettier-plugin-monkeyc": "./src/prettier-plugin-monkeyc.js",
+      "prettier-plugin-monkeyc": "./src/prettier-plugin-monkeyc.ts",
     },
     dependencies: ["monkeyc"],
+    module: {
+      rules: [
+        {
+          test: /\.ts$/,
+          loader: "ts-loader",
+          exclude: /node_modules/,
+          options: {
+            // set to true for faster builds, or to transpile even
+            // when there are errors.
+            transpileOnly: false,
+          },
+        },
+      ],
+    },
+    resolve: {
+      enforceExtension: false,
+      extensions: [".ts", ".js"],
+    },
     externals: { "prettier/standalone.js": "commonjs prettier/standalone.js" },
     plugins: [
       {
@@ -141,26 +159,28 @@ export default (env, argv) => {
            */
           const fileToExports = {};
           const recordExport = (request, name) => {
+            request = request.replace(/\.(js|ts)$/, "").replace(/^\.[\\/]/, "");
             if (!Object.prototype.hasOwnProperty.call(fileToExports, request)) {
               fileToExports[request] = [];
             }
             fileToExports[request].push(name);
           };
           compiler.hooks.normalModuleFactory.tap(pluginName, (factory) => {
-            factory.hooks.parser
-              .for("javascript/esm")
-              .tap(pluginName, (parser) => {
-                parser.hooks.exportSpecifier.tap(
-                  pluginName,
-                  (statement, id, name) =>
-                    recordExport(parser.state.module.rawRequest, name)
-                );
-                parser.hooks.exportImportSpecifier.tap(
-                  pluginName,
-                  (statement, source, id, name) =>
-                    recordExport(parser.state.module.rawRequest, name)
-                );
-              });
+            const exportParser = (parser) => {
+              parser.hooks.exportSpecifier.tap(
+                pluginName,
+                (statement, id, name) =>
+                  recordExport(parser.state.module.rawRequest, name)
+              );
+              parser.hooks.exportImportSpecifier.tap(
+                pluginName,
+                (statement, source, id, name) =>
+                  recordExport(parser.state.module.rawRequest, name)
+              );
+            };
+            ["javascript/esm", "javascript/auto"].forEach((target) =>
+              factory.hooks.parser.for(target).tap(pluginName, exportParser)
+            );
           });
           /*
            * Now we insert the fake exports line into each of the .cjs
@@ -180,7 +200,7 @@ export default (env, argv) => {
                 Object.entries(assets).forEach(([file, asset]) => {
                   const match = file.match(/^(.*)\.cjs/);
                   if (match) {
-                    const original = `./src/${match[1]}.js`;
+                    const original = `src/${match[1]}`;
                     const exports = fileToExports[original];
                     if (exports) {
                       const fakeExportLine = `0 && (module.exports = {${exports.join(

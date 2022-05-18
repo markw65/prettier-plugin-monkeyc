@@ -1,8 +1,13 @@
 // If we pull in "prettier", we also pull in the `fs` module which
 // prevents the plugin from working in the browser, so we
 // pull in the standalone version.
-import Prettier from "prettier/standalone.js";
-
+import * as Prettier from "prettier/standalone.js";
+import { AstPath } from "prettier";
+import {
+  BlockStatement as ESTreeBlockStatement,
+  Statement as ESTreeStatement,
+  Node as ESTreeNode,
+} from "./estree-types";
 const { doc } = Prettier;
 
 // Commands to build the prettier syntax tree
@@ -22,17 +27,29 @@ const {
   //breakParent,
 } = doc.builders;
 
-const LiteralIntegerRe = /^(0x[0-9a-f]+|\d+)(l)?$/i;
+export const LiteralIntegerRe = /^(0x[0-9a-f]+|\d+)(l)?$/i;
 
-let estree_print, estree_preprocess;
+type ParserOptions = Prettier.ParserOptions<ESTreeNode>;
+
+interface Printer<T> extends Prettier.Printer<T> {
+  preprocess: (node: T, options: Prettier.ParserOptions<T>) => T;
+}
+
+let estree_print: Printer<ESTreeNode>["print"],
+  estree_preprocess: Printer<ESTreeNode>["preprocess"];
 
 // We set this as the parser's preprocess function. That lets
 // us grab the estree printer early on, and munge our printer,
 // before any printing starts
-export default function printerIntialize(text, options) {
+export default function printerIntialize(text: string, options: ParserOptions) {
   if (!estree_print) {
-    const find = (name) =>
-      options.plugins.find((p) => p.printers[name]).printers[name];
+    const find = (name: string) => {
+      const finder = (p: Prettier.Plugin | string | undefined) =>
+        p && typeof p !== "string" && p.printers?.[name];
+      const result = finder(options.plugins?.find(finder));
+      if (!result) throw new Error("Prettier setup failure!");
+      return result as Printer<ESTreeNode>;
+    };
     let rest;
     ({
       print: estree_print,
@@ -47,14 +64,20 @@ export default function printerIntialize(text, options) {
   return text;
 }
 
-function preprocessAst(ast, options) {
+function preprocessAst(ast: ESTreeNode, options: ParserOptions) {
   return preprocessHelper(
     estree_preprocess ? estree_preprocess(ast, options) : ast,
+    null,
     options
   );
 }
 
-function printAttributeList(path, options, print, body) {
+function printAttributeList(
+  path: AstPath,
+  options: ParserOptions,
+  print: (path: AstPath<ESTreeNode>) => Prettier.Doc,
+  body: Prettier.Doc
+) {
   const node = path.getValue();
   if (node.access) {
     const access = path
@@ -80,7 +103,11 @@ function printAttributeList(path, options, print, body) {
   ];
 }
 
-function printAst(path, options, print) {
+function printAst(
+  path: AstPath<ESTreeNode>,
+  options: ParserOptions,
+  print: (path: AstPath) => Prettier.Doc
+) {
   const node = path.getValue();
   if (!node) {
     return "";
@@ -90,7 +117,6 @@ function printAst(path, options, print) {
     return node;
   }
 
-  let rhs, body;
   switch (node.type) {
     case "Program": {
       const { semi, trailingComma } = options;
@@ -98,13 +124,13 @@ function printAst(path, options, print) {
       if (options.trailingComma == "all") {
         options.trailingComma = "es5";
       }
-      body = estree_print(path, options, print);
+      const body = estree_print(path, options, print);
       options.semi = semi;
       options.trailingComma = trailingComma;
       return body;
     }
-    case "ModuleDeclaration":
-      body = group([
+    case "ModuleDeclaration": {
+      let body: Prettier.Doc = group([
         group(["module", line, indent(node.id.name), line]),
         path.call(print, "body"),
       ]);
@@ -115,6 +141,7 @@ function printAst(path, options, print) {
         );
       }
       return body;
+    }
 
     case "TypedefDeclaration":
       return [
@@ -133,44 +160,53 @@ function printAst(path, options, print) {
     case "ImportModule":
       return group(["import", line, path.call(print, "id"), ";"]);
 
-    case "Using":
-      body = ["using", line, path.call(print, "id")];
+    case "Using": {
+      const body = ["using", line, path.call(print, "id")];
       if (node.as != null) {
         body.push(line, "as", line, node.as.name);
       }
       body.push(";");
       return group(body);
+    }
 
     case "Identifier":
-      if (node.ts) {
-        return group([node.name, path.call(print, "ts")]);
-      }
       return node.name;
 
-    case "TypeSpecList":
-      body = path.map(print, "ts");
+    case "TypeSpecList": {
+      const body = path.map(print, "ts");
       if (body.length == 2 && body[1] == "Null") {
         body[1] = "?";
         return body;
       }
       return group(join([" or", line], body));
+    }
 
     case "ObjectExpression":
       return estree_print(path, options, print);
 
-    case "TypeSpecPart":
-      body = [node.name ? path.call(print, "name") : ""];
+    case "TypeSpecPart": {
+      const body = [node.name ? path.call(print, "name") : ""];
 
       if (node.body) {
         body.push(" ", dedent(path.call(print, "body")));
       }
       if (node.generics) {
-        const final_space = node.generics.slice(-1)[0].ts.slice(-1)[0].generics
-          ? line
-          : softline;
+        // Add a space between the trailing >> in Array<Array<Number>>,
+        // because the monkeyc parser can't handle that.
+        const final_space =
+          "generics" in node.generics.slice(-1)[0].ts.slice(-1)[0]
+            ? line
+            : softline;
         body.push(
           group([
             "<",
+            /*
+             * A bug in @types/prettier only allows map to be called on
+             * fields that are non-optional arrays in at least one of the
+             * components of ESTreeNode. The only occurrance of generics is
+             * as an optional array.
+             */
+            // @ts-ignore
             indent([softline, join([",", line], path.map(print, "generics"))]),
             final_space,
             ">",
@@ -188,6 +224,7 @@ function printAst(path, options, print) {
         options.semi = true;
       }
       return body.length == 1 ? body[0] : body;
+    }
 
     case "ArrayExpression":
       return [estree_print(path, options, print), node.byte || ""];
@@ -195,7 +232,21 @@ function printAst(path, options, print) {
     case "SizedArrayExpression":
       return group([
         "new ",
-        node.ts ? [path.call(print, "ts"), node.ts.generics ? "" : " "] : "",
+        node.ts
+          ? [
+              path.call(print, "ts"),
+              /*
+               * if the typespec has a generic, don't leave
+               * a space.
+               *
+               * So:
+               *   new Foo [ size ];
+               * but
+               *   new Array<Number>[ size ]
+               */
+              "generics" in node.ts ? "" : " ",
+            ]
+          : "",
         "[",
         indent(path.call(print, "size")),
         "]",
@@ -204,8 +255,8 @@ function printAst(path, options, print) {
 
     case "VariableDeclaration":
     case "FunctionDeclaration":
-    case "ClassDeclaration":
-      body = estree_print(path, options, print);
+    case "ClassDeclaration": {
+      let body = estree_print(path, options, print);
       if (node.attrs) {
         body = path.call(
           (p) => printAttributeList(p, options, print, body),
@@ -213,9 +264,10 @@ function printAst(path, options, print) {
         );
       }
       return body;
+    }
 
-    case "EnumDeclaration":
-      body = ["enum"];
+    case "EnumDeclaration": {
+      let body: Prettier.Doc = ["enum"];
       if (node.id) {
         body.push(path.call(print, "id"));
       }
@@ -227,27 +279,13 @@ function printAst(path, options, print) {
         );
       }
       return [body, " ", path.call(print, "body")];
+    }
 
     case "AttributeList":
       return printAttributeList(path, options, print, "");
+
     case "ClassElement":
-      body = [];
-      if (node.access) {
-        body.push(node.access, line);
-      }
-      if (node.item.static) {
-        body.push("static", line);
-      }
-      rhs = path.call(print, "item");
-      if (!body.length) {
-        return rhs;
-      }
-      if (Array.isArray(rhs)) {
-        body = body.concat(rhs);
-      } else {
-        body.push(rhs);
-      }
-      return fill(body);
+      return path.call(print, "item");
 
     case "CatchClauses":
       return join(" ", path.map(print, "catches"));
@@ -265,7 +303,7 @@ function printAst(path, options, print) {
         typeof node.value === "number" &&
         node.value === Math.floor(node.value)
       ) {
-        if (!LiteralIntegerRe.test(node.raw)) {
+        if (node.raw && !LiteralIntegerRe.test(node.raw)) {
           const result = doc.printer.printDocToString(
             estree_print(path, options, print),
             options
@@ -277,9 +315,9 @@ function printAst(path, options, print) {
             : result;
         } else if (
           (node.value > 0xffffffff || -node.value > 0xffffffff) &&
-          !/l$/i.test(node.raw)
+          !/l$/i.test(node.raw || "")
         ) {
-          return node.raw.toLowerCase() + "l";
+          return (node.raw || node.value.toString()).toLowerCase() + "l";
         }
       }
       break;
@@ -314,23 +352,28 @@ const BinaryOpPrecedence = {
   "|": [70, 10],
 };
 
-function wrapBody(node) {
+function wrapBody(node: ESTreeStatement): ESTreeBlockStatement {
   if (node.type == "BlockStatement") return node;
   return {
     type: "BlockStatement",
     body: [node],
     start: node.start,
     end: node.end,
+    loc: node.loc,
   };
 }
 
-function preprocessHelper(node, parent, options) {
+function preprocessHelper<T extends ESTreeNode>(
+  node: T,
+  parent: ESTreeNode | null,
+  options: ParserOptions
+) {
   for (const [key, value] of Object.entries(node)) {
     if (!value) continue;
     if (Array.isArray(value)) {
       value.forEach((obj) => preprocessHelper(obj, null, options));
     } else if (typeof value == "object" && value.type) {
-      node[key] = preprocessHelper(value, node, options);
+      node[key as keyof T] = preprocessHelper(value, node, options);
     }
   }
 
@@ -354,19 +397,21 @@ function preprocessHelper(node, parent, options) {
       expression: node,
       start: node.start,
       end: node.end,
+      loc: node.loc,
     };
   }
 
   return node;
 }
 
-function nodeNeedsParens(node, parent) {
+function nodeNeedsParens(node: ESTreeNode, parent: ESTreeNode): boolean {
   if (parent.type == "BinaryExpression" && parent.operator == "as") {
     if (node == parent.right) return false;
     switch (node.type) {
       // pretty much everything except primary, call, new, member
       case "ThisExpression":
       case "Identifier":
+      case "SizedArrayExpression":
       case "ArrayExpression":
       case "ObjectExpression":
       case "Literal":
@@ -410,4 +455,6 @@ function nodeNeedsParens(node, parent) {
   if (node.type == "NewExpression") {
     return parent.type == "MemberExpression";
   }
+
+  return false;
 }

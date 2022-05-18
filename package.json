@@ -1,10 +1,13 @@
 {
   "type": "module",
   "devDependencies": {
+    "@types/prettier": "^2.6.1",
     "eslint": "^8.10.0",
     "globby": "^13.1.1",
     "peggy": "^1.2.0",
     "prettier-plugin-pegjs": "^0.5.0",
+    "ts-loader": "^9.3.0",
+    "typescript": "^4.6.4",
     "webpack": "5.65.0",
     "webpack-cli": "^4.9.1"
   },
@@ -23,10 +26,10 @@
   "version": "1.0.17",
   "description": "A prettier plugin for Garmin monkey-c",
   "main": "build/prettier-plugin-monkeyc.cjs",
-  "types": "index.d.ts",
+  "types": "build/src/prettier-plugin-monkeyc.d.ts",
   "files": [
     "build/prettier-plugin-monkeyc.cjs",
-    "index.d.ts"
+    "build/src/*.d.ts"
   ],
   "repository": {
     "type": "git",
