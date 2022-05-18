@@ -129,9 +129,6 @@ SingleLineComment
 
 Identifier = !ReservedWord name:IdentifierName { return name; }
 
-TypedIdentifier
-  = id:Identifier ts:(__ @AsTypeSpec)? { return ts ? wrap({ ...id, ts }) : id; }
-
 IdentifierName "identifier"
   = "@"? head:IdentifierStart tail:IdentifierPart* {
       return wrap({
@@ -1468,6 +1465,18 @@ AsTypeSpec
     }
 
 FormalParameter = TypedIdentifier
+
+TypedIdentifier
+  = left:Identifier right:(__ AsToken __ @TypeSpecList)? {
+      return right
+        ? wrap({
+            type: "BinaryExpression",
+            operator: "as",
+            left,
+            right,
+          })
+        : left;
+    }
 
 FormalParameterList
   = head:FormalParameter tail:(__ "," __ @FormalParameter)* (__ ",")? {
