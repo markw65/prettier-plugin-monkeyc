@@ -170,3 +170,12 @@ Accept and fix a few more illegal programs
 #### 1.0.16
 
 - Write a webpack plugin to add a fake module.exports header to build/prettier-plugin-monkeyc.cjs, so that typescript, and node properly recognize what's being exported.
+
+#### 1.0.17
+
+- As of sdk 4.1.3, some of the sample projects no longer build with type checking enabled.
+  - Drop -l option from tests
+- Fix start/end locations for certain nodes
+  - When building chains of nodes via `reduce`, we were fixing start and end, but not the newly added loc.start/loc.end.
+- Add an index.d.ts
+  - @markw65/monkeyc-optimizer is switching over to typescript, and needs some basic type declarations.
