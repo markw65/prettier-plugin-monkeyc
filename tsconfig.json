@@ -9,10 +9,7 @@
     "sourceMap": true,
     "noImplicitReturns": true,
     "noImplicitAny": true,
-    "strictNullChecks": false,
-    "paths": {
-      "prettier/standalone.js": ["node_modules/@types/prettier/index.d.ts"]
-    },
+    "strictNullChecks": true,
     "declaration": true,
     "declarationDir": "build"
   },

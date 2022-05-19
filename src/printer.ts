@@ -1,8 +1,4 @@
-// If we pull in "prettier", we also pull in the `fs` module which
-// prevents the plugin from working in the browser, so we
-// pull in the standalone version.
-import * as Prettier from "prettier/standalone.js";
-import { AstPath } from "prettier";
+import * as Prettier from "prettier";
 import {
   BlockStatement as ESTreeBlockStatement,
   Statement as ESTreeStatement,
@@ -29,6 +25,7 @@ const {
 
 export const LiteralIntegerRe = /^(0x[0-9a-f]+|\d+)(l)?$/i;
 
+type AstPath<T = any> = Prettier.AstPath<T>;
 type ParserOptions = Prettier.ParserOptions<ESTreeNode>;
 
 interface Printer<T> extends Prettier.Printer<T> {

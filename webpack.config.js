@@ -117,7 +117,7 @@ export default (env, argv) => {
       enforceExtension: false,
       extensions: [".ts", ".js"],
     },
-    externals: { "prettier/standalone.js": "commonjs prettier/standalone.js" },
+    externals: { prettier: "prettier" },
     plugins: [
       {
         apply(compiler) {
