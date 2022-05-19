@@ -180,7 +180,11 @@ Accept and fix a few more illegal programs
 - Add an index.d.ts
   - @markw65/monkeyc-optimizer is switching over to typescript, and needs some basic type declarations.
 
-### 1.0.18
+#### 1.0.18
 
 - Make TypedIdentifier a union type between `Identifier` and `AsExpression`. The problem with the old way of doing it was that the identifier's location went from before the start of the identifier to after the end of the `as` expression, which was problematic when finding all references to the symbol, or renaming the symbol in vscode.
 - Switch everything over to typescript. This found some bugs, and some dead code (where fields had been moved around, but there was still dead code looking at the old locations). It also creates better type exports for typescript projects that import this one.
+
+#### 1.0.19
+
+- Switch to using prettier, rather than prettier/standalone since we don't need to run in the browser, and @types/prettier is missing a lot of types for prettier/standalone.
