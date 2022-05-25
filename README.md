@@ -188,3 +188,8 @@ Accept and fix a few more illegal programs
 #### 1.0.19
 
 - Switch to using prettier, rather than prettier/standalone since we don't need to run in the browser, and @types/prettier is missing a lot of types for prettier/standalone.
+
+#### 1.0.20
+
+- Allow null for FunctionDeclaration.body
+- Turn on stricter checking for typescript.
