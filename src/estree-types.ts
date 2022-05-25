@@ -87,7 +87,7 @@ export interface ModuleDeclaration extends BaseDeclaration {
 
 interface BaseFunction extends BaseNode {
   params: Array<TypedIdentifier>;
-  body: BlockStatement;
+  body: BlockStatement | null;
 }
 
 export type Statement =
@@ -191,7 +191,6 @@ interface BaseDeclaration extends BaseStatement {
 export interface FunctionDeclaration extends BaseFunction, BaseDeclaration {
   type: "FunctionDeclaration";
   id: Identifier;
-  body: BlockStatement;
   optimizable?: boolean;
   hasOverride?: boolean;
 }
