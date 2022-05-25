@@ -358,13 +358,14 @@ const BinaryOpPrecedence = {
 
 function wrapBody(node: ESTreeStatement): ESTreeBlockStatement {
   if (node.type == "BlockStatement") return node;
-  return {
+  const wrapped = {
     type: "BlockStatement",
     body: [node],
-    start: node.start,
-    end: node.end,
-    loc: node.loc,
-  };
+  } as ESTreeBlockStatement;
+  if (node.start != null) wrapped.start = node.start;
+  if (node.end != null) wrapped.end = node.end;
+  if (node.loc != null) wrapped.loc = node.loc;
+  return wrapped;
 }
 
 function preprocessHelper<T extends ESTreeNode>(
