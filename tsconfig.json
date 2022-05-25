@@ -7,11 +7,11 @@
     "lib": ["ES2020"],
     "outDir": "build",
     "sourceMap": true,
-    "noImplicitReturns": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
     "declaration": true,
-    "declarationDir": "build"
+    "declarationDir": "build",
+    "noImplicitReturns": true,
+    "useUnknownInCatchVariables": true,
+    "strict": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "build"]

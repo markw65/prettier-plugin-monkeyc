@@ -3,6 +3,7 @@ import {
   BlockStatement as ESTreeBlockStatement,
   Statement as ESTreeStatement,
   Node as ESTreeNode,
+  AttributeList,
 } from "./estree-types";
 const { doc } = Prettier;
 
@@ -70,12 +71,13 @@ function preprocessAst(ast: ESTreeNode, options: ParserOptions) {
 }
 
 function printAttributeList(
-  path: AstPath,
+  path: AstPath<AttributeList | undefined>,
   options: ParserOptions,
-  print: (path: AstPath<ESTreeNode>) => Prettier.Doc,
+  print: (path: AstPath<ESTreeNode | string>) => Prettier.Doc,
   body: Prettier.Doc
 ) {
   const node = path.getValue();
+  if (!node) return [];
   if (node.access) {
     const access = path
       .map(print, "access")
@@ -132,7 +134,7 @@ function printAst(
         path.call(print, "body"),
       ]);
       if (node.attrs) {
-        body = path.call(
+        body = (path as AstPath<typeof node>).call(
           (p) => printAttributeList(p, options, print, body),
           "attrs"
         );
@@ -255,7 +257,7 @@ function printAst(
     case "ClassDeclaration": {
       let body = estree_print(path, options, print);
       if (node.attrs) {
-        body = path.call(
+        body = (path as AstPath<typeof node>).call(
           (p) => printAttributeList(p, options, print, body),
           "attrs"
         );
@@ -270,7 +272,7 @@ function printAst(
       }
       body = join(" ", body);
       if (node.attrs) {
-        body = path.call(
+        body = (path as AstPath<typeof node>).call(
           (p) => printAttributeList(p, options, print, body),
           "attrs"
         );
@@ -279,7 +281,12 @@ function printAst(
     }
 
     case "AttributeList":
-      return printAttributeList(path, options, print, "");
+      return printAttributeList(
+        path as AstPath<typeof node>,
+        options,
+        print,
+        ""
+      );
 
     case "ClassElement":
       return path.call(print, "item");
