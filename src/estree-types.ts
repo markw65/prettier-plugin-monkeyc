@@ -53,6 +53,7 @@ export type Node =
   | TypeSpecPart
   | ClassElement
   | ClassBody
+  | MethodDefinition
   | Comment;
 
 export interface Comment extends BaseNode {
@@ -81,7 +82,7 @@ export interface Program extends BaseNode {
 
 export interface ModuleDeclaration extends BaseDeclaration {
   type: "ModuleDeclaration";
-  body: Array<Declaration | ImportStatement>;
+  body: BlockStatement;
   id: Identifier;
 }
 
@@ -446,7 +447,7 @@ export interface ClassBody extends BaseStatement {
 
 export interface ClassElement extends BaseStatement {
   type: "ClassElement";
-  item: Omit<Declaration, "ModuleDeclaration">;
+  item: Exclude<Declaration, ModuleDeclaration>;
 }
 
 export interface EnumDeclaration extends BaseDeclaration {

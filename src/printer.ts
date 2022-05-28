@@ -105,7 +105,7 @@ function printAttributeList(
 function printAst(
   path: AstPath<ESTreeNode>,
   options: ParserOptions,
-  print: (path: AstPath) => Prettier.Doc
+  print: (path: AstPath<ESTreeNode | string | null | undefined>) => Prettier.Doc
 ) {
   const node = path.getValue();
   if (!node) {
@@ -115,6 +115,8 @@ function printAst(
   if (typeof node === "string") {
     return node;
   }
+
+  const typedPath = <T extends ESTreeNode>(node: T) => path as AstPath<T>;
 
   switch (node.type) {
     case "Program": {
@@ -131,10 +133,10 @@ function printAst(
     case "ModuleDeclaration": {
       let body: Prettier.Doc = group([
         group(["module", line, indent(node.id.name), line]),
-        path.call(print, "body"),
+        typedPath(node).call(print, "body"),
       ]);
       if (node.attrs) {
-        body = (path as AstPath<typeof node>).call(
+        body = typedPath(node).call(
           (p) => printAttributeList(p, options, print, body),
           "attrs"
         );
@@ -145,14 +147,14 @@ function printAst(
     case "TypedefDeclaration":
       return [
         group(["typedef", line, node.id.name]),
-        indent(path.call(print, "ts")),
+        indent(typedPath(node).call(print, "ts")),
         ";",
       ];
 
     case "Property": {
       return group([
         group([path.call(print, "key"), line, "=>", line]),
-        path.call(print, "value"),
+        typedPath(node).call(print, "value"),
       ]);
     }
 
@@ -187,7 +189,7 @@ function printAst(
       const body = [node.name ? path.call(print, "name") : ""];
 
       if (node.body) {
-        body.push(" ", dedent(path.call(print, "body")));
+        body.push(" ", dedent(typedPath(node).call(print, "body")));
       }
       if (node.generics) {
         // Add a space between the trailing >> in Array<Array<Number>>,
@@ -199,13 +201,6 @@ function printAst(
         body.push(
           group([
             "<",
-            /*
-             * A bug in @types/prettier only allows map to be called on
-             * fields that are non-optional arrays in at least one of the
-             * components of ESTreeNode. The only occurrance of generics is
-             * as an optional array.
-             */
-            // @ts-ignore
             indent([softline, join([",", line], path.map(print, "generics"))]),
             final_space,
             ">",
@@ -233,7 +228,7 @@ function printAst(
         "new ",
         node.ts
           ? [
-              path.call(print, "ts"),
+              typedPath(node).call(print, "ts"),
               /*
                * if the typespec has a generic, don't leave
                * a space.
@@ -257,7 +252,7 @@ function printAst(
     case "ClassDeclaration": {
       let body = estree_print(path, options, print);
       if (node.attrs) {
-        body = (path as AstPath<typeof node>).call(
+        body = typedPath(node).call(
           (p) => printAttributeList(p, options, print, body),
           "attrs"
         );
@@ -272,12 +267,12 @@ function printAst(
       }
       body = join(" ", body);
       if (node.attrs) {
-        body = (path as AstPath<typeof node>).call(
+        body = typedPath(node).call(
           (p) => printAttributeList(p, options, print, body),
           "attrs"
         );
       }
-      return [body, " ", path.call(print, "body")];
+      return [body, " ", typedPath(node).call(print, "body")];
     }
 
     case "AttributeList":
