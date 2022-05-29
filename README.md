@@ -193,3 +193,8 @@ Accept and fix a few more illegal programs
 
 - Allow null for FunctionDeclaration.body
 - Turn on stricter checking for typescript.
+
+#### 1.0.21
+
+- Stricter typechecking, and fix a declaration in estree-types
+- Bump to latest versions of all npm packages
