@@ -460,7 +460,7 @@ export interface EnumStringBody extends BaseNode {
   type: "EnumStringBody";
   members: Array<EnumStringMember | Identifier>;
   // Added by optimizer
-  enumType?: string | Node;
+  enumType?: string;
 }
 
 export interface EnumStringMember extends BaseNode {
@@ -468,7 +468,7 @@ export interface EnumStringMember extends BaseNode {
   id: Identifier;
   init: Expression;
   // Added by optimizer
-  enumType?: string | Node;
+  enumType?: string;
 }
 
 export interface TypedefDeclaration extends BaseDeclaration {
