@@ -198,3 +198,9 @@ Accept and fix a few more illegal programs
 
 - Stricter typechecking, and fix a declaration in estree-types
 - Bump to latest versions of all npm packages
+
+#### 1.0.22
+
+- Fix a couple of estree-types declarations
+- Fix parsing and printing of top level object literals
+- Parenthesize various top level expressions so the Garmin parser can handle them
