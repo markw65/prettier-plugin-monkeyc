@@ -182,6 +182,20 @@ function printAst(
       return group(join([" or", line], body));
     }
 
+    case "ParenthesizedExpression": {
+      // We wrap top-level ObjectExpressions in parens
+      // so that the estree printer doesn't realize they're
+      // top level (because it would *add* parens in that case)
+      // There's also a bug where trying to print certain expressions
+      // with no parent node will crash the estree printer, so
+      // we wrap the nodes in parens.
+      // In both cases, we don't want to actually print the parens.
+      if (node.expression.type == "ObjectExpression" || !path.getParentNode()) {
+        return path.call(print, "expression");
+      }
+      return estree_print(path, options, print);
+    }
+
     case "ObjectExpression":
       return estree_print(path, options, print);
 
@@ -404,25 +418,39 @@ function preprocessHelper<T extends ESTreeNode>(
   return node;
 }
 
+function isToplevel(node: ESTreeNode) {
+  switch (node.type) {
+    // pretty much everything except primary, call, new, member
+    case "ThisExpression":
+    case "Identifier":
+    case "SizedArrayExpression":
+    case "ArrayExpression":
+    case "ObjectExpression":
+    case "Literal":
+    case "MemberExpression":
+    case "NewExpression":
+    case "CallExpression":
+    case "UnaryExpression":
+    case "ParenthesizedExpression":
+    case "AssignmentExpression":
+    case "UpdateExpression":
+      return true;
+  }
+  return false;
+}
+
 function nodeNeedsParens(node: ESTreeNode, parent: ESTreeNode): boolean {
+  if (parent.type === "ExpressionStatement") {
+    // We don't want to parenthesise a top level ObjectExpression,
+    // but the estree printer will do it anyway. So we wrap it in
+    // parens (to prevent the estree printer from doing so), but
+    // ignore the parens ourselves.
+    return !isToplevel(node) || node.type === "ObjectExpression";
+  }
+
   if (parent.type == "BinaryExpression" && parent.operator == "as") {
     if (node == parent.right) return false;
-    switch (node.type) {
-      // pretty much everything except primary, call, new, member
-      case "ThisExpression":
-      case "Identifier":
-      case "SizedArrayExpression":
-      case "ArrayExpression":
-      case "ObjectExpression":
-      case "Literal":
-      case "MemberExpression":
-      case "NewExpression":
-      case "CallExpression":
-      case "UnaryExpression":
-      case "ParenthesizedExpression":
-        return false;
-    }
-    return true;
+    return !isToplevel(node);
   }
 
   if (node.type == "BinaryExpression") {

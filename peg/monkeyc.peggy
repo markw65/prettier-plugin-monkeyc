@@ -572,12 +572,9 @@ ObjectLiteral
   / "{" __ properties:PropertyNameAndValueList __ "}" {
       return wrap({ type: "ObjectExpression", properties: properties });
     }
-  / "{" __ properties:PropertyNameAndValueList __ "," __ "}" {
-      return wrap({ type: "ObjectExpression", properties: properties });
-    }
 
 PropertyNameAndValueList
-  = head:PropertyAssignment tail:(__ "," __ @PropertyAssignment)* {
+  = head:PropertyAssignment tail:(__ "," __ @PropertyAssignment)* (__ ",")? {
       return [head, ...tail];
     }
 
@@ -871,7 +868,7 @@ ExpressionLikeList
 // ----- Statements -----
 
 Statement
-  = Block
+  = BlockOrObjectLiteral
   / VariableStatement
   / ExpressionStatement
   / IfStatement
@@ -890,6 +887,12 @@ Block
         type: "BlockStatement",
         body: optionalList(body),
       });
+    }
+
+BlockOrObjectLiteral
+  = Block
+  / expression:ObjectLiteral EOS {
+      return wrap({ type: "ExpressionStatement", expression });
     }
 
 StatementList = head:Statement tail:(__ @Statement)* { return [head, ...tail]; }
