@@ -204,3 +204,8 @@ Accept and fix a few more illegal programs
 - Fix a couple of estree-types declarations
 - Fix parsing and printing of top level object literals
 - Parenthesize various top level expressions so the Garmin parser can handle them
+
+#### 1.0.23
+
+- Don't allow comments on AttributeList nodes.
+  - They weren't handled, and that resulted in an assertion from Prettier
