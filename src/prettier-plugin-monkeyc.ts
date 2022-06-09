@@ -1,7 +1,7 @@
 import { parse } from "../build/monkeyc.js";
 import { default as preprocess, LiteralIntegerRe } from "./printer";
 import { Node as ESTreeNode, Program as ESTreeProgram } from "./estree-types";
-import { Parser, ParserOptions } from "prettier";
+import { Parser, ParserOptions, Printer } from "prettier";
 export * as mctree from "./estree-types";
 export { LiteralIntegerRe };
 
@@ -48,7 +48,7 @@ export const parsers = {
   } as Parser<ESTreeNode>,
 };
 
-export const printers = {
+export const printers: Record<string, Printer<ESTreeNode>> = {
   monkeyc: {
     print: () => {
       throw "Something went wrong: printer not initialized!";

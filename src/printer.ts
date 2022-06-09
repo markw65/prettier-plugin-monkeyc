@@ -3,8 +3,11 @@ import {
   BlockStatement as ESTreeBlockStatement,
   Statement as ESTreeStatement,
   Node as ESTreeNode,
-  AttributeList,
+  AttributeList as ESTreeAttributeList,
+  Comment as ESTreeComment,
 } from "./estree-types";
+import { printers } from "./prettier-plugin-monkeyc";
+
 const { doc } = Prettier;
 
 // Commands to build the prettier syntax tree
@@ -48,15 +51,19 @@ export default function printerIntialize(text: string, options: ParserOptions) {
       if (!result) throw new Error("Prettier setup failure!");
       return result as Printer<ESTreeNode>;
     };
-    let rest;
+    let rest, canAttachComment: ((node: ESTreeNode) => boolean) | undefined;
     ({
       print: estree_print,
       preprocess: estree_preprocess,
+      canAttachComment,
       ...rest
     } = find("estree"));
-    Object.assign(find("monkeyc"), rest, {
+    Object.assign(printers.monkeyc, rest, {
       print: printAst,
       preprocess: preprocessAst,
+      canAttachComment: (node: ESTreeNode) =>
+        node.type != "AttributeList" &&
+        (!canAttachComment || canAttachComment(node)),
     });
   }
   return text;
@@ -71,7 +78,7 @@ function preprocessAst(ast: ESTreeNode, options: ParserOptions) {
 }
 
 function printAttributeList(
-  path: AstPath<AttributeList | undefined>,
+  path: AstPath<ESTreeAttributeList | undefined>,
   options: ParserOptions,
   print: (path: AstPath<ESTreeNode | string>) => Prettier.Doc,
   body: Prettier.Doc
