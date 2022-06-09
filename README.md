@@ -209,3 +209,11 @@ Accept and fix a few more illegal programs
 
 - Don't allow comments on AttributeList nodes.
   - They weren't handled, and that resulted in an assertion from Prettier
+
+#### 1.0.23
+
+- Add an Attributes node between the AttributeList and the Attribute[]
+  - This allows us to handle trailing comments on attributes better.
+- Properly handle comments in the monkeyc-json parser.
+  - Drop comments unless we have the source code
+  - Drop prettier-ignore comments if we _do_ have the source code.
