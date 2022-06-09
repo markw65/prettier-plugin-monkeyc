@@ -49,6 +49,7 @@ export type Node =
   | ImportStatement
   | AsTypeSpec
   | AttributeList
+  | Attributes
   | TypeSpecList
   | TypeSpecPart
   | ClassElement
@@ -513,9 +514,14 @@ export type AccessSpecifier =
   | "hidden"
   | "public";
 
+export interface Attributes extends BaseNode {
+  type: "Attributes";
+  elements: Attribute[];
+}
+
 export interface AttributeList extends BaseNode {
   type: "AttributeList";
-  attrs?: Attribute[];
+  attributes?: Attributes;
   access?: AccessSpecifier[];
 }
 

@@ -1198,10 +1198,10 @@ Attribute
     }
 
 AttributeList
-  = attrs:Attributes access:(__ @AccessList)? {
+  = attributes:Attributes access:(__ @AccessList)? {
       return wrap({
         type: "AttributeList",
-        attrs,
+        attributes,
         access,
       });
     }
@@ -1214,7 +1214,7 @@ AttributeList
 
 Attributes
   = "(" __ head:Attribute tail:(__ "," __ @Attribute)* __ ")" {
-      return [head, ...tail];
+      return wrap({ type: "Attributes", elements: [head, ...tail] });
     }
 
 AccessList

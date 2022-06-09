@@ -80,33 +80,21 @@ function preprocessAst(ast: ESTreeNode, options: ParserOptions) {
 function printAttributeList(
   path: AstPath<ESTreeAttributeList | undefined>,
   options: ParserOptions,
-  print: (path: AstPath<ESTreeNode | string>) => Prettier.Doc,
-  body: Prettier.Doc
+  print: (path: AstPath<ESTreeNode | string | undefined>) => Prettier.Doc
 ) {
   const node = path.getValue();
   if (!node) return [];
+  let body: Prettier.Doc = [];
   if (node.access) {
-    const access = path
-      .map(print, "access")
-      .sort()
-      .filter((item, index, arr) => !index || item != arr[index - 1]);
-    access.push(body);
-    body = join(" ", access);
+    body =
+      node.access
+        .slice()
+        .sort()
+        .filter((item, index, arr) => !index || item != arr[index - 1])
+        .join(" ") + " ";
   }
-  if (!node.attrs) return body;
-  return [
-    group([
-      "(",
-      indent([
-        softline,
-        group(join([",", softline], path.map(print, "attrs"))),
-      ]),
-      softline,
-      ")",
-    ]),
-    hardline,
-    body,
-  ];
+  if (!node.attributes) return body;
+  return [path.call(print, "attributes"), hardline, body];
 }
 
 function printAst(
@@ -138,15 +126,13 @@ function printAst(
       return body;
     }
     case "ModuleDeclaration": {
-      let body: Prettier.Doc = group([
+      const body: Prettier.Doc = group([
         group(["module", line, indent(node.id.name), line]),
         typedPath(node).call(print, "body"),
       ]);
       if (node.attrs) {
-        body = typedPath(node).call(
-          (p) => printAttributeList(p, options, print, body),
-          "attrs"
-        );
+        const attrs = typedPath(node).call(print, "attrs");
+        return [attrs, body];
       }
       return body;
     }
@@ -271,12 +257,10 @@ function printAst(
     case "VariableDeclaration":
     case "FunctionDeclaration":
     case "ClassDeclaration": {
-      let body = estree_print(path, options, print);
+      const body = estree_print(path, options, print);
       if (node.attrs) {
-        body = typedPath(node).call(
-          (p) => printAttributeList(p, options, print, body),
-          "attrs"
-        );
+        const attrs = typedPath(node).call(print, "attrs");
+        return [attrs, body];
       }
       return body;
     }
@@ -288,21 +272,25 @@ function printAst(
       }
       body = join(" ", body);
       if (node.attrs) {
-        body = typedPath(node).call(
-          (p) => printAttributeList(p, options, print, body),
-          "attrs"
-        );
+        const attrs = typedPath(node).call(print, "attrs");
+        body = [attrs, body];
       }
       return [body, " ", typedPath(node).call(print, "body")];
     }
 
+    case "Attributes":
+      return group([
+        "(",
+        indent([
+          softline,
+          group(join([",", softline], path.map(print, "elements"))),
+        ]),
+        softline,
+        ")",
+      ]);
+
     case "AttributeList":
-      return printAttributeList(
-        path as AstPath<typeof node>,
-        options,
-        print,
-        ""
-      );
+      return printAttributeList(path as AstPath<typeof node>, options, print);
 
     case "ClassElement":
       return path.call(print, "item");
