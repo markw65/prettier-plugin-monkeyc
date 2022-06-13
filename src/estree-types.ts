@@ -33,6 +33,8 @@ interface BaseNode {
 
 export type Node =
   | Identifier
+  | DottedName
+  | ScopedName
   | Literal
   | Program
   | SwitchCase
@@ -362,6 +364,15 @@ export interface MemberExpression extends BaseExpression {
   computed: boolean;
 }
 
+export interface DottedName extends MemberExpression {
+  type: "MemberExpression";
+  object: ScopedName;
+  property: Identifier;
+  computed: false;
+}
+
+export type ScopedName = DottedName | Identifier;
+
 export interface SwitchCase extends BaseNode {
   type: "SwitchCase";
   test?: Expression | InstanceOfCase | null | undefined;
@@ -437,7 +448,7 @@ export type UpdateOperator = "++" | "--";
 export interface ClassDeclaration extends BaseDeclaration {
   type: "ClassDeclaration";
   id: Identifier;
-  superClass?: Expression | null | undefined;
+  superClass?: ScopedName | null | undefined;
   body: ClassBody;
 }
 
@@ -491,7 +502,7 @@ export interface TypeSpecList extends BaseNode {
 
 export interface TypeSpecPart extends BaseNode {
   type: "TypeSpecPart";
-  name: Identifier | MemberExpression;
+  name: ScopedName | string;
   body?: BlockStatement;
   callspec?: MethodDefinition;
   generics?: Array<TypeSpecList>;
@@ -531,11 +542,11 @@ export type ImportStatement = ImportModule | Using;
 
 export interface ImportModule extends BaseNode {
   type: "ImportModule";
-  id: MemberExpression;
+  id: ScopedName;
 }
 
 export interface Using extends BaseNode {
   type: "Using";
-  id: MemberExpression;
+  id: ScopedName;
   as: Identifier;
 }
