@@ -223,6 +223,8 @@ type Expression =
   | BinaryExpression
   | AsExpression
   | AsIdentifier
+  | InstanceofExpression
+  | InstanceofIdentifier
   | AssignmentExpression
   | LogicalExpression
   | MemberExpression
@@ -315,6 +317,20 @@ export interface AsIdentifier extends AsExpression {
   left: Identifier;
 }
 
+export interface InstanceofExpression extends BaseExpression {
+  type: "BinaryExpression";
+  operator: "instanceof";
+  left: Expression;
+  right: ScopedName;
+}
+
+export interface InstanceofIdentifier extends InstanceofExpression {
+  type: "BinaryExpression";
+  operator: "instanceof";
+  left: Identifier;
+  right: ScopedName;
+}
+
 export interface AssignmentExpression extends BaseExpression {
   type: "AssignmentExpression";
   operator: AssignmentOperator;
@@ -381,12 +397,12 @@ export interface SwitchCase extends BaseNode {
 
 export interface InstanceOfCase extends BaseNode {
   type: "InstanceOfCase";
-  id: Identifier;
+  id: ScopedName;
 }
 
 export interface CatchClause extends BaseNode {
   type: "CatchClause";
-  param: Identifier | null;
+  param: Identifier | InstanceofIdentifier | null;
   body: BlockStatement;
 }
 
@@ -425,8 +441,7 @@ export type BinaryOperator =
   | "|"
   | "^"
   | "&"
-  | "has"
-  | "instanceof";
+  | "has";
 
 export type LogicalOperator = "||" | "&&";
 

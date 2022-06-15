@@ -1091,7 +1091,7 @@ CaseBlock
 CaseClauses = head:CaseClause tail:(__ @CaseClause)* { return [head, ...tail]; }
 
 InstanceofCase
-  = InstanceofToken __ id:Identifier {
+  = InstanceofToken __ id:ScopedName {
       return wrap({
         type: "InstanceOfCase",
         id,
