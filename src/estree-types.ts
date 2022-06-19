@@ -197,6 +197,7 @@ export interface FunctionDeclaration extends BaseFunction, BaseDeclaration {
   id: Identifier;
   optimizable?: boolean;
   hasOverride?: boolean;
+  returnType?: AsTypeSpec;
 }
 
 export interface VariableDeclaration extends BaseDeclaration {
