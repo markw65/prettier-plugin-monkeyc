@@ -60,7 +60,7 @@ export type Node =
   | Comment;
 
 export interface Comment extends BaseNode {
-  type: "Line" | "Block";
+  type: "Line" | "Block" | "MultiLine";
   value: string;
 }
 
