@@ -230,3 +230,7 @@ Accept and fix a few more illegal programs
 #### 1.0.27
 
 - More nits in estree-types.
+
+#### 1.0.28
+
+- More nits in estree-types.
