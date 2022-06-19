@@ -226,3 +226,7 @@ Accept and fix a few more illegal programs
 
 - Fix bug parsing case instanceof (it only allowed a plain identifier)
 - Fix more estree types
+
+#### 1.0.27
+
+- More nits in estree-types.
