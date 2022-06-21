@@ -64,6 +64,7 @@ export default function printerIntialize(text: string, options: ParserOptions) {
       canAttachComment: (node: ESTreeNode) =>
         node.type != "AttributeList" &&
         (!canAttachComment || canAttachComment(node)),
+      willPrintOwnComments: () => false,
     });
   }
   return text;

@@ -101,7 +101,14 @@ function runTests(logger as Logger) as Boolean {
     var tests = getExprs();
     var ok = true;
     for (var i = 0; i < tests.size(); i++) {
-        if (!check(logger, i, tests[i][0], tests[i][1])) {
+        if (
+            !check(
+                logger,
+                i as Number /* :: Flow Comment Shouldn't break the printer */,
+                tests[i][0],
+                tests[i][1]
+            )
+        ) {
             ok = false;
         }
     }
