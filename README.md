@@ -234,3 +234,7 @@ Accept and fix a few more illegal programs
 #### 1.0.28
 
 - More nits in estree-types.
+
+#### 1.0.29
+
+- Fix a bug where comments beginning `\s*::` on certain nodes could end up not being printed, and result in an error from prettier.
