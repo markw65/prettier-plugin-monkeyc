@@ -359,7 +359,7 @@ const BinaryOpPrecedence = {
   "&": [50, 0],
   "^": [60, 10],
   "|": [70, 10],
-};
+} as const;
 
 function wrapBody(node: ESTreeStatement): ESTreeBlockStatement {
   if (node.type == "BlockStatement") return node;
@@ -467,6 +467,8 @@ function nodeNeedsParens(node: ESTreeNode, parent: ESTreeNode): boolean {
         }
         break;
       }
+      case "LogicalExpression":
+        return node.operator == "as";
       case "MemberExpression":
         return node.operator == "as" && node == parent.object;
       case "NewExpression":
