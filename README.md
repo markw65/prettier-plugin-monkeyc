@@ -243,3 +243,7 @@ Accept and fix a few more illegal programs
 
 - Parenthesize AsExpression when its a subexpression of LogicalExpression
 - Export Expression from estree-types
+
+#### 1.0.31
+
+- Parenthesize AsExpression when its the test of a ConditionalExpression
