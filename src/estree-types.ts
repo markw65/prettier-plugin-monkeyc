@@ -213,7 +213,7 @@ export interface VariableDeclarator extends BaseNode {
   kind: "var" | "const";
 }
 
-type Expression =
+export type Expression =
   | ThisExpression
   | ArrayExpression
   | SizedArrayExpression
