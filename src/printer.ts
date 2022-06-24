@@ -467,13 +467,15 @@ function nodeNeedsParens(node: ESTreeNode, parent: ESTreeNode): boolean {
         }
         break;
       }
+      case "ConditionalExpression":
+        return node.operator === "as" && node === parent.test;
       case "LogicalExpression":
-        return node.operator == "as";
+        return node.operator === "as";
       case "MemberExpression":
-        return node.operator == "as" && node == parent.object;
+        return node.operator === "as" && node === parent.object;
       case "NewExpression":
       case "CallExpression":
-        return node.operator == "as" && node == parent.callee;
+        return node.operator === "as" && node === parent.callee;
     }
     return false;
   }
