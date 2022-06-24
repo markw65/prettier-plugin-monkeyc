@@ -238,3 +238,8 @@ Accept and fix a few more illegal programs
 #### 1.0.29
 
 - Fix a bug where comments beginning `\s*::` on certain nodes could end up not being printed, and result in an error from prettier.
+
+#### 1.0.30
+
+- Parenthesize AsExpression when its a subexpression of LogicalExpression
+- Export Expression from estree-types
