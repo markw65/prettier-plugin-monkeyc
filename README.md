@@ -247,3 +247,8 @@ Accept and fix a few more illegal programs
 #### 1.0.31
 
 - Parenthesize AsExpression when its the test of a ConditionalExpression
+
+#### 1.0.32
+
+- Disambiguate the ? in `foo as Bar ? E1 : E2`
+  - Without this fix, it would be greedily parsed as `(foo as Bar?)`, and then the parser would trip over the remainder of the expression. This adds a lookahead, so the `?` is only included in the type if the rest of the expression doesn't parse as a ConditionalExpression.
