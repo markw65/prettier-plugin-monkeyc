@@ -16,6 +16,7 @@
   },
   "scripts": {
     "test": "node test/test.js",
+    "test-quick": "node test/test.js --projects=test/test-cases",
     "watch": "webpack --mode development --watch",
     "build-debug": "webpack --mode development",
     "build-release": "webpack --mode production",

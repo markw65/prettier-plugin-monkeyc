@@ -83,6 +83,7 @@ function check(logger, i, expected, actual) {
     return result[0];
 }
 
+// prettier-ignore
 function getExprs() as Array<Array> {
     return (
         [
@@ -92,6 +93,8 @@ function getExprs() as Array<Array> {
             [true, ((4 + 5) has :toString) as Boolean],
             [[[2, 3], [-1, 4]], { 1 ? 2 : 3 => 3, -1 => 4 }],
             [true, 4e0 instanceof Lang.Float],
+            [true, true as Boolean ? true : false],
+            [false, null as Boolean? ? true : false],
         ] as Array<Array>
     );
 }

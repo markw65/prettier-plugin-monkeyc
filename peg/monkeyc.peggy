@@ -1443,10 +1443,14 @@ CallSpec
       });
     }
 
+ConditionalExpressionTail = __ SingleExpression __ ":" __ SingleExpression
+
 TypeSpecList
   = head:SingleTypeSpec
     tail:(
-      __ "?" { return wrap({ type: "TypeSpecPart", name: "Null" }); }
+      __ "?" !ConditionalExpressionTail {
+          return wrap({ type: "TypeSpecPart", name: "Null" });
+        }
       / (__ "or" __ @SingleTypeSpec)+
     )? {
       if (tail == null) {
