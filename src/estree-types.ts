@@ -419,7 +419,7 @@ export interface Identifier extends BaseNode, BaseExpression {
 
 export interface Literal extends BaseNode, BaseExpression {
   type: "Literal";
-  value: string | boolean | number | null;
+  value: string | boolean | number | bigint | null;
   raw: string;
 }
 

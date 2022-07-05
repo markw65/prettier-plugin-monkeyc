@@ -236,12 +236,20 @@ FloatSuffix
   / "d"i
 
 DecimalLiteral
-  = txt:$(
+  = raw:$(
     DecimalIntegerLiteral
       ("l"i / (("." DecimalDigit+)? ExponentPart?) FloatSuffix?)?
-  ) { return wrap({ type: "Literal", value: parseFloat(txt), raw: text() }); }
-  / txt:$("." DecimalDigit+ ExponentPart?) suffix:FloatSuffix? {
-      return wrap({ type: "Literal", value: parseFloat(txt), raw: text() });
+  ) {
+      return wrap({
+        type: "Literal",
+        value: /l$/i.test(raw)
+          ? BigInt.asIntN(64, BigInt(raw.slice(0, -1)))
+          : parseFloat(raw),
+        raw,
+      });
+    }
+  / raw:$("." DecimalDigit+ ExponentPart?) suffix:FloatSuffix? {
+      return wrap({ type: "Literal", value: parseFloat(raw), raw });
     }
 
 DecimalIntegerLiteral

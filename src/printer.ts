@@ -312,7 +312,7 @@ function printAst(
         typeof node.value === "number" &&
         node.value === Math.floor(node.value)
       ) {
-        if (node.raw && !LiteralIntegerRe.test(node.raw)) {
+        if (!LiteralIntegerRe.test(node.raw)) {
           const result = doc.printer.printDocToString(
             estree_print(path, options, print),
             options
@@ -326,8 +326,14 @@ function printAst(
           (node.value > 0xffffffff || -node.value > 0xffffffff) &&
           !/l$/i.test(node.raw || "")
         ) {
-          return (node.raw || node.value.toString()).toLowerCase() + "l";
+          return node.raw.toLowerCase() + "l";
         }
+      } else if (typeof node.value === "bigint") {
+        const result = doc.printer.printDocToString(
+          estree_print(path, options, print),
+          options
+        ).formatted;
+        return result + "l";
       }
       break;
   }

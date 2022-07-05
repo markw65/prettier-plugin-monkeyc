@@ -38,7 +38,7 @@ export const parsers = {
       const match = str.match(
         /^((.|[\r\n\u2028\u2029])*)(\r\n|[\n\r\u2028\u2029])(.+)$/
       );
-      const result = JSON.parse(match ? match[4] : str) as ESTreeNode;
+      const result = unserializeMonkeyC(match ? match[4] : str);
       if ("comments" in result) {
         if (
           !match ||
@@ -80,5 +80,39 @@ export const options = {};
 export const defaultOptions = {
   tabWidth: 4,
 };
+
+/*
+ * BigInt's can't be JSON.serialized, so use a replacer function
+ * Literals have a value field, which can be a string, number,
+ * bigint, boolean or null. Since the string type can hold an
+ * arbitrary string, we can't convert the BigInt to "1n" or
+ * "BigInt(1)", since a string could take on the same value.
+ *
+ * Instead, we just encode it as Number(0). Then when we unpack,
+ * if we find a 0, we can use the Literal's "raw" field to
+ * unpack the actual BigInt value.
+ */
+export function serializeMonkeyC(node: ESTreeNode) {
+  return JSON.stringify(node, (key: string, value: unknown) => {
+    if (key === "value" && typeof value === "bigint") {
+      return 0;
+    }
+    return value;
+  });
+}
+
+export function unserializeMonkeyC(serialized: string) {
+  return JSON.parse(serialized, function (key: string, value: unknown) {
+    if (key === "value" && value === 0) {
+      if (this.type === "Literal" && typeof this.raw === "string") {
+        const match = this.raw.match(LiteralIntegerRe);
+        if (match && (match[2] === "l" || match[2] === "L")) {
+          return BigInt(match[1]);
+        }
+      }
+    }
+    return value;
+  }) as ESTreeNode;
+}
 
 export default { languages, parsers, printers, options };
