@@ -782,23 +782,17 @@ LogicalOROperator
   / $OrToken
 
 ConditionalExpression
-  = test:LogicalORExpression
-    __
-    "?"
-    __
-    consequent:SingleExpression
-    __
-    ":"
-    __
-    alternate:SingleExpression {
+  = test:LogicalORExpression __ "?" tail:ConditionalExpressionTail {
       return wrap({
         type: "ConditionalExpression",
         test: test,
-        consequent: consequent,
-        alternate: alternate,
+        consequent: tail[0],
+        alternate: tail[1],
       });
     }
   / LogicalORExpression
+
+ConditionalExpressionTail = __ @SingleExpression __ ":" __ @SingleExpression
 
 AssignmentExpression
   = left:LeftHandSideExpression
@@ -1442,8 +1436,6 @@ CallSpec
         returnType,
       });
     }
-
-ConditionalExpressionTail = __ SingleExpression __ ":" __ SingleExpression
 
 TypeSpecList
   = head:SingleTypeSpec
