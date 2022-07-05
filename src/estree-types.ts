@@ -342,7 +342,7 @@ export interface AssignmentExpression extends BaseExpression {
 export interface UpdateExpression extends BaseExpression {
   type: "UpdateExpression";
   operator: UpdateOperator;
-  argument: Expression;
+  argument: Identifier | MemberExpression;
   prefix: boolean;
 }
 
@@ -420,7 +420,7 @@ export interface Identifier extends BaseNode, BaseExpression {
 export interface Literal extends BaseNode, BaseExpression {
   type: "Literal";
   value: string | boolean | number | null;
-  raw?: string | undefined;
+  raw: string;
 }
 
 export type UnaryOperator = "-" | "+" | "!" | "~" | " as";
