@@ -604,7 +604,8 @@ MemberExpression
         size:SingleExpression
         __
         "]"
-        byte:"b"? {
+        byte:"b"?
+        !(__ "(") {
           return wrap({
             type: "SizedArrayExpression",
             size,
