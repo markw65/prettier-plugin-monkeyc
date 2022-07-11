@@ -10,7 +10,7 @@
       "runtimeArgs": ["run-script", "pretty"],
       "runtimeExecutable": "npm",
       "skipFiles": ["<node_internals>/**"],
-      "type": "pwa-node",
+      "type": "node",
       "outputCapture": "std"
     },
     {
@@ -24,7 +24,7 @@
       ],
       "runtimeExecutable": "npx",
       "skipFiles": ["<node_internals>/**"],
-      "type": "pwa-node",
+      "type": "node",
       "outputCapture": "std"
     },
     {
@@ -33,7 +33,7 @@
       "runtimeArgs": ["run-script", "build-debug"],
       "runtimeExecutable": "npm",
       "skipFiles": ["<node_internals>/**"],
-      "type": "pwa-node"
+      "type": "node"
     },
     {
       "type": "node",
