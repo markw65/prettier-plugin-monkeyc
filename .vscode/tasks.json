@@ -29,10 +29,15 @@
     {
       "type": "npm",
       "script": "watch",
-      "group": "build",
-      "problemMatcher": [],
-      "label": "npm: watch",
-      "detail": "webpack --mode development --watch"
+      "label": "Auto watch",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
     }
   ]
 }
