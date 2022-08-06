@@ -1216,7 +1216,7 @@ AttributeList
     }
 
 Attributes
-  = "(" __ head:Attribute tail:(__ "," __ @Attribute)* __ ")" {
+  = "(" __ head:Attribute tail:(__ ("," __)? @Attribute)* __ ")" {
       return wrap({ type: "Attributes", elements: [head, ...tail] });
     }
 
