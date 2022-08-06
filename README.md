@@ -267,3 +267,8 @@ Accept and fix a few more illegal programs
 - Parser fix
   - Allow `new arr[index](...args)`
     - previously it would treat arr as a type, and create a SizedArrayExpression `new arr [index]`, and try to invoke that.
+
+#### 1.0.34
+
+- Parser fix
+  - Allow space to separate attributes (rather than requiring a comma)
