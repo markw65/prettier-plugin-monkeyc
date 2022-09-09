@@ -109,6 +109,8 @@ WhiteSpace "whitespace"
   / "\u00A0"
   / "\uFEFF"
   / Zs
+  / "\\" [a-zA-Z" ]
+  / "\\" &LineTerminatorSequence
 
 LineTerminator = [\n\r\u2028\u2029]
 
