@@ -1452,7 +1452,7 @@ TypeSpecList
       __ "?" !ConditionalExpressionTail {
           return wrap({ type: "TypeSpecPart", name: "Null" });
         }
-      / (__ "or" __ @SingleTypeSpec)+
+      / (__ (OrToken / "|") __ @SingleTypeSpec)+
     )? {
       if (tail == null) {
         tail = [];
