@@ -272,3 +272,13 @@ Accept and fix a few more illegal programs
 
 - Parser fix
   - Allow space to separate attributes (rather than requiring a comma)
+
+#### 1.0.35
+
+- Formatter fix
+  - Don't indent object types in typedef declarations [#1](https://github.com/markw65/prettier-plugin-monkeyc/issues/1)
+
+- Parser fixes to match some [undocument monkeyc behavior](https://github.com/markw65/monkeyc-optimizer/issues/1)
+  - Allow '|' as well as 'or' in type unions
+  - Treat \<letter>, \" and \<space> as whitespace
+  - Treat \<newline> as <newline>
