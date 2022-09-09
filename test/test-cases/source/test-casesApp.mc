@@ -83,7 +83,6 @@ function check(logger, i, expected, actual) {
     return result[0];
 }
 
-// prettier-ignore
 function getExprs() as Array<Array> {
     return (
         [
