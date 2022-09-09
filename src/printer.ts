@@ -140,8 +140,8 @@ function printAst(
 
     case "TypedefDeclaration":
       return [
-        group(["typedef", line, node.id.name]),
-        indent(typedPath(node).call(print, "ts")),
+        group(["typedef", indent(line), node.id.name]),
+        typedPath(node).call(print, "ts"),
         ";",
       ];
 
@@ -173,7 +173,7 @@ function printAst(
         body[1] = "?";
         return body;
       }
-      return group(join([" or", line], body));
+      return group(join([" or", indent(line)], body));
     }
 
     case "ParenthesizedExpression": {
