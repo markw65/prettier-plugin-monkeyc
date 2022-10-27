@@ -282,3 +282,7 @@ Accept and fix a few more illegal programs
   - Allow '|' as well as 'or' in type unions
   - Treat \<letter>, \" and \<space> as whitespace
   - Treat \<newline> as <newline>
+
+#### 1.0.36
+
+- Upgrade to latest versions of all dependent packages
