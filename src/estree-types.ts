@@ -75,6 +75,8 @@ export interface Position {
   line: number;
   /** >= 0 */
   column: number;
+  /** >= 0 */
+  offset: number;
 }
 
 export interface Program extends BaseNode {
