@@ -446,7 +446,7 @@ export type BinaryOperator =
   | "&"
   | "has";
 
-export type LogicalOperator = "||" | "&&";
+export type LogicalOperator = "||" | "&&" | "or" | "and";
 
 export type AssignmentOperator =
   | "="
