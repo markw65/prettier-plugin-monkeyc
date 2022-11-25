@@ -286,3 +286,7 @@ Accept and fix a few more illegal programs
 #### 1.0.36
 
 - Upgrade to latest versions of all dependent packages
+
+#### 1.0.37
+
+- Tweaks to estree-types.ts to more accurately describe the AST
