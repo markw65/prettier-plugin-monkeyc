@@ -1,4 +1,4 @@
-import { parse } from "../build/monkeyc.js";
+import { parse } from "build/monkeyc.js";
 import { default as preprocess, LiteralIntegerRe } from "./printer";
 import { Node as ESTreeNode, Program as ESTreeProgram } from "./estree-types";
 import { Parser, ParserOptions, Printer } from "prettier";
@@ -22,7 +22,7 @@ export const parsers = {
     ) =>
       parse(
         text,
-        options && options.filepath && { grammarSource: options.filepath }
+        options && options.filepath ? { grammarSource: options.filepath } : null
       ),
     astFormat: "monkeyc",
     locStart: (node: ESTreeNode) => node.start || 0,

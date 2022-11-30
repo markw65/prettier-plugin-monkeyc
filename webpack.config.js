@@ -116,6 +116,10 @@ export default (env, argv) => {
     resolve: {
       enforceExtension: false,
       extensions: [".ts", ".js"],
+      alias: {
+        build: path.resolve(__dirname, 'build'),
+      },
+
     },
     externals: { prettier: "prettier" },
     plugins: [
