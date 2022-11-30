@@ -624,12 +624,15 @@ MemberExpression
         }
     )
     tail:(
-      __ "[" __ property:SingleExpression __ "]" {
-          return wrap({ property: property, computed: true });
-        }
-      / __ "." __ property:IdentifierName {
-          return wrap({ property: property, computed: false });
-        }
+      __
+        @(
+          "[" __ property:SingleExpression __ "]" {
+              return wrap({ property: property, computed: true });
+            }
+          / "." __ property:IdentifierName {
+              return wrap({ property: property, computed: false });
+            }
+        )
     )* {
       return reduce(head, tail, (result, element) => {
         return {
@@ -640,40 +643,29 @@ MemberExpression
       });
     }
 
-NewExpression
-  = MemberExpression
-  / NewToken __ callee:NewExpression {
-      return wrap({ type: "NewExpression", callee: callee, arguments: [] });
-    }
-
 CallExpression
-  = head:(
-      callee:MemberExpression __ args:Arguments {
-          return wrap({
-            type: "CallExpression",
-            callee: callee,
-            arguments: args,
-          });
-        }
-    )
+  = head:MemberExpression
     tail:(
-      __ args:Arguments {
-          return wrap({ type: "CallExpression", arguments: args });
-        }
-      / __ "[" __ property:SingleExpression __ "]" {
-          return wrap({
-            type: "MemberExpression",
-            property: property,
-            computed: true,
-          });
-        }
-      / __ "." __ property:IdentifierName {
-          return wrap({
-            type: "MemberExpression",
-            property: property,
-            computed: false,
-          });
-        }
+      __
+        @(
+          args:Arguments {
+              return wrap({ type: "CallExpression", arguments: args });
+            }
+          / "[" __ property:SingleExpression __ "]" {
+              return wrap({
+                type: "MemberExpression",
+                property: property,
+                computed: true,
+              });
+            }
+          / "." __ property:IdentifierName {
+              return wrap({
+                type: "MemberExpression",
+                property: property,
+                computed: false,
+              });
+            }
+        )
     )* {
       return reduce(head, tail, (result, element) => {
         const e = { ...element };
@@ -689,9 +681,7 @@ ArgumentList
       return [head, ...tail];
     }
 
-LeftHandSideExpression
-  = CallExpression
-  / NewExpression
+LeftHandSideExpression = CallExpression
 
 UnaryExpression
   = LeftHandSideExpression
