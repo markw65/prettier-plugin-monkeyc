@@ -947,23 +947,12 @@ IfStatement
     ")"
     __
     consequent:Statement
-    __
-    ElseToken
-    __
-    alternate:Statement {
+    alternate:(__ ElseToken __ @Statement)? {
       return wrap({
         type: "IfStatement",
         test,
         consequent,
-        alternate,
-      });
-    }
-  / IfToken __ "(" __ test:SingleExpression __ ")" __ consequent:Statement {
-      return wrap({
-        type: "IfStatement",
-        test,
-        consequent,
-        alternate: null,
+        alternate: alternate || null,
       });
     }
 
@@ -987,40 +976,23 @@ IterationStatement
     __
     "("
     __
-    init:(@ExpressionLikeList __)?
-    ";"
-    __
-    test:(@SingleExpression __)?
-    ";"
-    __
-    update:(@ExpressionLikeList __)?
-    ")"
-    __
-    body:Statement {
-      return wrap({
-        type: "ForStatement",
-        init,
-        test,
-        update,
-        body,
-      });
-    }
-  / ForToken
-    __
-    "("
-    __
-    VarToken
-    __
     init:(
-      declarations:VariableDeclarationList {
-          return wrap({
-            type: "VariableDeclaration",
-            declarations,
-            kind: "var",
-          });
-        }
-    )
-    __
+      @(
+          @ExpressionLikeList
+          / VarToken
+            __
+            @(
+              declarations:VariableDeclarationList {
+                  return wrap({
+                    type: "VariableDeclaration",
+                    declarations,
+                    kind: "var",
+                  });
+                }
+            )
+        )
+        __
+    )?
     ";"
     __
     test:(@SingleExpression __)?
@@ -1054,11 +1026,8 @@ BreakStatement
     }
 
 ReturnStatement
-  = ReturnToken EOS {
-      return wrap({ type: "ReturnStatement", argument: null });
-    }
-  / ReturnToken __ argument:SingleExpression EOS {
-      return wrap({ type: "ReturnStatement", argument });
+  = ReturnToken argument:(__ @SingleExpression)? EOS {
+      return wrap({ type: "ReturnStatement", argument: argument || null });
     }
 
 SwitchStatement
@@ -1079,16 +1048,15 @@ SwitchStatement
     }
 
 CaseBlock
-  = "{" __ clauses:(@CaseClauses __)? "}" { return optionalList(clauses); }
-  / "{"
+  = "{"
     __
     before:(@CaseClauses __)?
-    default_:DefaultClause
-    __
-    after:(@CaseClauses __)?
-    "}" {
-      return optionalList(before).concat(default_).concat(optionalList(after));
-    }
+    defaults:(
+      dc:DefaultClause __ after:(@CaseClauses __)? {
+          return [dc].concat(optionalList(after));
+        }
+    )?
+    "}" { return optionalList(before).concat(optionalList(defaults)); }
 
 CaseClauses = head:CaseClause tail:(__ @CaseClause)* { return [head, ...tail]; }
 
