@@ -65,7 +65,7 @@ export interface Comment extends BaseNode {
   value: string;
 }
 
-interface SourceLocation {
+export interface SourceLocation {
   source?: string | null | undefined;
   start: Position;
   end: Position;
