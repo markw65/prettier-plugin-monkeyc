@@ -541,46 +541,25 @@ PrimaryExpression
     }
 
 ArrayLiteral
-  = "[" __ elision:(@Elision __)? "]" byte:"b"? {
+  = "[" __ elements:(@ElementList __)? "]" byte:"b"? {
       return wrap({
         type: "ArrayExpression",
-        elements: optionalList(elision),
-        byte,
-      });
-    }
-  / "[" __ elements:ElementList __ "]" byte:"b"? {
-      return wrap({
-        type: "ArrayExpression",
-        elements: elements,
-        byte,
-      });
-    }
-  / "[" __ elements:ElementList __ "," __ elision:(@Elision __)? "]" byte:"b"? {
-      return wrap({
-        type: "ArrayExpression",
-        elements: elements.concat(optionalList(elision)),
+        elements: optionalList(elements),
         byte,
       });
     }
 
 ElementList
-  = head:(
-      elision:(@Elision __)? element:SingleExpression {
-          return optionalList(elision).concat(element);
-        }
-    )
-    tail:(
-      __ "," __ elision:(@Elision __)? element:SingleExpression {
-          return optionalList(elision).concat(element);
-        }
-    )* { return Array.prototype.concat.apply(head, tail); }
-
-Elision = "," commas:(__ ",")* { return filledArray(commas.length + 1, null); }
+  = head:SingleExpression tail:(__ "," __ @SingleExpression)* (__ ",")? {
+      return [head, ...tail];
+    }
 
 ObjectLiteral
-  = "{" __ "}" { return wrap({ type: "ObjectExpression", properties: [] }); }
-  / "{" __ properties:PropertyNameAndValueList __ "}" {
-      return wrap({ type: "ObjectExpression", properties: properties });
+  = "{" __ properties:(@PropertyNameAndValueList __)? "}" {
+      return wrap({
+        type: "ObjectExpression",
+        properties: optionalList(properties),
+      });
     }
 
 PropertyNameAndValueList
