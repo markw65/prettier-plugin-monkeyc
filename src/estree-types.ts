@@ -29,6 +29,7 @@ interface BaseNode {
   start?: number;
   end?: number;
   range?: [number, number] | undefined;
+  system?: Record<string, unknown>
 }
 
 export type Node =

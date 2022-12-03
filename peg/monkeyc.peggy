@@ -1160,6 +1160,25 @@ AttributeList
         access,
       });
     }
+  / system:SystemAttributes access:(__ @AccessList)? {
+      return wrap({
+        type: "AttributeList",
+        system,
+        access,
+      });
+    }
+
+SystemAttributes
+  = "[" __ list:(@SystemAttribute __)+ "]" {
+      return Object.fromEntries(
+        list.map(([name, value]) => [
+          name,
+          value.type === "Literal" ? value.value : value,
+        ])
+      );
+    }
+
+SystemAttribute = "@"? @$IdentifierName __ "=" __ @PrimaryExpression __ ";"
 
 Attributes
   = "(" __ head:Attribute tail:(__ ("," __)? @Attribute)* __ ")" {
@@ -1274,14 +1293,18 @@ EnumBody
     }
 
 Enum
-  = id:Identifier init:(__ "=" __ @SingleExpression)? {
-      return init
+  = system:(@SystemAttributes __)?
+    id:Identifier
+    init:(__ "=" __ @SingleExpression)? {
+      const tag = init
         ? wrap({
             type: "EnumStringMember",
             id,
             init,
           })
         : id;
+      if (system) tag.system = system;
+      return tag;
     }
 
 TypedefDeclaration
