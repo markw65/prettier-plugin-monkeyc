@@ -14,8 +14,8 @@
 //     that prettier will add the required space when formatting that to turn it
 //     into legal monkey-c).
 
-{
-  var TYPES_TO_PROPERTY_NAMES = {
+{{
+  const TYPES_TO_PROPERTY_NAMES = {
     CallExpression: "callee",
     MemberExpression: "object",
   };
@@ -28,32 +28,6 @@
 
   function optionalList(value) {
     return value !== null ? value : [];
-  }
-
-  const comments = [];
-  function addComment(value, multiline) {
-    const loc = location();
-    // If there is a node already stored with our starting location,
-    // we are being processed a second time, so just ignore it
-    if (comments.find((c) => c.start === loc.start.offset)) {
-      return text;
-    }
-    comments.push({
-      type: multiline ? "MultiLine" : "Line",
-      value,
-      start: loc.start.offset,
-      end: loc.end.offset,
-      loc,
-    });
-    return text;
-  }
-
-  function wrap(value) {
-    var loc = location();
-    value.start = loc.start.offset;
-    value.end = loc.end.offset;
-    value.loc = loc;
-    return value;
   }
 
   function reduce(head, tail, fn) {
@@ -88,6 +62,34 @@
         loc: element[3].loc,
       };
     });
+  }
+}}
+
+{
+  const comments = [];
+  function addComment(value, multiline) {
+    const loc = location();
+    // If there is a node already stored with our starting location,
+    // we are being processed a second time, so just ignore it
+    if (comments.find((c) => c.start === loc.start.offset)) {
+      return text;
+    }
+    comments.push({
+      type: multiline ? "MultiLine" : "Line",
+      value,
+      start: loc.start.offset,
+      end: loc.end.offset,
+      loc,
+    });
+    return text;
+  }
+
+  function wrap(value) {
+    var loc = location();
+    value.start = loc.start.offset;
+    value.end = loc.end.offset;
+    value.loc = loc;
+    return value;
   }
 }
 
