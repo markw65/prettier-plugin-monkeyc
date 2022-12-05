@@ -567,5 +567,5 @@ export interface ImportModule extends BaseNode {
 export interface Using extends BaseNode {
   type: "Using";
   id: ScopedName;
-  as: Identifier;
+  as?: Identifier | undefined;
 }
