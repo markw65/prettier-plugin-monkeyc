@@ -783,39 +783,46 @@ LogicalOROperator
   / $OrToken
 
 ConditionalExpression
-  = test:LogicalORExpression __ "?" tail:ConditionalExpressionTail {
-      return wrap({
-        type: "ConditionalExpression",
-        test: test,
-        consequent: tail[0],
-        alternate: tail[1],
-      });
+  = test:LogicalORExpression tail:(__ "?" @ConditionalExpressionTail)? {
+      return tail
+        ? wrap({
+            type: "ConditionalExpression",
+            test: test,
+            consequent: tail[0],
+            alternate: tail[1],
+          })
+        : test;
     }
-  / LogicalORExpression
 
 ConditionalExpressionTail = __ @SingleExpression __ ":" __ @SingleExpression
 
 AssignmentExpression
   = left:LeftHandSideExpression
     __
-    operator:AssignmentOperator
-    __
-    right:SingleExpression {
-      return wrap({
-        type: "AssignmentExpression",
-        operator,
-        left,
-        right,
-      });
-    }
-  / argument:LeftHandSideExpression __ operator:UpdateOperator {
-      return wrap({
-        type: "UpdateExpression",
-        operator,
-        argument,
-        prefix: false,
-      });
-    }
+    full:(
+      operator:AssignmentOperator __ right:SingleExpression {
+          return {
+            type: "AssignmentExpression",
+            operator,
+            left,
+            right,
+          };
+        }
+      / operator:UpdateOperator {
+          return {
+            type: "UpdateExpression",
+            operator,
+            argument: left,
+            prefix: false,
+          };
+        }
+      // without this, parsing an ExpressionLike thats *not* an assignment
+      // would first parse the lhs as a LeftHandSideExpression, then throw
+      // that away, and reparse it as a SingleExpression. Since we're no longer
+      // using peggy's caching mechanism, its much better to just return
+      // the result here if it looks like we've seen the whole expression.
+      / &[;)}] { return left; }
+    ) { return full.loc ? full : wrap(full); }
   / operator:UpdateOperator __ argument:LeftHandSideExpression {
       return wrap({
         type: "UpdateExpression",
