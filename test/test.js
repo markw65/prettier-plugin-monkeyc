@@ -20,6 +20,7 @@ import * as fs from "fs/promises";
 import path from "path";
 import { getSdkPath, spawnByLine, readByLine, appSupport } from "./util.js";
 import { globby } from "globby";
+import { default as MonkeyC } from "../build/prettier-plugin-monkeyc.cjs";
 
 let developer_key;
 
@@ -36,6 +37,7 @@ async function test() {
   const sdk = await getSdkPath();
   const projects = [];
   let build_all = false;
+  let validate_locations = false;
   process.argv.slice(2).forEach((arg) => {
     const match = /^--((?:\w|-)+)=(.*)$/.exec(arg);
     if (match) {
@@ -51,6 +53,9 @@ async function test() {
           // or just pick one device for each product.
           build_all = /^(true|1|yes)$/i.test(match[2]);
           break;
+        case "validate-locations":
+          validate_locations = /^(true|1|yes)$/i.test(match[2]);
+          break;
       }
     }
   });
@@ -60,16 +65,11 @@ async function test() {
   const global_settings = await getSettings(
     `${appSupport}/Code/User/settings.json`
   );
-  /*
-  if (!developer_key) {
-    developer_key =
-      (await getDevKey(".vscode/settings.json")) ||
-      ();
+
+  if (validate_locations) {
+    await validate(projects);
+    return;
   }
-  if (!developer_key) {
-    throw "Failed to find developer key; please specify its location via --dev-key=<path>";
-  }
-  */
 
   const dest = "./build/test";
 
@@ -270,6 +270,110 @@ async function test() {
   }
 
   return;
+}
+
+function error(node, message, path) {
+  throw new Error(
+    `Node ${node.type} ${message} at ${path
+      .map(
+        (n) =>
+          `\n - ${n.type}: ${n.loc.source}:${n.loc.start.line},${n.loc.start.column}`
+      )
+      .join("")}`
+  );
+}
+
+function checkNode(node, path) {
+  if (!node.loc) {
+    error(node, "has no location", path);
+  }
+  if (!node.loc.source) {
+    error(node, "has no source", path);
+  }
+  if (!node.loc.start || !node.loc.end) {
+    error(node, "is missing loc.start or loc.end", path);
+  }
+  if (
+    node.start !== node.loc.start.offset ||
+    node.end !== node.loc.end.offset
+  ) {
+    error(node, "offsets disagree", path);
+  }
+}
+
+function validateHelper(node, path) {
+  const kids = [];
+  for (const [key, value] of Object.entries(node)) {
+    if (!value || key === "comments") continue;
+    if (Array.isArray(value)) {
+      kids.push(...value.filter((kid) => typeof kid == "object" && kid.type));
+    } else if (typeof value == "object" && value.type) {
+      kids.push(value);
+    }
+  }
+  if (!kids.length) return 1;
+  kids.sort((a, b) => (a.start || 0) - (b.start || 0));
+  path.push(node);
+  kids.reduce((prev, cur) => {
+    checkNode(cur, path);
+    if (!prev) return cur;
+    if (prev.end > cur.start) {
+      error(prev, `overlaps with ${cur.type}. end-offset > start`, path);
+    }
+    if (
+      prev.loc.end.line > cur.loc.start.line ||
+      (prev.loc.end.line === cur.loc.start.line &&
+        prev.loc.end.column > cur.loc.start.column)
+    ) {
+      error(prev, `overlaps with ${cur.type}. end-line/char > start`, path);
+    }
+  }, null);
+  path.pop();
+  if (kids[0].start < node.start || kids[kids.length - 1].end > node.end) {
+    error(node, `does not contain its children (offset based)`, path);
+  }
+  if (
+    kids[0].loc.start.line < node.loc.start.line ||
+    (kids[0].loc.start.line === node.loc.start.line &&
+      kids[0].loc.start.column < node.loc.start.column) ||
+    kids[kids.length - 1].loc.end.line > node.loc.end.line ||
+    (kids[kids.length - 1].loc.end.line === node.loc.end.line &&
+      kids[kids.length - 1].loc.end.column > node.loc.end.column)
+  ) {
+    error(node, `does not contain its children (line/char based)`, path);
+  }
+  path.push(node);
+  const numNodesProcessed = kids.reduce(
+    (num, kid) => num + validateHelper(kid, path),
+    1
+  );
+  path.pop(node);
+  return numNodesProcessed;
+}
+
+function validate(projects) {
+  return globby(projects, {
+    expandDirectories: false,
+    onlyDirectories: true,
+  })
+    .then((projects) =>
+      Promise.all(
+        projects.map((project) => globby(path.resolve(project, "**/*.mc")))
+      )
+    )
+    .then((files) =>
+      Promise.all(
+        files.flat().map((file) =>
+          fs.readFile(file).then((data) => {
+            const ast = MonkeyC.parsers.monkeyc.parse(data.toString(), null, {
+              filepath: file,
+            });
+            const numNodes = validateHelper(ast, []);
+            console.log(`Validated ${numNodes} locations for ${file}.`);
+          })
+        )
+      )
+    );
 }
 
 test()
