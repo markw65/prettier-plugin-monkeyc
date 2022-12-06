@@ -83,6 +83,11 @@ function check(logger, i, expected, actual) {
     return result[0];
 }
 
+// prettier-ignore
+function getNaN() {
+    return NaN;
+}
+
 function getExprs() as Array<Array> {
     return (
         [
@@ -94,6 +99,7 @@ function getExprs() as Array<Array> {
             [true, 4e0 instanceof Lang.Float],
             [true, true as Boolean ? true : false],
             [false, null as Boolean? ? true : false],
+            [NaN, getNaN()],
         ] as Array<Array>
     );
 }
