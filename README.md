@@ -290,3 +290,12 @@ Accept and fix a few more illegal programs
 #### 1.0.37
 
 - Tweaks to estree-types.ts to more accurately describe the AST
+
+#### 1.0.38
+
+- Turn off caching, reducing the parser's memory use by about 5x. This initially had very little effect on parsing speed for most code, but there were some pathalogical cases that were relying on caching. So I folled this up by a series of fixes to the grammar to reduce the amount of backtracking and reparsing. At the end of which, parsing was about twice as fast on average, and no slower worst case.
+- Added tests that the location info was consistent, after accidentally breaking it with the backtracking fixes.
+- Fix the layout of the generated .d.ts files
+- Update the parser to handle the attribute fields in api.mir, so we can access things like minCiq version from the ast.
+- Switch to my own build of prettier-plugin-pegjs, which can handle peggy's global initializer
+
