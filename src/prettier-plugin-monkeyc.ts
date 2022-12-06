@@ -94,7 +94,11 @@ export const defaultOptions = {
  */
 export function serializeMonkeyC(node: ESTreeNode) {
   return JSON.stringify(node, (key: string, value: unknown) => {
-    if (key === "value" && typeof value === "bigint") {
+    if (
+      key === "value" &&
+      (typeof value === "bigint" ||
+        (typeof value === "number" && isNaN(value)))
+    ) {
       return 0;
     }
     return value;
@@ -105,6 +109,9 @@ export function unserializeMonkeyC(serialized: string) {
   return JSON.parse(serialized, function (key: string, value: unknown) {
     if (key === "value" && value === 0) {
       if (this.type === "Literal" && typeof this.raw === "string") {
+        if (this.raw === "NaN") {
+          return NaN;
+        }
         const match = this.raw.match(LiteralIntegerRe);
         if (match && (match[2] === "l" || match[2] === "L")) {
           return BigInt(match[1]);
