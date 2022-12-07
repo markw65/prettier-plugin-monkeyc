@@ -299,3 +299,9 @@ Accept and fix a few more illegal programs
 - Update the parser to handle the attribute fields in api.mir, so we can access things like minCiq version from the ast.
 - Switch to my own build of prettier-plugin-pegjs, which can handle peggy's global initializer
 
+#### 1.0.39
+- Fix issues with NaN
+  - NaN was prettied to nan, even though the token is case sensitive
+  - NaN was serialized to null (default JSON.serialize behavior), so the optimizer converted NaN to null.
+- Add support for parsing single expressions, rather than modules.
+
