@@ -17,12 +17,21 @@ export const parsers = {
   monkeyc: {
     parse: (
       text: string,
-      parsers: unknown,
-      options: Partial<ParserOptions<ESTreeNode>>
+      _parsers: unknown,
+      options: Partial<ParserOptions<ESTreeNode>> & {
+        singleExpression?: boolean;
+      }
     ) =>
       parse(
         text,
-        options && options.filepath ? { grammarSource: options.filepath } : null
+        options && options.filepath
+          ? {
+              grammarSource: options.filepath,
+              startRule: options.singleExpression
+                ? "SingleExpression"
+                : "Start",
+            }
+          : null
       ),
     astFormat: "monkeyc",
     locStart: (node: ESTreeNode) => node.start || 0,
@@ -75,7 +84,15 @@ export const printers: Record<string, Printer<ESTreeNode>> = {
   },
 };
 
-export const options = {};
+export const options = {
+  singleExpression: {
+    since: "",
+    type: "boolean",
+    category: "Global",
+    default: false,
+    description: "Parse a single monkeyc expression, rather than a module.",
+  },
+} as const;
 
 export const defaultOptions = {
   tabWidth: 4,
@@ -96,8 +113,7 @@ export function serializeMonkeyC(node: ESTreeNode) {
   return JSON.stringify(node, (key: string, value: unknown) => {
     if (
       key === "value" &&
-      (typeof value === "bigint" ||
-        (typeof value === "number" && isNaN(value)))
+      (typeof value === "bigint" || (typeof value === "number" && isNaN(value)))
     ) {
       return 0;
     }

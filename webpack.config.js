@@ -32,7 +32,12 @@ export default (env, argv) => {
           test: /\.peggy$/,
           // Set the type so that the raw .js file is generated
           type: "asset/resource",
-          use: [{ loader: path.resolve(__dirname, "src/peggy-loader.cjs") }],
+          use: [
+            {
+              loader: path.resolve(__dirname, "src/peggy-loader.cjs"),
+              options: { allowedStartRules: ["Start", "SingleExpression"] },
+            },
+          ],
           generator: {
             // name the raw .js file
             filename: "[name].js",
@@ -117,9 +122,8 @@ export default (env, argv) => {
       enforceExtension: false,
       extensions: [".ts", ".js"],
       alias: {
-        build: path.resolve(__dirname, 'build'),
+        build: path.resolve(__dirname, "build"),
       },
-
     },
     externals: { prettier: "prettier" },
     plugins: [
