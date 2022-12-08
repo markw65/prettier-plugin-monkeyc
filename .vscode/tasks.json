@@ -29,7 +29,7 @@
     {
       "type": "npm",
       "script": "watch",
-      "label": "Auto watch",
+      "label": "Auto watch (pp)",
       "group": "none",
       "presentation": {
         "reveal": "always",
