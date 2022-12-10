@@ -538,9 +538,7 @@ PrimaryExpression
   / Literal
   / ArrayLiteral
   / ObjectLiteral
-  / "(" __ expression:SingleExpression __ ")" {
-      return wrap({ ...expression });
-    }
+  / "(" __ @SingleExpression __ ")"
 
 ArrayLiteral
   = "[" __ elements:(@ElementList __)? "]" byte:"b"? {
