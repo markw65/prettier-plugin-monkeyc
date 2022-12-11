@@ -305,3 +305,7 @@ Accept and fix a few more illegal programs
   - NaN was serialized to null (default JSON.serialize behavior), so the optimizer converted NaN to null.
 - Add support for parsing single expressions, rather than modules.
 
+#### 1.0.40
+
+- Fix an issue parsing Char literals
+- Fix location info for parenthesized expressions
