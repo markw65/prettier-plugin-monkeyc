@@ -296,8 +296,8 @@ StringLiteral "string"
   = "\"" chars:DoubleStringCharacter* "\"" {
       return wrap({ type: "Literal", value: chars.join(""), raw: text() });
     }
-  / "'" chars:SingleStringCharacter* "'" {
-      return wrap({ type: "Literal", value: chars.join(""), raw: text() });
+  / "'" value:SingleStringCharacter "'" {
+      return wrap({ type: "Literal", value, raw: text() });
     }
 
 DoubleStringCharacter
