@@ -27,7 +27,7 @@ const {
   //breakParent,
 } = doc.builders;
 
-export const LiteralIntegerRe = /^(0x[0-9a-f]+|\d+)(l)?$/i;
+export const LiteralIntegerRe = /^-?(0x[0-9a-f]+|\d+)(l)?$/i;
 
 type AstPath<T = any> = Prettier.AstPath<T>;
 type ParserOptions = Prettier.ParserOptions<ESTreeNode>;
