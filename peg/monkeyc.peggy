@@ -248,7 +248,8 @@ DecimalLiteral
         type: "Literal",
         value: /l$/i.test(raw)
           ? BigInt.asIntN(64, BigInt(raw.slice(0, -1)))
-          : parseFloat(raw),
+          : /(\d+l?|d)$/i.test(raw)
+          ? parseFloat(raw) : new Float32Array([parseFloat(raw)])[0],
         raw,
       });
     }
