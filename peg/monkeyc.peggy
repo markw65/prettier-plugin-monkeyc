@@ -681,15 +681,8 @@ UnaryOperator
   / "!"
 
 AsExpression
-  = left:UnaryExpression right:(__ AsToken __ @TypeSpecList)? {
-      return right
-        ? wrap({
-            type: "BinaryExpression",
-            operator: "as",
-            left,
-            right,
-          })
-        : left;
+  = head:UnaryExpression tail:(__ $AsToken __ TypeSpecList)* {
+      return buildBinaryExpression(head, tail);
     }
 
 // The monkey-c compiler treats `a [*/%] b as Type` as a syntax error,
