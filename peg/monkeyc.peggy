@@ -1282,7 +1282,7 @@ EnumDeclaration
 // EnumStringBody, and EnumStringMember isn't really right, but
 // the estree printer doesn't care about the actual types, so...
 EnumBody
-  = "{" __ head:Enum __ tail:("," __ @Enum)* __ ("," __)? "}" {
+  = "{" __ head:Enum __ tail:("," __ @Enum __)* __ ("," __)? "}" {
       return wrap({ type: "EnumStringBody", members: [head, ...tail] });
     }
 
