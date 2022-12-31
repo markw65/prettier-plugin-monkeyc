@@ -377,18 +377,25 @@ export interface NewExpression extends BaseCallExpression {
   type: "NewExpression";
 }
 
-export interface MemberExpression extends BaseExpression {
+interface MemberExpressionBase extends BaseExpression {
   type: "MemberExpression";
   object: Expression;
   property: Expression;
   computed: boolean;
 }
 
-export interface DottedName extends MemberExpression {
-  type: "MemberExpression";
-  object: ScopedName;
+export interface ComputedMemberExpression extends MemberExpressionBase {
+  computed: true;
+}
+export interface DottedMemberExpression extends MemberExpressionBase {
   property: Identifier;
   computed: false;
+}
+
+export type MemberExpression = DottedMemberExpression | ComputedMemberExpression;
+
+export interface DottedName extends DottedMemberExpression {
+  object: ScopedName;
 }
 
 export type ScopedName = DottedName | Identifier;
