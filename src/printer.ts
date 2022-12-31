@@ -318,7 +318,7 @@ function printAst(
             return LiteralIntegerRe.test(result)
               ? // we started with an integer valued float or double
                 // but ended with an integer. Add a suffix.
-                `${result}${node.raw.endsWith("d") ? "d" : "f"}`
+                `${result}${/d$/i.test(node.raw) ? "d" : "f"}`
               : result;
           } else if (
             (node.value > 0xffffffff || -node.value > 0xffffffff) &&
