@@ -309,3 +309,12 @@ Accept and fix a few more illegal programs
 
 - Fix an issue parsing Char literals
 - Fix location info for parenthesized expressions
+
+#### 1.0.41
+
+- Fix LiteralIntegerRe to include negative numbers
+- Round Float literals to 32 bits
+- Properly parse "foo as Bar as Baz", without requiring parentheses "(foo as Bar) as Baz"
+- In enums, allow whitespace between the initializer and the following comma
+- Fix an issue where a number whose representation looked like an integer, and ended in capital D would be converted to a float.
+- More precise typescript types for MemberExpressions
