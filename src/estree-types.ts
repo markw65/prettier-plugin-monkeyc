@@ -29,7 +29,8 @@ interface BaseNode {
   start?: number;
   end?: number;
   range?: [number, number] | undefined;
-  system?: Record<string, unknown>
+  system?: Record<string, unknown>;
+  origins?: Array<{ loc: SourceLocation; func: string }>;
 }
 
 export type Node =
@@ -392,7 +393,9 @@ export interface DottedMemberExpression extends MemberExpressionBase {
   computed: false;
 }
 
-export type MemberExpression = DottedMemberExpression | ComputedMemberExpression;
+export type MemberExpression =
+  | DottedMemberExpression
+  | ComputedMemberExpression;
 
 export interface DottedName extends DottedMemberExpression {
   object: ScopedName;
