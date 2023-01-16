@@ -1404,7 +1404,7 @@ CallSpec
         type: "MethodDefinition",
         kind: "method",
         key: "",
-        params,
+        params: params || [],
         returnType,
       });
     }
