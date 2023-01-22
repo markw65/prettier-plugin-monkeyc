@@ -318,3 +318,8 @@ Accept and fix a few more illegal programs
 - In enums, allow whitespace between the initializer and the following comma
 - Fix an issue where a number whose representation looked like an integer, and ended in capital D would be converted to a float.
 - More precise typescript types for MemberExpressions
+
+#### 1.0.42
+
+- Add an "origins" array to BaseNode, to store inlining history.
+- Ensure that MethodDefinition.params is never null.
