@@ -428,6 +428,7 @@ export interface CatchClauses extends BaseNode {
 export interface Identifier extends BaseNode, BaseExpression {
   type: "Identifier";
   name: string;
+  original?: string;
 }
 
 export interface Literal extends BaseNode, BaseExpression {

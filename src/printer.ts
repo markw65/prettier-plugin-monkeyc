@@ -165,7 +165,9 @@ function printAst(
     }
 
     case "Identifier":
-      return node.name;
+      return node.original && node.original !== node.name
+        ? `${node.name} /*>${node.original}<*/`
+        : node.name;
 
     case "TypeSpecList": {
       const body = path.map(print, "ts");
