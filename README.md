@@ -323,3 +323,7 @@ Accept and fix a few more illegal programs
 
 - Add an "origins" array to BaseNode, to store inlining history.
 - Ensure that MethodDefinition.params is never null.
+
+#### 1.0.43
+
+- Add an "original" field to Identifier, to indicate that this variable was renamed by the optimizer. The printer will display the name as a comment after each use.
