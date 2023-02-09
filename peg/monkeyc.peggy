@@ -249,7 +249,8 @@ DecimalLiteral
         value: /l$/i.test(raw)
           ? BigInt.asIntN(64, BigInt(raw.slice(0, -1)))
           : /(\d+l?|d)$/i.test(raw)
-          ? parseFloat(raw) : new Float32Array([parseFloat(raw)])[0],
+          ? parseFloat(raw)
+          : new Float32Array([parseFloat(raw)])[0],
         raw,
       });
     }
@@ -1410,7 +1411,10 @@ CallSpec
     }
 
 TypeSpecList
-  = head:SingleTypeSpec
+  = "Void" !IdentifierPart {
+      return wrap({ type: "TypeSpecList", ts:[wrap({ type: "TypeSpecPart", name: "Void" })]});
+    }
+  / head:SingleTypeSpec
     tail:(
       __ "?" !ConditionalExpressionTail {
           return wrap({ type: "TypeSpecPart", name: "Null" });

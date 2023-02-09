@@ -104,6 +104,46 @@ function getExprs() as Array<Array> {
     );
 }
 
+class MethodTests {
+    function num(x as Number) as Void {
+        System.println(x);
+    }
+
+    function num2(x as Number) as Null {
+        System.println(x);
+        return null;
+    }
+
+    function num3(x as Number) as Method(x as String) as Void {
+        System.println(x);
+        return method(:str);
+    }
+
+    function str(x as String) as Void {
+        System.println(x);
+    }
+
+    // parses as (Method(...) as Void) or (Method(...) as Void)
+    function methodTest1(m as Method(x as Number) as Void or Method(x as String) as Void, p as Number or String) as Void {
+        (m as Method(x as Number) as Void).invoke(p);
+    }
+
+    // parses as Method(...) as (Null or (Method(...) as Void)
+    function methodTest2(m as Method(x as Number) as Null or Method(x as String) as Void, p as Number, s as String) as Void {
+        var m2 = m.invoke(p);
+        if (m2) {
+            m2.invoke(s);
+        }
+    }
+
+    function tests() {
+        methodTest1(method(:num), 42);
+        methodTest1(method(:str), "hello");
+        methodTest2(method(:num2), 42, "hello");
+        methodTest2(method(:num3), 24, "goodbye");
+    }
+}
+
 (:test)
 function runTests(logger as Logger) as Boolean {
     var tests = getExprs();
@@ -120,5 +160,7 @@ function runTests(logger as Logger) as Boolean {
             ok = false;
         }
     }
+
+    (new MethodTests()).tests();
     return ok;
 }

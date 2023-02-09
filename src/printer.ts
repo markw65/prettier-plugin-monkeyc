@@ -218,6 +218,7 @@ function printAst(
         );
       }
       if (node.callspec) {
+        const semi = options.semi;
         options.semi = false;
         body.unshift("(");
         body.push(
@@ -225,7 +226,7 @@ function printAst(
           softline,
           ")"
         );
-        options.semi = true;
+        options.semi = semi;
       }
       return body.length == 1 ? body[0] : body;
     }
