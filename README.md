@@ -327,3 +327,7 @@ Accept and fix a few more illegal programs
 #### 1.0.43
 
 - Add an "original" field to Identifier, to indicate that this variable was renamed by the optimizer. The printer will display the name as a comment after each use.
+#### 1.0.44
+
+- Fix parsing of union expressions so that `Void` never includes the following types. This lets us parse `Method() as Void or xxx` the same way that Garmin does.
+- Fix printing of nested Methods. If one Method's declaration contained another Method (eg as a parameter, or the return type), then the outer Method would be incorrectly terminated by a `;`
