@@ -128,7 +128,7 @@ function printAst(
     }
     case "ModuleDeclaration": {
       const body: Prettier.Doc = group([
-        group(["module", line, indent(node.id.name), line]),
+        group(["module", line, indent(typedPath(node).call(print, "id")), line]),
         typedPath(node).call(print, "body"),
       ]);
       if (node.attrs) {
@@ -140,7 +140,7 @@ function printAst(
 
     case "TypedefDeclaration":
       return [
-        group(["typedef", indent(line), node.id.name]),
+        group(["typedef", indent(line), typedPath(node).call(print, "id")]),
         typedPath(node).call(print, "ts"),
         ";",
       ];
@@ -158,7 +158,7 @@ function printAst(
     case "Using": {
       const body = ["using", line, path.call(print, "id")];
       if (node.as != null) {
-        body.push(line, "as", line, node.as.name);
+        body.push(line, "as", line, typedPath(node).call(print, "as"));
       }
       body.push(";");
       return group(body);

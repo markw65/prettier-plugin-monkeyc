@@ -164,3 +164,11 @@ function runTests(logger as Logger) as Boolean {
     (new MethodTests()).tests();
     return ok;
 }
+
+// checking that comments in odd places don't crash
+// the formatter.
+(/*bar*/ :background_app /*baz*/) // boo
+// biz
+module Bar {
+    typedef /* foo */ Foo as Number;
+}
