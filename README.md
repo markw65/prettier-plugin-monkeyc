@@ -331,3 +331,6 @@ Accept and fix a few more illegal programs
 
 - Fix parsing of union expressions so that `Void` never includes the following types. This lets us parse `Method() as Void or xxx` the same way that Garmin does.
 - Fix printing of nested Methods. If one Method's declaration contained another Method (eg as a parameter, or the return type), then the outer Method would be incorrectly terminated by a `;`
+
+#### 1.0.45
+- Fix some issues where the formatter didn't print comments attached to certain identifiers (eg the name in `module <name>`), resulting in an internal error.
