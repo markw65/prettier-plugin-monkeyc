@@ -40,7 +40,7 @@ export default (env, argv) => {
           ],
           generator: {
             // name the raw .js file
-            filename: "[name].js",
+            filename: "[name].mjs",
           },
         },
       ],

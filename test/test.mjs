@@ -18,7 +18,7 @@
 
 import * as fs from "fs/promises";
 import path from "path";
-import { getSdkPath, spawnByLine, readByLine, appSupport } from "./util.js";
+import { getSdkPath, spawnByLine, readByLine, appSupport } from "./util.mjs";
 import { globby } from "globby";
 import { default as MonkeyC } from "../build/prettier-plugin-monkeyc.cjs";
 
@@ -111,7 +111,7 @@ async function test() {
             ["-f", settings["monkeyC.jungleFiles"] || "monkey.jungle"],
             ["-y", developer_key],
             // "-w",
-            //["-l", "1"],
+            ["-l", "0"],
             ["-d", `${product}_sim`],
             mode || [],
           ].flat(),

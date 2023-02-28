@@ -1,4 +1,4 @@
-import { parse } from "build/monkeyc.js";
+import { parse } from "build/monkeyc.mjs";
 import { default as preprocess, LiteralIntegerRe } from "./printer";
 import { Node as ESTreeNode, Program as ESTreeProgram } from "./estree-types";
 import { Parser, ParserOptions, Printer } from "prettier";

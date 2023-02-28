@@ -1,5 +1,5 @@
 {
-  "type": "module",
+  "type": "commonjs",
   "devDependencies": {
     "@types/prettier": "^2.6.1",
     "eslint": "^8.10.0",
@@ -15,9 +15,9 @@
     "prettier": "^2.5.1"
   },
   "scripts": {
-    "test": "node test/test.js --validate-locations=true && node test/test.js",
-    "test-quick": "node test/test.js --projects=test/test-cases",
-    "test-locations": "node test/test.js --validate-locations=true",
+    "test": "node test/test.mjs --validate-locations=true && node test/test.mjs",
+    "test-quick": "node test/test.mjs --projects=test/test-cases",
+    "test-locations": "node test/test.mjs --validate-locations=true",
     "watch": "webpack --mode development --watch",
     "build-debug": "webpack --mode development",
     "build-release": "webpack --mode production",

@@ -40,7 +40,7 @@
       "request": "launch",
       "name": "Parse example/AnalogView.mc",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/src/peg.js",
+      "program": "${workspaceFolder}/src/peg.mjs",
       "args": ["example/AnalogView.mc"]
     },
     {
@@ -48,7 +48,7 @@
       "request": "launch",
       "name": "Parse Current File",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/src/peg.js",
+      "program": "${workspaceFolder}/src/peg.mjs",
       "args": ["${file}"]
     },
     {
@@ -56,7 +56,7 @@
       "request": "launch",
       "name": "Run tests",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/test/test.js",
+      "program": "${workspaceFolder}/test/test.mjs",
       "args": ["--dev-key=${config:monkeyC.developerKeyPath}"]
     }
   ]
