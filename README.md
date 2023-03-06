@@ -334,3 +334,6 @@ Accept and fix a few more illegal programs
 
 #### 1.0.45
 - Fix some issues where the formatter didn't print comments attached to certain identifiers (eg the name in `module <name>`), resulting in an internal error.
+
+#### 1.0.46
+- Change the `type` of the project to `commonjs`, so it can be imported by typescript with `moduleResolution` set to `nodenext`
