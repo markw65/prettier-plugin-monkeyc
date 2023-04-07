@@ -1414,7 +1414,10 @@ CallSpec
 
 TypeSpecList
   = "Void" !IdentifierPart {
-      return wrap({ type: "TypeSpecList", ts:[wrap({ type: "TypeSpecPart", name: "Void" })]});
+      return wrap({
+        type: "TypeSpecList",
+        ts: [wrap({ type: "TypeSpecPart", name: "Void" })],
+      });
     }
   / head:SingleTypeSpec
     tail:(
