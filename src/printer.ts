@@ -333,6 +333,9 @@ function printAst(
           return "NaN";
         }
       } else if (typeof node.value === "bigint") {
+        if (node.raw && /l$/i.test(node.raw)) {
+          return node.raw.toLowerCase();
+        }
         const result = doc.printer.printDocToString(
           estree_print(path, options, print),
           options
