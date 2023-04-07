@@ -273,22 +273,24 @@ ExponentIndicator = "e"i
 SignedInteger = [+-]? DecimalDigit+
 
 HexIntegerLiteral
-  = "0x"i digits:$HexDigit+ "l"i? {
+  = raw:$("0x"i HexDigit+ "l"i?) {
       return wrap({
         type: "Literal",
-        value: parseInt(digits, 16),
-        raw: text(),
+        value: /l$/i.test(raw) ? BigInt(raw.slice(0, -1)) : parseInt(raw),
+        raw,
       });
     }
 
 HexDigit = [0-9a-f]i
 
 OctalIntegerLiteral
-  = "0" digits:$OctalDigit* "l"i? {
+  = raw:$("0" OctalDigit* "l"i?) {
       return wrap({
         type: "Literal",
-        value: parseInt(digits, 8),
-        raw: text(),
+        value: /l$/i.test(raw)
+          ? BigInt("0o" + raw.slice(1, -1))
+          : parseInt(raw.slice(1), 8),
+        raw,
       });
     }
 

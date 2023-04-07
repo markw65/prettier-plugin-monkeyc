@@ -100,6 +100,8 @@ function getExprs() as Array<Array> {
             [true, true as Boolean ? true : false],
             [false, null as Boolean? ? true : false],
             [NaN, getNaN()],
+            [0x4l, 4l],
+            [04l, 4l],
         ] as Array<Array>
     );
 }
