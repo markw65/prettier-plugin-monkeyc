@@ -20,12 +20,6 @@
     MemberExpression: "object",
   };
 
-  function filledArray(count, value) {
-    return Array.apply(null, new Array(count)).map(function () {
-      return value;
-    });
-  }
-
   function optionalList(value) {
     return value !== null ? value : [];
   }
@@ -91,10 +85,57 @@
     value.loc = loc;
     return value;
   }
+
+  function makeModule(name, body) {
+    return {
+      type: "ModuleDeclaration",
+      id: { type: "Identifier", name },
+      body: {
+        type: "BlockStatement",
+        body,
+      },
+    };
+  }
+  function makeImport(type, module, as) {
+    const id = {
+      type: "MemberExpression",
+      computed: false,
+      object: { type: "Identifier", name: "Toybox" },
+      property: { type: "Identifier", name: module },
+    };
+    return type === "Using" && as
+      ? { type, id, as: { type: "Identifier", name: as } }
+      : { type, id };
+  }
+
+  function personalityProgram(personalities) {
+    let rez = makeModule("Rez", [makeModule("Styles", personalities)]);
+    if (options.mss !== "") {
+      rez = makeModule(options.mss, [rez]);
+    }
+    return wrap({
+      type: "Program",
+      body: [
+        makeImport("ImportModule", "Lang"),
+        makeImport("Using", "WatchUi"),
+        makeImport("Using", "WatchUi", "Ui"),
+        makeImport("Using", "Graphics"),
+        makeImport("Using", "Graphics", "Gfx"),
+        rez,
+      ],
+    });
+  }
 }
 
 Start
   = __ program:Program __ {
+      program.comments = comments;
+      return program;
+    }
+
+// Separate entry point for .mss files
+PersonalityStart
+  = __ program:PersonalityProgram __ {
       program.comments = comments;
       return program;
     }
@@ -241,7 +282,7 @@ FloatSuffix
 
 DecimalLiteral
   = raw:$(
-    DecimalIntegerLiteral
+    DecimalIntegerLiteralStr
       ("l"i / (("." DecimalDigit+)? ExponentPart?) FloatSuffix?)?
   ) {
       return wrap({
@@ -258,9 +299,16 @@ DecimalLiteral
       return wrap({ type: "Literal", value: parseFloat(raw), raw });
     }
 
+DecimalIntegerLiteralStr = $("0" !OctalDigit / NonZeroDigit DecimalDigit*)
+
 DecimalIntegerLiteral
-  = "0" !OctalDigit
-  / NonZeroDigit DecimalDigit*
+  = raw:DecimalIntegerLiteralStr {
+      return wrap({
+        type: "Literal",
+        value: parseInt(raw, 10),
+        raw,
+      });
+    }
 
 DecimalDigit = [0-9]
 
@@ -1511,3 +1559,92 @@ FunctionElement
   = Statement
   / EnumDeclaration
   / TypedefDeclaration
+
+PersonalityProgram
+  = body:PersonalityModules? { return personalityProgram(optionalList(body)); }
+
+PersonalityModules
+  = head:PersonalityModule tail:(__ @PersonalityModule)* {
+      return [head, ...tail];
+    }
+
+PersonalityModule
+  = id:Identifier __ body:PersonalityBlock {
+      return wrap({ type: "ModuleDeclaration", body, id });
+    }
+
+PersonalityBlock
+  = "{" __ body:PersonalityElements? __ "}" {
+      return wrap({ type: "BlockStatement", body: optionalList(body) });
+    }
+
+PersonalityElements
+  = head:PersonalityElement tail:(__ @PersonalityElement)* {
+      return [head, ...tail];
+    }
+
+PersonalityElement
+  = name:Identifier __ ":" __ value:PersonalityValue __ ";" {
+      return wrap({
+        type: "VariableDeclaration",
+        kind: "const",
+        declarations: [
+          wrap({
+            type: "VariableDeclarator",
+            kind: "const",
+            id: name,
+            init: value.value,
+          }),
+        ],
+      });
+    }
+
+PersonalityValue
+  = number:$DecimalLiteral & { return !/[fdl]$/i.test(number); } __ "%" {
+      const value = parseFloat(number) / 100;
+      return {
+        value: {
+          type: "Literal",
+          value,
+          raw: value.toString(),
+        },
+        type: "Float",
+      };
+    }
+  / "#" digits:$HexDigit|6| {
+      return {
+        value: wrap({
+          type: "Literal",
+          value: parseInt(digits, 16),
+          raw: "0x" + digits,
+        }),
+        type: "Number",
+      };
+    }
+  / symbol:Symbol { return { value: symbol, type: "Symbol" }; }
+  / "@" resource:ScopedName {
+      return {
+        value: wrap({
+          type: "UnaryExpression",
+          prefix: true,
+          operator: ":",
+          argument:
+            resource.type === "Identifier" ? resource : resource.property,
+        }),
+        type: "Symbol",
+      };
+    }
+  / number:(DecimalIntegerLiteral / HexIntegerLiteral / OctalIntegerLiteral)
+    &(__ ";") { return { value: number, type: "Number" }; }
+  / string:StringLiteral &(__ ";") { return { value: string, type: "String" }; }
+  / bool:BooleanLiteral &(__ ";") { return { value: bool, type: "Boolean" }; }
+  / id:Identifier &(__ ";") {
+      return {
+        value: {
+          type: "Literal",
+          value: id.name,
+          raw: JSON.stringify(id.name),
+        },
+      };
+    }
+  / value:SingleExpression { return { value }; }

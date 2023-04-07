@@ -35,7 +35,13 @@ export default (env, argv) => {
           use: [
             {
               loader: path.resolve(__dirname, "src/peggy-loader.cjs"),
-              options: { allowedStartRules: ["Start", "SingleExpression"] },
+              options: {
+                allowedStartRules: [
+                  "Start",
+                  "SingleExpression",
+                  "PersonalityStart",
+                ],
+              },
             },
           ],
           generator: {

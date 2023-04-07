@@ -20,19 +20,29 @@ export const parsers = {
       _parsers: unknown,
       options: Partial<ParserOptions<ESTreeNode>> & {
         singleExpression?: boolean;
+        mss?: string;
       }
-    ) =>
-      parse(
-        text,
-        options && options.filepath
-          ? {
-              grammarSource: options.filepath,
-              startRule: options.singleExpression
-                ? "SingleExpression"
-                : "Start",
-            }
-          : null
-      ),
+    ) => {
+      const peggyOptions: {
+        grammarSource?: string;
+        startRule?: string;
+        mss?: string;
+      } = {};
+      if (options) {
+        if (options.filepath) {
+          peggyOptions.grammarSource = options.filepath;
+        }
+        if (options.mss != null) {
+          peggyOptions.startRule = "PersonalityStart";
+          peggyOptions.mss = options.mss;
+        } else {
+          peggyOptions.startRule = options.singleExpression
+            ? "SingleExpression"
+            : "Start";
+        }
+      }
+      return parse(text, peggyOptions);
+    },
     astFormat: "monkeyc",
     locStart: (node: ESTreeNode) => node.start || 0,
     locEnd: (node: ESTreeNode) => node.end || 0,
@@ -88,9 +98,15 @@ export const options = {
   singleExpression: {
     since: "",
     type: "boolean",
-    category: "Global",
+    category: "Special",
     default: false,
     description: "Parse a single monkeyc expression, rather than a module.",
+  },
+  mss: {
+    since: "",
+    type: "string",
+    category: "Special",
+    description: "Parse a .mss file, rather than a .mc file.",
   },
 } as const;
 
