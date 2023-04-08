@@ -1,6 +1,6 @@
 import { parse } from "build/monkeyc.mjs";
 import { default as preprocess, LiteralIntegerRe } from "./printer";
-import { Node as ESTreeNode, Program as ESTreeProgram } from "./estree-types";
+import { Node as ESTreeNode } from "./estree-types";
 import { Parser, ParserOptions, Printer } from "prettier";
 export * as mctree from "./estree-types";
 export { LiteralIntegerRe };
