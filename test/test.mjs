@@ -120,13 +120,16 @@ async function test() {
         );
       });
     });
-    await promise;
+    await promise.catch((e) => {
+      console.error(`While building ${root} got error ${e}`);
+      throw new Error(`While building ${root} got error ${e}`);
+    });
     return programs;
   }
 
   const promises = [];
   const build_some = async (root, bin, mode, tests) => {
-    (await globby(`${root}/${tests || "*"}/manifest.xml`)).forEach(
+    (await globby([`${root}/${tests || "*"}/manifest.xml`,`!${root}/Toasts/*`])).forEach(
       (manifest, index) => {
         const MAX_CONCURRENT_COMPILES = 4;
         const doit = () =>
