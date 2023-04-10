@@ -343,3 +343,6 @@ Accept and fix a few more illegal programs
 - Fix a bug where Long hex and octal constants were stored as number rather than BigInt, possibly losing precision.
 - Fix a formatting issue where Long hex and octal constants would be converted to decimal
 - Upgrade all the dev dependencies, including typescript.
+
+#### 1.0.48
+- No changes in functionality, but switch from webpack to esbuild. I had been meaning to do that anyway, but webpack's minifier started breaking the code (the published 1.0.47 is unusable as a result).
