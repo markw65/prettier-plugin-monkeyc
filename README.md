@@ -346,3 +346,6 @@ Accept and fix a few more illegal programs
 
 #### 1.0.48
 - No changes in functionality, but switch from webpack to esbuild. I had been meaning to do that anyway, but webpack's minifier started breaking the code (the published 1.0.47 is unusable as a result).
+
+#### 1.0.49
+- No changes in functionality. esbuild was accidentally added as a dependency, rather than a dev dependency.
