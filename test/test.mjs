@@ -21,6 +21,7 @@ import path from "path";
 import { getSdkPath, spawnByLine, readByLine, appSupport } from "./util.mjs";
 import { globby } from "globby";
 import { default as MonkeyC } from "../build/prettier-plugin-monkeyc.cjs";
+import { connectiq } from "./util.mjs";
 
 let developer_key;
 
@@ -38,6 +39,7 @@ async function test() {
   const projects = [];
   let build_all = false;
   let validate_locations = false;
+  let check_mss = false;
   process.argv.slice(2).forEach((arg) => {
     const match = /^--((?:\w|-)+)=(.*)$/.exec(arg);
     if (match) {
@@ -56,9 +58,27 @@ async function test() {
         case "validate-locations":
           validate_locations = /^(true|1|yes)$/i.test(match[2]);
           break;
+        case "check-mss":
+          check_mss = /^(true|1|yes)$/i.test(match[2]);
+          break;
       }
     }
   });
+  if (check_mss) {
+    const filesToCheck = await globby(`${connectiq}/Devices/*/personality.mss`);
+    await Promise.all(
+      filesToCheck.map((file) =>
+        fs.readFile(file).then((data) => {
+          console.log(`Parsing ${file}`)
+          MonkeyC.parsers.monkeyc.parse(data.toString(), null, {
+            filepath: file,
+            mss: "",
+          });
+        })
+      )
+    );
+    return;
+  }
   if (!projects.length) {
     projects.push(`${sdk}/samples/*`, "./test/test-cases");
   }
@@ -129,21 +149,24 @@ async function test() {
 
   const promises = [];
   const build_some = async (root, bin, mode, tests) => {
-    (await globby([`${root}/${tests || "*"}/manifest.xml`,`!${root}/Toasts/*`])).forEach(
-      (manifest, index) => {
-        const MAX_CONCURRENT_COMPILES = 4;
-        const doit = () =>
-          build_one(manifest, bin, mode).then((result) =>
-            results.push(...result)
-          );
-        if (promises.length < MAX_CONCURRENT_COMPILES) {
-          promises.push(doit());
-        } else {
-          const i = index % MAX_CONCURRENT_COMPILES;
-          promises[i] = promises[i].then(doit);
-        }
+    (
+      await globby([
+        `${root}/${tests || "*"}/manifest.xml`,
+        `!${root}/Toasts/*`,
+      ])
+    ).forEach((manifest, index) => {
+      const MAX_CONCURRENT_COMPILES = 4;
+      const doit = () =>
+        build_one(manifest, bin, mode).then((result) =>
+          results.push(...result)
+        );
+      if (promises.length < MAX_CONCURRENT_COMPILES) {
+        promises.push(doit());
+      } else {
+        const i = index % MAX_CONCURRENT_COMPILES;
+        promises[i] = promises[i].then(doit);
       }
-    );
+    });
   };
 
   const results = [];

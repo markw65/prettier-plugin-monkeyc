@@ -15,9 +15,10 @@
     "prettier": "^2.5.1"
   },
   "scripts": {
-    "test": "node test/test.mjs --validate-locations=true && node test/test.mjs",
+    "test": "node test/test.mjs --validate-locations=true && node test/test.mjs --check-mss=true && node test/test.mjs",
     "test-quick": "node test/test.mjs --projects=test/test-cases",
     "test-locations": "node test/test.mjs --validate-locations=true",
+    "test-mss": "node test/test.mjs --check-mss=true",
     "watch": "webpack --mode development --watch",
     "build-debug": "webpack --mode development",
     "build-release": "webpack --mode production",
