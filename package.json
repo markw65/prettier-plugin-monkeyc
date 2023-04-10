@@ -47,5 +47,8 @@
   "bugs": {
     "url": "https://github.com/markw65/prettier-plugin-monkeyc/issues"
   },
-  "homepage": "https://github.com/markw65/prettier-plugin-monkeyc#readme"
+  "homepage": "https://github.com/markw65/prettier-plugin-monkeyc#readme",
+  "dependencies": {
+    "esbuild": "^0.17.16"
+  }
 }
