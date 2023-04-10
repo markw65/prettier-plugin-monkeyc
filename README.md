@@ -337,3 +337,9 @@ Accept and fix a few more illegal programs
 
 #### 1.0.46
 - Change the `type` of the project to `commonjs`, so it can be imported by typescript with `moduleResolution` set to `nodenext`
+
+#### 1.0.47
+- Add support for parsing (but not formatting) .mss files
+- Fix a bug where Long hex and octal constants were stored as number rather than BigInt, possibly losing precision.
+- Fix a formatting issue where Long hex and octal constants would be converted to decimal
+- Upgrade all the dev dependencies, including typescript.

@@ -26,7 +26,7 @@
     "prepack": "webpack --mode production"
   },
   "name": "@markw65/prettier-plugin-monkeyc",
-  "version": "1.0.46",
+  "version": "1.0.47",
   "description": "A prettier plugin for Garmin monkey-c",
   "main": "build/prettier-plugin-monkeyc.cjs",
   "types": "build/prettier-plugin-monkeyc.d.ts",
