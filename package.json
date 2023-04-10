@@ -6,10 +6,7 @@
     "globby": "^13.1.1",
     "peggy": "^3.0.2",
     "prettier-plugin-pegjs": "^1.0.1",
-    "ts-loader": "^9.3.0",
-    "typescript": "^5.0.4",
-    "webpack": "^5.74.0",
-    "webpack-cli": "^4.9.1"
+    "typescript": "^5.0.4"
   },
   "peerDependencies": {
     "prettier": "^2.5.1"
@@ -19,11 +16,11 @@
     "test-quick": "node test/test.mjs --projects=test/test-cases",
     "test-locations": "node test/test.mjs --validate-locations=true",
     "test-mss": "node test/test.mjs --check-mss=true",
-    "watch": "webpack --mode development --watch",
-    "build-debug": "webpack --mode development",
-    "build-release": "webpack --mode production",
+    "watch": "node esbuild.mjs --watch",
+    "build-debug": "node esbuild.mjs",
+    "build-release": "node esbuild.mjs --release",
     "pretty": "prettier --plugin build/prettier-plugin-monkeyc.cjs example/AnalogView.mc",
-    "prepack": "webpack --mode production"
+    "prepack": "npm run build-release"
   },
   "name": "@markw65/prettier-plugin-monkeyc",
   "version": "1.0.47",

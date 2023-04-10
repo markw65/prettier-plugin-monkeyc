@@ -1,4 +1,4 @@
-import { parse } from "build/monkeyc.mjs";
+import { parse } from "peg/monkeyc.peggy";
 import { default as preprocess, LiteralIntegerRe } from "./printer";
 import { Node as ESTreeNode } from "./estree-types";
 import { Parser, ParserOptions, Printer } from "prettier";

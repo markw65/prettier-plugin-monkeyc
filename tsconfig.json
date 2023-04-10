@@ -12,7 +12,10 @@
     "noImplicitReturns": true,
     "useUnknownInCatchVariables": true,
     "strict": true,
-    "exactOptionalPropertyTypes": true
+    "exactOptionalPropertyTypes": true,
+    "paths": {
+      "peg/*.peggy": ["src/*.d.ts"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "build"]
