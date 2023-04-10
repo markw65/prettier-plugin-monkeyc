@@ -2,6 +2,7 @@
   "type": "commonjs",
   "devDependencies": {
     "@types/prettier": "^2.6.1",
+    "esbuild": "^0.17.16",
     "eslint": "^8.10.0",
     "globby": "^13.1.1",
     "peggy": "^3.0.2",
@@ -44,8 +45,5 @@
   "bugs": {
     "url": "https://github.com/markw65/prettier-plugin-monkeyc/issues"
   },
-  "homepage": "https://github.com/markw65/prettier-plugin-monkeyc#readme",
-  "dependencies": {
-    "esbuild": "^0.17.16"
-  }
+  "homepage": "https://github.com/markw65/prettier-plugin-monkeyc#readme"
 }
