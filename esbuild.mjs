@@ -9,13 +9,43 @@ const cjsDir = "build";
 const releaseBuild = process.argv.includes("--release");
 const sourcemap = !releaseBuild;
 
+let buildActive = 0;
+function activate() {
+  if (!buildActive++) {
+    console.log(`${new Date().toLocaleString()} - Build active`);
+  }
+}
+
+function deactivate() {
+  setTimeout(() => {
+    if (!--buildActive) {
+      console.log(`${new Date().toLocaleString()} - Build inactive`);
+    }
+  }, 500);
+}
+
+function report(diagnostics, kind) {
+  diagnostics.forEach((diagnostic) => diagnostic.location.column++);
+
+  esbuild
+    .formatMessages(diagnostics, {
+      kind,
+      color: true,
+      terminalWidth: 100,
+    })
+    .then((messages) => messages.forEach((error) => console.log(error)));
+}
+
 const startEndPlugin = {
   name: "startEnd",
   setup(build) {
     build.onStart(() => {
+      activate();
       console.log(`${new Date().toLocaleString()} - ESBuild start`);
     });
     build.onEnd((result) => {
+      report(result.errors, "error");
+      report(result.warnings, "warning");
       false &&
         Object.entries(result.metafile.outputs).forEach(
           ([key, value]) =>
@@ -24,7 +54,7 @@ const startEndPlugin = {
         ) &&
         console.log("");
 
-      Object.entries(result.metafile.outputs).forEach(
+      Object.entries(result.metafile?.outputs ?? {}).forEach(
         ([key, value]) =>
           key.endsWith(".cjs") &&
           value.bytes > 10000 &&
@@ -33,6 +63,7 @@ const startEndPlugin = {
       console.log("");
 
       console.log(`${new Date().toLocaleString()} - ESBuild end`);
+      deactivate();
     });
   },
 };
@@ -114,6 +145,7 @@ const cjsConfig = {
   sourcesContent: false,
   metafile: true,
   minify: releaseBuild,
+  logLevel: "silent",
 };
 
 function spawnByLine(command, args, lineHandler, options) {
@@ -141,21 +173,32 @@ function spawnByLine(command, args, lineHandler, options) {
 
 const npx = process.platform === "win32" ? "npx.cmd" : "npx";
 const tscCommand = ["tsc", "--emitDeclarationOnly", "--outDir", "build/src"];
-
+const logger = (line) => {
+  // tsc in watch mode does ESC-c to clear the screen
+  // eslint-disable-next-line no-control-regex
+  line = line.replace(/[\x1b]c/g, "");
+  if (
+    /Starting compilation in watch mode|File change detected\. Starting incremental compilation/.test(
+      line
+    )
+  ) {
+    activate();
+  }
+  console.log(line);
+  if (/Found \d+ errors?\. Watching for file changes/.test(line)) {
+    deactivate();
+  }
+};
 if (process.argv.includes("--watch")) {
   const ctx = await esbuild.context(cjsConfig);
   await Promise.all([
     ctx.watch(),
-    spawnByLine(npx, tscCommand.concat("--watch"), (line) =>
-      // tsc in watch mode does ESC-c to clear the screen
-      // eslint-disable-next-line no-control-regex
-      console.log(line.replace(/[\x1b]c/g, ""))
-    ),
+    spawnByLine(npx, tscCommand.concat("--watch"), logger),
   ]);
 } else {
   await Promise.all([
     esbuild.build(cjsConfig),
-    spawnByLine(npx, tscCommand, (line) => console.log(line)).then(() => {
+    spawnByLine(npx, tscCommand, logger).then(() => {
       console.log(`${new Date().toLocaleString()} - tsc end`);
     }),
   ]);
