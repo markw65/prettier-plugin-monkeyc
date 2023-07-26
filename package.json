@@ -10,7 +10,7 @@
     "typescript": "^5.0.4"
   },
   "peerDependencies": {
-    "prettier": "^2.5.1"
+    "prettier": ">2.5.1"
   },
   "scripts": {
     "test": "node test/test.mjs --validate-locations=true && node test/test.mjs --check-mss=true && node test/test.mjs",

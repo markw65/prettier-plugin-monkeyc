@@ -1,7 +1,8 @@
 import { parse } from "peg/monkeyc.peggy";
-import { default as preprocess, LiteralIntegerRe } from "./printer";
+import { default as preprocess, LiteralIntegerRe, estree_promise } from "./printer";
 import { Node as ESTreeNode } from "./estree-types";
-import { Parser, ParserOptions, Printer } from "prettier";
+import { Parser, ParserOptions } from "prettier";
+import { Printer } from "./printer";
 export * as mctree from "./estree-types";
 export { LiteralIntegerRe };
 
@@ -13,35 +14,52 @@ export const languages = [
   },
 ];
 
+function parseMonkeyC(
+  text: string,
+  parsers: unknown,
+  options: Partial<ParserOptions<ESTreeNode>> & {
+    singleExpression?: boolean;
+    mss?: string;
+  }
+) {
+  const peggyOptions: {
+    grammarSource?: string;
+    startRule?: string;
+    mss?: string;
+  } = {};
+  if (!options) {
+    options = parsers as typeof options;
+  }
+  if (options) {
+    if (options.filepath) {
+      peggyOptions.grammarSource = options.filepath;
+    }
+    if (options.mss != null) {
+      peggyOptions.startRule = "PersonalityStart";
+      peggyOptions.mss = options.mss;
+    } else {
+      peggyOptions.startRule = options.singleExpression
+        ? "SingleExpression"
+        : "Start";
+    }
+  }
+  return parse(text, peggyOptions);
+}
+
 export const parsers = {
   monkeyc: {
     parse: (
       text: string,
-      _parsers: unknown,
+      parsers: unknown,
       options: Partial<ParserOptions<ESTreeNode>> & {
         singleExpression?: boolean;
         mss?: string;
       }
     ) => {
-      const peggyOptions: {
-        grammarSource?: string;
-        startRule?: string;
-        mss?: string;
-      } = {};
-      if (options) {
-        if (options.filepath) {
-          peggyOptions.grammarSource = options.filepath;
-        }
-        if (options.mss != null) {
-          peggyOptions.startRule = "PersonalityStart";
-          peggyOptions.mss = options.mss;
-        } else {
-          peggyOptions.startRule = options.singleExpression
-            ? "SingleExpression"
-            : "Start";
-        }
+      if (estree_promise) {
+        return estree_promise.then(() => parseMonkeyC(text, parsers, options));
       }
-      return parse(text, peggyOptions);
+      return parseMonkeyC(text, parsers, options);
     },
     astFormat: "monkeyc",
     locStart: (node: ESTreeNode) => node.start || 0,
@@ -86,10 +104,32 @@ export const parsers = {
   } as Parser<ESTreeNode>,
 };
 
+const nonTraversableKeys = new Set([
+  "tokens",
+  "comments",
+  "parent",
+  "enclosingNode",
+  "precedingNode",
+  "followingNode",
+]);
+
 export const printers: Record<string, Printer<ESTreeNode>> = {
   monkeyc: {
-    print: () => {
+    print() {
       throw "Something went wrong: printer not initialized!";
+    },
+    preprocess() {
+      throw "Something went wrong: printer not initialized!";
+    },
+    getVisitorKeys(node) {
+      return Object.entries(node)
+        .filter(
+          ([key, value]) =>
+            !nonTraversableKeys.has(key) &&
+            ((value && typeof value.type === "string") ||
+              (Array.isArray(value) && value.every((v) => v.type != null)))
+        )
+        .map(([key]) => key);
     },
   },
 };

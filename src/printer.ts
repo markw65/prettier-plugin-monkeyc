@@ -32,50 +32,71 @@ export const LiteralIntegerRe = /^-?(0x[0-9a-f]+|\d+)(l)?$/i;
 type AstPath<T = any> = Prettier.AstPath<T>;
 type ParserOptions = Prettier.ParserOptions<ESTreeNode>;
 
-interface Printer<T> extends Prettier.Printer<T> {
-  preprocess: (node: T, options: Prettier.ParserOptions<T>) => T;
+export interface Printer<T> extends Prettier.Printer<T> {
+  preprocess: (node: T, options: Prettier.ParserOptions<T>) => T | Promise<T>;
+  getVisitorKeys: (node: T) => string[];
 }
+
+type PluginPrinterElem =
+  | Printer<ESTreeNode>
+  | (() => Promise<Printer<ESTreeNode>>);
 
 let estree_print: Printer<ESTreeNode>["print"],
   estree_preprocess: Printer<ESTreeNode>["preprocess"];
+
+export let estree_promise: Promise<void> | undefined | null;
 
 // We set this as the parser's preprocess function. That lets
 // us grab the estree printer early on, and munge our printer,
 // before any printing starts
 export default function printerIntialize(text: string, options: ParserOptions) {
-  if (!estree_print) {
+  if (estree_promise === undefined) {
     const find = (name: string) => {
-      const finder = (p: Prettier.Plugin | string | undefined) =>
-        p && typeof p !== "string" && p.printers?.[name];
+      const finder = (
+        p: Prettier.Plugin | string | undefined
+      ): false | "" | undefined | PluginPrinterElem =>
+        p && typeof p !== "string" && (p.printers?.[name] as PluginPrinterElem);
       const result = finder(options.plugins?.find(finder));
       if (!result) throw new Error("Prettier setup failure!");
-      return result as Printer<ESTreeNode>;
+      return result;
     };
-    let rest, canAttachComment: ((node: ESTreeNode) => boolean) | undefined;
-    ({
-      print: estree_print,
-      preprocess: estree_preprocess,
-      canAttachComment,
-      ...rest
-    } = find("estree"));
-    Object.assign(printers.monkeyc, rest, {
-      print: printAst,
-      preprocess: preprocessAst,
-      canAttachComment: (node: ESTreeNode) =>
-        node.type != "AttributeList" &&
-        (!canAttachComment || canAttachComment(node)),
-      willPrintOwnComments: () => false,
-    });
+    const estree = find("estree");
+    const setup = (estree: Printer<ESTreeNode>) => {
+      estree_promise = null;
+      let rest,
+        canAttachComment: ((node: ESTreeNode) => boolean) | undefined,
+        getVisitorKeys;
+      ({
+        print: estree_print,
+        preprocess: estree_preprocess,
+        canAttachComment,
+        getVisitorKeys,
+        ...rest
+      } = estree);
+      Object.assign(printers.monkeyc, rest, {
+        print: printAst,
+        preprocess: preprocessAst,
+        canAttachComment: (node: ESTreeNode) =>
+          node.type != "AttributeList" &&
+          (!canAttachComment || canAttachComment(node)),
+        willPrintOwnComments: () => false,
+      });
+    };
+    if (typeof estree === "function") {
+      estree_promise = estree().then(setup);
+    } else {
+      setup(estree);
+    }
   }
   return text;
 }
 
 function preprocessAst(ast: ESTreeNode, options: ParserOptions) {
-  return preprocessHelper(
-    estree_preprocess ? estree_preprocess(ast, options) : ast,
-    null,
-    options
-  );
+  const newAst = estree_preprocess ? estree_preprocess(ast, options) : ast;
+  if ("then" in newAst) {
+    return newAst.then((ast) => preprocessHelper(ast, null, options));
+  }
+  return preprocessHelper(newAst, null, options);
 }
 
 function printAttributeList(
@@ -128,7 +149,12 @@ function printAst(
     }
     case "ModuleDeclaration": {
       const body: Prettier.Doc = group([
-        group(["module", line, indent(typedPath(node).call(print, "id")), line]),
+        group([
+          "module",
+          line,
+          indent(typedPath(node).call(print, "id")),
+          line,
+        ]),
         typedPath(node).call(print, "body"),
       ]);
       if (node.attrs) {
