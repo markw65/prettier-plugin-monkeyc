@@ -349,3 +349,6 @@ Accept and fix a few more illegal programs
 
 #### 1.0.49
 - No changes in functionality. esbuild was accidentally added as a dependency, rather than a dev dependency.
+
+#### 1.0.50
+- Make the plugin work with prettier@3.0.0
