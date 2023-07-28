@@ -1,5 +1,9 @@
 import { parse } from "peg/monkeyc.peggy";
-import { default as preprocess, LiteralIntegerRe, estree_promise } from "./printer";
+import {
+  default as preprocess,
+  LiteralIntegerRe,
+  estree_promise,
+} from "./printer";
 import { Node as ESTreeNode } from "./estree-types";
 import { Parser, ParserOptions } from "prettier";
 import { Printer } from "./printer";
@@ -127,7 +131,8 @@ export const printers: Record<string, Printer<ESTreeNode>> = {
           ([key, value]) =>
             !nonTraversableKeys.has(key) &&
             ((value && typeof value.type === "string") ||
-              (Array.isArray(value) && value.every((v) => v.type != null)))
+              (Array.isArray(value) &&
+                value.every((v) => v && typeof v.type === "string")))
         )
         .map(([key]) => key);
     },
