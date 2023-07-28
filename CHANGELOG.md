@@ -54,7 +54,7 @@
 
 #### 1.0.38
 
-- Turn off caching, reducing the parser's memory use by about 5x. This initially had very little effect on parsing speed for most code, but there were some pathalogical cases that were relying on caching. So I folled this up by a series of fixes to the grammar to reduce the amount of backtracking and reparsing. At the end of which, parsing was about twice as fast on average, and no slower worst case.
+- Turn off caching, reducing the parser's memory use by about 5x. This initially had very little effect on parsing speed for most code, but there were some pathological cases that were relying on caching. So I followed this up by a series of fixes to the grammar to reduce the amount of backtracking and re-parsing. At the end of which, parsing was about twice as fast on average, and no slower worst case.
 - Added tests that the location info was consistent, after accidentally breaking it with the backtracking fixes.
 - Fix the layout of the generated .d.ts files
 - Update the parser to handle the attribute fields in api.mir, so we can access things like minCiq version from the ast.
@@ -73,7 +73,7 @@
 - Formatter fix
   - Don't indent object types in typedef declarations [#1](https://github.com/markw65/prettier-plugin-monkeyc/issues/1)
 
-- Parser fixes to match some [undocument monkeyc behavior](https://github.com/markw65/monkeyc-optimizer/issues/1)
+- Parser fixes to match some [undocumented monkeyc behavior](https://github.com/markw65/monkeyc-optimizer/issues/1)
   - Allow '|' as well as 'or' in type unions
   - Treat \<letter>, \" and \<space> as whitespace
   - Treat \<newline> as <newline>
@@ -92,7 +92,7 @@
 
 - Api change
 
-  - Use BigInts for Longs
+  - Use `BigInt`s for `Long`s
 
 - Parser fix
   - Allow `new arr[index](...args)`
@@ -109,7 +109,7 @@
 
 #### 1.0.30
 
-- Parenthesize AsExpression when its a subexpression of LogicalExpression
+- Parenthesize AsExpression when its a sub-expression of LogicalExpression
 - Export Expression from estree-types
 
 #### 1.0.29
@@ -126,7 +126,7 @@
 
 #### 1.0.26
 
-- Fix bug parsing case instanceof (it only allowed a plain identifier)
+- Fix bug parsing `case instanceof` (it only allowed a plain identifier)
 - Fix more estree types
 
 #### 1.0.25
@@ -217,7 +217,7 @@ Fixed various parser issues:
 - Ignore "@" at the beginning of an identifier (is this right? It doesn't
   seem to do anything)
 - Floating point literals need a digit after the point. Otherwise
-  `42.toChar()` gets misparsed by consuming `42.` as a float literal,
+  `42.toChar()` gets mis-parsed by consuming `42.` as a float literal,
   and then hitting a syntax error.
 - Allow `static class Foo {}` (but ignore the static)
 - Fixup reserved word lists
