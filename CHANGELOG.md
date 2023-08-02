@@ -1,3 +1,6 @@
+#### 1.0.51
+- Fix a potential crash introduced in the last release
+
 #### 1.0.50
 - Make the plugin work with prettier@3.0.0
 
