@@ -152,7 +152,8 @@ async function test() {
     (
       await globby([
         `${root}/${tests || "*"}/manifest.xml`,
-        `!${root}/Toasts/*`,
+        // Exclude broken tests here (Toasts was broken around 4.2, and fixed in 6.2.0)
+        // `!${root}/Toasts/*`,
       ])
     ).forEach((manifest, index) => {
       const MAX_CONCURRENT_COMPILES = 4;
