@@ -1,3 +1,7 @@
+# Change Log
+
+All notable changes to the "prettier-plugin-monkeyc" package will be documented in this file.
+
 #### 1.0.51
 - Fix a potential crash introduced in the last release
 
