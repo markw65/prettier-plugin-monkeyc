@@ -489,7 +489,7 @@ export interface ClassBody extends BaseStatement {
 
 export interface ClassElement extends BaseStatement {
   type: "ClassElement";
-  item: Exclude<Declaration, ModuleDeclaration>;
+  item: Exclude<Declaration, ModuleDeclaration> | ImportStatement;
 }
 
 export interface EnumDeclaration extends BaseDeclaration {

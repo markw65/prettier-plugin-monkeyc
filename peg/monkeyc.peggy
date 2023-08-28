@@ -1308,6 +1308,7 @@ ClassElement
     / VariableStatement
     / ClassDeclaration
     / TypedefDeclaration
+    / ImportStatement
   ) {
       return wrap({
         type: "ClassElement",
