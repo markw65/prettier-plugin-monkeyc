@@ -5,8 +5,16 @@
   "cSpell.words": [
     "adata",
     "bdata",
+    "callspec",
     "connectiq",
-    "monkeydo"
+    "hardline",
+    "metafile",
+    "monkeydo",
+    "munge",
+    "nprec",
+    "outdir",
+    "pprec",
+    "softline"
   ],
   "prettier.prettierPath": "./node_modules/prettier"
 }

@@ -49,7 +49,7 @@ export let estree_promise: Promise<void> | undefined | null;
 // We set this as the parser's preprocess function. That lets
 // us grab the estree printer early on, and munge our printer,
 // before any printing starts
-export default function printerIntialize(text: string, options: ParserOptions) {
+export default function printerInitialize(text: string, options: ParserOptions) {
   if (estree_promise === undefined) {
     const find = (name: string) => {
       const finder = (
@@ -476,7 +476,7 @@ function isToplevel(node: ESTreeNode) {
 
 function nodeNeedsParens(node: ESTreeNode, parent: ESTreeNode): boolean {
   if (parent.type === "ExpressionStatement") {
-    // We don't want to parenthesise a top level ObjectExpression,
+    // We don't want to parenthesize a top level ObjectExpression,
     // but the estree printer will do it anyway. So we wrap it in
     // parens (to prevent the estree printer from doing so), but
     // ignore the parens ourselves.
