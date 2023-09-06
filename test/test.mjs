@@ -69,7 +69,7 @@ async function test() {
     await Promise.all(
       filesToCheck.map((file) =>
         fs.readFile(file).then((data) => {
-          console.log(`Parsing ${file}`)
+          console.log(`Parsing ${file}`);
           MonkeyC.parsers.monkeyc.parse(data.toString(), null, {
             filepath: file,
             mss: "",
@@ -390,16 +390,32 @@ function validate(projects) {
     )
     .then((files) =>
       Promise.all(
-        files.flat().map((file) =>
-          fs.readFile(file).then((data) => {
-            const ast = MonkeyC.parsers.monkeyc.parse(data.toString(), null, {
+        files
+          .flat()
+          .map((file) =>
+            fs.readFile(file).then((data) => [file, data.toString()])
+          )
+      )
+        .then((results) => {
+          const start = Date.now();
+          const asts = results.map(([file, data]) => [
+            file,
+            MonkeyC.parsers.monkeyc.parse(data, null, {
               filepath: file,
-            });
+            }),
+          ]);
+          //const numNodes = validateHelper(ast, []);
+          //console.log(`Validated ${numNodes} locations for ${file}.`);
+          const end = Date.now();
+          return [start, asts, end];
+        })
+        .then(([start, asts, end]) => {
+          asts.forEach(([file, ast]) => {
             const numNodes = validateHelper(ast, []);
             console.log(`Validated ${numNodes} locations for ${file}.`);
-          })
-        )
-      )
+          });
+          console.log(`Parsed ${asts.length} files in ${end - start}ms.`);
+        })
     );
 }
 
