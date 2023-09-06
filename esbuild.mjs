@@ -4,6 +4,7 @@ import * as fs from "node:fs/promises";
 import peggy from "peggy";
 import * as readline from "node:readline";
 import * as path from "node:path";
+import peggyOptimizer from "@markw65/peggy-optimizer";
 
 const cjsDir = "build";
 const releaseBuild = process.argv.includes("--release");
@@ -93,27 +94,21 @@ const peggyPlugin = {
 
       try {
         const mapDir = path.resolve(build.initialOptions.outdir, "..");
-        const sourceAndMap = peggy
-          .generate(source, {
-            cache: false,
-            format: "es",
-            output: "source-and-map",
-            grammarSource: args.path,
-            allowedStartRules: [
-              "Start",
-              "SingleExpression",
-              "PersonalityStart",
-            ],
-          })
-          .toStringWithSourceMap({
-            /*file: path.resolve(
-              mapDir,
-              path.basename(args.path, ".peggy") + ".js"
-            ),*/
-            //sourceRoot: process.cwd(),
-          });
-        let contents = sourceAndMap.code;
+        const options = /** @type {const} */ {
+          cache: false,
+          format: "es",
+          grammarSource: args.path,
+          allowedStartRules: ["Start", "SingleExpression", "PersonalityStart"],
+          plugins: [peggyOptimizer],
+        };
         if (build.initialOptions.sourcemap) {
+          const sourceAndMap = peggy
+            .generate(source, {
+              ...options,
+              output: "source-and-map",
+            })
+            .toStringWithSourceMap({});
+          let contents = sourceAndMap.code;
           const sourceMap = sourceAndMap.map.toJSON();
           sourceMap.sources = sourceMap.sources.map((src) => {
             return src === null ? null : path.relative(mapDir, src);
@@ -122,8 +117,15 @@ const peggyPlugin = {
             JSON.stringify(sourceMap)
           ).toString("base64")}`;
           contents += `\n//# sourceMappingURL=${map}`;
+          return { contents, loader: "js" };
+        } else {
+          return {
+            contents: peggy.generate(source, {
+              ...options,
+              output: "source",
+            }),
+          };
         }
-        return { contents, loader: "js" };
       } catch (e) {
         return { errors: [convertMessage(e)] };
       }

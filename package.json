@@ -45,5 +45,8 @@
   "bugs": {
     "url": "https://github.com/markw65/prettier-plugin-monkeyc/issues"
   },
-  "homepage": "https://github.com/markw65/prettier-plugin-monkeyc#readme"
+  "homepage": "https://github.com/markw65/prettier-plugin-monkeyc#readme",
+  "dependencies": {
+    "@markw65/peggy-optimizer": "^1.0.1"
+  }
 }
