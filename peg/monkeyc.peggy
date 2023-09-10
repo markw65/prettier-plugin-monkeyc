@@ -152,8 +152,8 @@ WhiteSpace "whitespace"
   / "\u00A0"
   / "\uFEFF"
   / Zs
-  / "\\" [a-zA-Z" ]
-  / "\\" &LineTerminatorSequence
+  / LineTerminator
+  / "\\" ([a-zA-Z" ] / LineTerminator)
 
 LineTerminator = [\n\r\u2028\u2029]
 
@@ -213,42 +213,20 @@ UnicodeDigit = Nd
 UnicodeConnectorPunctuation = Pc
 
 ReservedWord
-  = Keyword
-  / NullLiteral
-  / NaNLiteral
-  / BooleanLiteral
-
-Keyword
-  = AndToken
-  / AsToken
+  = &"a" @(AndToken / AsToken)
   / BreakToken
-  / CaseToken
-  / CatchToken
-  / ClassToken
-  / ConstToken
-  / ContinueToken
-  / DefaultToken
-  / DoToken
-  / ElseToken
-  / EnumToken
-  / ExtendsToken
-  / FinallyToken
-  / ForToken
-  / FunctionToken
+  / &"c" @(CaseToken / CatchToken / ClassToken / ConstToken / ContinueToken)
+  / &"d" @(DefaultToken / DoToken)
+  / &"e" @(ElseToken / EnumToken / ExtendsToken)
+  / &"f" @(FalseToken / FinallyToken / ForToken / FunctionToken)
   / HasToken
-  / IfToken
-  / InstanceofToken
-  / InterfaceToken
+  / &"i" @(IfToken / InstanceofToken / InterfaceToken)
   / MeToken
-  / NativeToken
-  / NewToken
+  / &"n" @(NaNToken / NativeToken / NewToken / NullToken)
   / OrToken
   / ReturnToken
-  / SelfToken
-  / SwitchToken
-  / ThrowToken
-  / TryToken
-  / TypedefToken
+  / &"s" @(SelfToken / SwitchToken)
+  / &"t" @(ThrowToken / TrueToken / TryToken / TypedefToken)
   / VarToken
   / WhileToken
 
@@ -471,91 +449,91 @@ Zs = [\u0020\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]
 
 // Tokens
 
-AndToken = "and" !IdentifierPart
+AndToken = @"and" !IdentifierPart
 
-AsToken = "as" !IdentifierPart
+AsToken = @"as" !IdentifierPart
 
-BreakToken = "break" !IdentifierPart
+BreakToken = @"break" !IdentifierPart
 
-CaseToken = "case" !IdentifierPart
+CaseToken = @"case" !IdentifierPart
 
-CatchToken = "catch" !IdentifierPart
+CatchToken = @"catch" !IdentifierPart
 
-ClassToken = "class" !IdentifierPart
+ClassToken = @"class" !IdentifierPart
 
-ConstToken = "const" !IdentifierPart
+ConstToken = @"const" !IdentifierPart
 
-ContinueToken = "continue" !IdentifierPart
+ContinueToken = @"continue" !IdentifierPart
 
-DefaultToken = "default" !IdentifierPart
+DefaultToken = @"default" !IdentifierPart
 
-DoToken = "do" !IdentifierPart
+DoToken = @"do" !IdentifierPart
 
-ElseToken = "else" !IdentifierPart
+ElseToken = @"else" !IdentifierPart
 
-EnumToken = "enum" !IdentifierPart
+EnumToken = @"enum" !IdentifierPart
 
-ExtendsToken = "extends" !IdentifierPart
+ExtendsToken = @"extends" !IdentifierPart
 
-FalseToken = "false" !IdentifierPart
+FalseToken = @"false" !IdentifierPart
 
-FinallyToken = "finally" !IdentifierPart
+FinallyToken = @"finally" !IdentifierPart
 
-ForToken = "for" !IdentifierPart
+ForToken = @"for" !IdentifierPart
 
-FunctionToken = "function" !IdentifierPart
+FunctionToken = @"function" !IdentifierPart
 
-HasToken = "has" !IdentifierPart
+HasToken = @"has" !IdentifierPart
 
-IfToken = "if" !IdentifierPart
+IfToken = @"if" !IdentifierPart
 
-ImportToken = "import" !IdentifierPart
+ImportToken = @"import" !IdentifierPart
 
-InstanceofToken = "instanceof" !IdentifierPart
+InstanceofToken = @"instanceof" !IdentifierPart
 
-InterfaceToken = "interface" !IdentifierPart
+InterfaceToken = @"interface" !IdentifierPart
 
-MeToken = "me" !IdentifierPart
+MeToken = @"me" !IdentifierPart
 
-ModuleToken = "module" !IdentifierPart
+ModuleToken = @"module" !IdentifierPart
 
-NativeToken = "native" !IdentifierPart
+NativeToken = @"native" !IdentifierPart
 
-NaNToken = "NaN" !IdentifierPart
+NaNToken = @"NaN" !IdentifierPart
 
-NewToken = "new" !IdentifierPart
+NewToken = @"new" !IdentifierPart
 
-NullToken = "null" !IdentifierPart
+NullToken = @"null" !IdentifierPart
 
-OrToken = "or" !IdentifierPart
+OrToken = @"or" !IdentifierPart
 
-ReturnToken = "return" !IdentifierPart
+ReturnToken = @"return" !IdentifierPart
 
-SelfToken = "self" !IdentifierPart
+SelfToken = @"self" !IdentifierPart
 
-StaticToken = "static" !IdentifierPart
+StaticToken = @"static" !IdentifierPart
 
-SuperToken = "super" !IdentifierPart
+SuperToken = @"super" !IdentifierPart
 
-SwitchToken = "switch" !IdentifierPart
+SwitchToken = @"switch" !IdentifierPart
 
-ThrowToken = "throw" !IdentifierPart
+ThrowToken = @"throw" !IdentifierPart
 
-TrueToken = "true" !IdentifierPart
+TrueToken = @"true" !IdentifierPart
 
-TryToken = "try" !IdentifierPart
+TryToken = @"try" !IdentifierPart
 
-TypedefToken = "typedef" !IdentifierPart
+TypedefToken = @"typedef" !IdentifierPart
 
-UsingToken = "using" !IdentifierPart
+UsingToken = @"using" !IdentifierPart
 
-VarToken = "var" !IdentifierPart
+VarToken = @"var" !IdentifierPart
 
-WhileToken = "while" !IdentifierPart
+WhileToken = @"while" !IdentifierPart
 
 // Skipped
 
-__ = (WhiteSpace / LineTerminatorSequence / Comment)*
+__ = $((WhiteSpace / &"/" @Comment)*)
 
 StatementBeginTokens
   = BreakToken
@@ -577,7 +555,7 @@ StatementBeginTokens
   / VarToken
   / WhileToken
 
-EOS = __ (";" / &("}" / StatementBeginTokens))
+EOS = __ @(";" / &("}" / StatementBeginTokens))
 
 // ----- Expressions -----
 
@@ -902,7 +880,6 @@ Statement
   / ContinueStatement
   / BreakStatement
   / ReturnStatement
-  / LabelledStatement
   / SwitchStatement
   / ThrowStatement
   / TryStatement
@@ -954,7 +931,7 @@ VariableDeclaration
 Initialiser = "=" !"=" __ expression:SingleExpression { return expression; }
 
 ExpressionStatement
-  = !("{" / FunctionToken) expression:ExpressionLike EOS {
+  = expression:ExpressionLike EOS {
       return wrap({
         type: "ExpressionStatement",
         expression,
@@ -1039,15 +1016,9 @@ ContinueStatement
   = ContinueToken EOS {
       return wrap({ type: "ContinueStatement", label: null });
     }
-  / ContinueToken __ label:Identifier EOS {
-      return wrap({ type: "ContinueStatement", label });
-    }
 
 BreakStatement
   = BreakToken EOS { return wrap({ type: "BreakStatement", label: null }); }
-  / BreakToken __ label:Identifier EOS {
-      return wrap({ type: "BreakStatement", label });
-    }
 
 ReturnStatement
   = ReturnToken argument:(__ @SingleExpression)? EOS {
@@ -1113,11 +1084,6 @@ DefaultClause
         test: null,
         consequent: optionalList(consequent),
       });
-    }
-
-LabelledStatement
-  = label:Identifier __ ":" __ body:Statement {
-      return wrap({ type: "LabeledStatement", label: label, body: body });
     }
 
 ThrowStatement
