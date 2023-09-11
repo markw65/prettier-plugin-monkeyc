@@ -20,6 +20,45 @@
     MemberExpression: "object",
   };
 
+  const RESERVED_WORDS = new Set([
+    "and",
+    "as",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "continue",
+    "default",
+    "do",
+    "else",
+    "enum",
+    "extends",
+    "false",
+    "finally",
+    "for",
+    "function",
+    "has",
+    "if",
+    "instanceof",
+    "interface",
+    "me",
+    "NaN",
+    "native",
+    "new",
+    "null",
+    "or",
+    "return",
+    "self",
+    "switch",
+    "throw",
+    "true",
+    "try",
+    "typedef",
+    "var",
+    "while",
+  ]);
+
   function optionalList(value) {
     return value !== null ? value : [];
   }
@@ -172,7 +211,7 @@ MultiLineComment
 SingleLineComment
   = "//" text:$(!LineTerminator SourceCharacter)* { addComment(text, false); }
 
-Identifier = !ReservedWord name:IdentifierName { return name; }
+Identifier = name:IdentifierName !{ return RESERVED_WORDS.has(name.name); } { return name; }
 
 IdentifierName "identifier"
   = "@"? head:IdentifierStart tail:IdentifierPart* {
@@ -211,24 +250,6 @@ UnicodeCombiningMark
 UnicodeDigit = Nd
 
 UnicodeConnectorPunctuation = Pc
-
-ReservedWord
-  = &"a" @(AndToken / AsToken)
-  / BreakToken
-  / &"c" @(CaseToken / CatchToken / ClassToken / ConstToken / ContinueToken)
-  / &"d" @(DefaultToken / DoToken)
-  / &"e" @(ElseToken / EnumToken / ExtendsToken)
-  / &"f" @(FalseToken / FinallyToken / ForToken / FunctionToken)
-  / HasToken
-  / &"i" @(IfToken / InstanceofToken / InterfaceToken)
-  / MeToken
-  / &"n" @(NaNToken / NativeToken / NewToken / NullToken)
-  / OrToken
-  / ReturnToken
-  / &"s" @(SelfToken / SwitchToken)
-  / &"t" @(ThrowToken / TrueToken / TryToken / TypedefToken)
-  / VarToken
-  / WhileToken
 
 Literal
   = NullLiteral
