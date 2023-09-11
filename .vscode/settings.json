@@ -7,5 +7,6 @@
     "bdata",
     "connectiq",
     "monkeydo"
-  ]
+  ],
+  "prettier.prettierPath": "./node_modules/prettier"
 }
