@@ -33,27 +33,27 @@
   }
 
   function buildBinaryExpression(head, tail) {
-    return reduce(head, tail, (result, element) => {
+    return reduce(head, tail, (result, [operator, right]) => {
       return {
         type: "BinaryExpression",
-        operator: element[1],
+        operator,
         left: result,
-        right: element[3],
-        end: element[3].end,
-        loc: element[3].loc,
+        right,
+        end: right.end,
+        loc: right.loc,
       };
     });
   }
 
   function buildLogicalExpression(head, tail) {
-    return reduce(head, tail, (result, element) => {
+    return reduce(head, tail, (result, [operator, right]) => {
       return {
         type: "LogicalExpression",
-        operator: element[1],
+        operator,
         left: result,
-        right: element[3],
-        end: element[3].end,
-        loc: element[3].loc,
+        right,
+        end: right.end,
+        loc: right.loc,
       };
     });
   }
@@ -533,7 +533,7 @@ WhileToken = @"while" !IdentifierPart
 
 // Skipped
 
-__ = $((WhiteSpace / &"/" @Comment)*)
+__ = $(WhiteSpace / &"/" @Comment)*
 
 StatementBeginTokens
   = BreakToken
@@ -703,14 +703,10 @@ UnaryExpression
       });
     }
 
-UnaryOperator
-  = $("+" !"=")
-  / $("-" !"=")
-  / "~"
-  / "!"
+UnaryOperator = @("+" / "-" / "~" / "!") !"="
 
 AsExpression
-  = head:UnaryExpression tail:(__ $AsToken __ TypeSpecList)* {
+  = head:UnaryExpression tail:(__ @AsToken __ @TypeSpecList)* {
       return buildBinaryExpression(head, tail);
     }
 
@@ -719,70 +715,64 @@ AsExpression
 // there's no need to replicate it here. If we get `a * b as Type` we'll
 // just fix it to `a * (b as Type)`.
 MultiplicativeExpression
-  = head:AsExpression tail:(__ MultiplicativeOperator __ AsExpression)* {
+  = head:AsExpression tail:(__ @MultiplicativeOperator __ @AsExpression)* {
       return buildBinaryExpression(head, tail);
     }
 
-MultiplicativeOperator
-  = $("*" !"=")
-  / $("/" !"=")
-  / $("%" !"=")
-  / $("&" !"=")
-  / $("<<" !"=")
-  / $(">>" !"=")
+MultiplicativeOperator = @("*" / "/" / "%" / "&" / "<<" / ">>") !"="
 
 InstanceHasExpression
   = head:MultiplicativeExpression
-    tail:(__ ($InstanceofToken / $HasToken) __ AsExpression)* {
+    tail:(__ @(InstanceofToken / HasToken) __ @AsExpression)* {
       return buildBinaryExpression(head, tail);
     }
 
 AdditiveExpression
   = head:InstanceHasExpression
-    tail:(__ AdditiveOperator __ InstanceHasExpression)* {
+    tail:(__ @AdditiveOperator __ @InstanceHasExpression)* {
       return buildBinaryExpression(head, tail);
     }
 
 AdditiveOperator
-  = $("+" ![+=])
-  / $("-" ![-=])
-  / $("|" ![-=])
-  / $("^" ![-=])
+  = (@"+" ![+=])
+  / (@"-" ![-=])
+  / (@"|" ![=])
+  / (@"^" ![=])
 
 RelationalExpression
   = head:AdditiveExpression
-    tail:(__ RelationalOperator __ AdditiveExpression)* {
+    tail:(__ @RelationalOperator __ @AdditiveExpression)* {
       return buildBinaryExpression(head, tail);
     }
 
 RelationalOperator
   = "<="
   / ">="
-  / $("<" !"<")
-  / $(">" !">")
+  / (@"<" !"<")
+  / (@">" !">")
   / "=="
   / "!="
   / $HasToken
 
 LogicalANDExpression
   = head:RelationalExpression
-    tail:(__ LogicalANDOperator __ RelationalExpression)* {
+    tail:(__ @LogicalANDOperator __ @RelationalExpression)* {
       return buildLogicalExpression(head, tail);
     }
 
 LogicalANDOperator
   = "&&"
-  / $AndToken
+  / AndToken
 
 LogicalORExpression
   = head:LogicalANDExpression
-    tail:(__ LogicalOROperator __ LogicalANDExpression)* {
+    tail:(__ @LogicalOROperator __ @LogicalANDExpression)* {
       return buildLogicalExpression(head, tail);
     }
 
 LogicalOROperator
   = "||"
-  / $OrToken
+  / OrToken
 
 ConditionalExpression
   = test:LogicalORExpression tail:(__ "?" @ConditionalExpressionTail)? {
@@ -835,7 +825,7 @@ AssignmentExpression
     }
 
 AssignmentOperator
-  = $("=" !"=")
+  = (@"=" !"=")
   / "*="
   / "/="
   / "%="
