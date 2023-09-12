@@ -203,7 +203,7 @@ LineTerminatorSequence "end of line"
   / "\u2028"
   / "\u2029"
 
-Comment "comment" = comment:$(MultiLineComment / SingleLineComment)
+Comment "comment" = comment:(MultiLineComment / SingleLineComment)
 
 MultiLineComment
   = "/*" text:$(!"*/" SourceCharacter)* "*/" { addComment(text, true); }
@@ -298,7 +298,7 @@ DecimalLiteral
       return wrap({ type: "Literal", value: parseFloat(raw), raw });
     }
 
-DecimalIntegerLiteralStr = $("0" !OctalDigit / NonZeroDigit DecimalDigit*)
+DecimalIntegerLiteralStr = @"0" !OctalDigit / $(NonZeroDigit DecimalDigit*)
 
 DecimalIntegerLiteral
   = raw:DecimalIntegerLiteralStr {
@@ -581,7 +581,7 @@ EOS = __ @(";" / &("}" / StatementBeginTokens))
 // ----- Expressions -----
 
 PrimaryExpression
-  = text:$(SelfToken / MeToken) {
+  = text:(SelfToken / MeToken) {
       return wrap({ type: "ThisExpression", text });
     }
   / Identifier
@@ -773,7 +773,7 @@ RelationalOperator
   / (@">" !">")
   / "=="
   / "!="
-  / $HasToken
+  / HasToken
 
 LogicalANDExpression
   = head:RelationalExpression
@@ -913,7 +913,7 @@ StatementList = head:Statement tail:(__ @Statement)* { return [head, ...tail]; }
 
 VariableStatement
   = attrs:(@AttributeList __)?
-    kind:($VarToken / $ConstToken)
+    kind:(VarToken / ConstToken)
     __
     declarations:VariableDeclarationList
     EOS {
@@ -1132,7 +1132,7 @@ Catch
     }
 
 CatchArg
-  = id:Identifier paramType:(__ @$InstanceofToken __ @ScopedName)? {
+  = id:Identifier paramType:(__ @InstanceofToken __ @ScopedName)? {
       return paramType
         ? wrap({
             type: "BinaryExpression",
@@ -1208,7 +1208,7 @@ Attributes
     }
 
 AccessList
-  = head:$AccessSpecifier tail:(__ @$AccessSpecifier)* {
+  = head:AccessSpecifier tail:(__ @AccessSpecifier)* {
       return [head, ...tail];
     }
 
@@ -1390,7 +1390,7 @@ SingleTypeSpec
         properties: [head, ...tail],
       });
     }
-  / name:$InterfaceToken __ body:ClassElements {
+  / name:InterfaceToken __ body:ClassElements {
       return wrap({
         type: "TypeSpecPart",
         name,
@@ -1398,7 +1398,7 @@ SingleTypeSpec
       });
     }
 
-ObjectAsExpression = &((Symbol / Literal) __ AsToken) @AsExpression
+ObjectAsExpression = &((Symbol / Literal) __ @AsToken) @AsExpression
 
 NullableTypeSpec
   = ts:SingleTypeSpec n:(__ "?")? {
