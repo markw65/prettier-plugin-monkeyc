@@ -75,7 +75,7 @@ export const parsers = {
     // original text, followed by the json ast. This is because
     // prettier makes some of its formatting decisions by looking
     // at the original source, rather than the contents of the ast.
-    parse: (str: string): ESTreeNode => {
+    parse: (str: string) => {
       const match = str.match(
         /^((.|[\r\n\u2028\u2029])*)(\r\n|[\n\r\u2028\u2029])(.+)$/
       );
@@ -98,6 +98,9 @@ export const parsers = {
             (comment) => !comment.value.includes("prettier-ignore")
           );
         }
+      }
+      if (estree_promise) {
+        return estree_promise.then(() => result);
       }
       return result;
     },
