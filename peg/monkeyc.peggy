@@ -1398,12 +1398,9 @@ SingleTypeSpec
       });
     }
 
-ObjectAsExpression = &((Symbol / Literal) __ @AsToken) @AsExpression
-
-NullableTypeSpec
-  = ts:SingleTypeSpec n:(__ "?")? {
-      if (!n) return ts;
-      return wrap({ ...ts, nullable: true });
+ObjectAsExpression
+  = head:(Symbol / Literal) tail:(__ @AsToken __ @TypeSpecList) {
+      return buildBinaryExpression(head, [tail]);
     }
 
 UnwrappedCallSpec
