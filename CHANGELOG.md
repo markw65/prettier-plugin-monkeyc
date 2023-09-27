@@ -2,6 +2,15 @@
 
 All notable changes to the "prettier-plugin-monkeyc" package will be documented in this file.
 
+#### 1.0.53
+
+- Performance
+  - use @markw65/peggy-optimizer to optimize the generated parser
+  - various tweaks to the grammar for parsing speed
+- fix the monkeyc-json parser (used by @markw65/monkeyc-optimizer to pretty-print the optimized code) to work with prettier-3.x
+- wrap `ObjectExpression`s in parentheses when they're the operand of an `as` expression, to work around [this bug](https://forums.garmin.com/developer/connect-iq/i/bug-reports/the-parser-doesn-t-handle-object-literal-as-type-correctly).
+
+
 #### 1.0.52
 - Allow `import` and `using` inside class declarations
 
