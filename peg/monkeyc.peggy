@@ -211,7 +211,10 @@ MultiLineComment
 SingleLineComment
   = "//" text:$(!LineTerminator SourceCharacter)* { addComment(text, false); }
 
-Identifier = name:IdentifierName !{ return RESERVED_WORDS.has(name.name); } { return name; }
+Identifier
+  = name:IdentifierName ! { return RESERVED_WORDS.has(name.name); } {
+      return name;
+    }
 
 IdentifierName "identifier"
   = "@"? head:IdentifierStart tail:IdentifierPart* {
@@ -298,7 +301,9 @@ DecimalLiteral
       return wrap({ type: "Literal", value: parseFloat(raw), raw });
     }
 
-DecimalIntegerLiteralStr = @"0" !OctalDigit / $(NonZeroDigit DecimalDigit*)
+DecimalIntegerLiteralStr
+  = @"0" !OctalDigit
+  / $(NonZeroDigit DecimalDigit*)
 
 DecimalIntegerLiteral
   = raw:DecimalIntegerLiteralStr {
@@ -629,7 +634,7 @@ MemberExpression
   = head:(
       PrimaryExpression
       / NewToken
-        ts:(__ @SingleTypeSpec)?
+        ts:(__ @SingleTypeSpec &(__ "["))?
         __
         "["
         __
@@ -1208,9 +1213,7 @@ Attributes
     }
 
 AccessList
-  = head:AccessSpecifier tail:(__ @AccessSpecifier)* {
-      return [head, ...tail];
-    }
+  = head:AccessSpecifier tail:(__ @AccessSpecifier)* { return [head, ...tail]; }
 
 ScopedName
   = head:Identifier
@@ -1389,6 +1392,9 @@ SingleTypeSpec
         type: "ObjectExpression",
         properties: [head, ...tail],
       });
+    }
+  / "[" __ head:TypeSpecList tail:(__ "," __ @TypeSpecList)* __ ("," __)? "]" {
+      return wrap({ type: "ArrayExpression", elements: [head, ...tail] });
     }
   / name:InterfaceToken __ body:ClassElements {
       return wrap({

@@ -256,7 +256,7 @@ export interface ArrayExpression extends BaseExpression {
   byte?: "b";
 }
 
-type SingleTypeSpec = TypeSpecPart | ObjectExpression;
+export type SingleTypeSpec = TypeSpecPart | ObjectExpression | ArrayExpression;
 
 export interface SizedArrayExpression extends BaseExpression {
   type: "SizedArrayExpression";
