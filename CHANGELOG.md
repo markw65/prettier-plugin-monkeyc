@@ -2,6 +2,10 @@
 
 All notable changes to the "prettier-plugin-monkeyc" package will be documented in this file.
 
+#### 1.0.54
+
+- Updates for compatibility with sdk-7.0.2-beta
+
 #### 1.0.53
 
 - Performance
