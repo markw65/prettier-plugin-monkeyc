@@ -1334,10 +1334,17 @@ Enum
     }
 
 TypedefDeclaration
-  = TypedefToken __ id:Identifier __ ts:AsTypeSpec EOS {
+  = attrs:(@AttributeList __)?
+    TypedefToken
+    __
+    id:Identifier
+    __
+    ts:AsTypeSpec
+    EOS {
       return wrap({
         type: "TypedefDeclaration",
         id,
+        attrs,
         ts,
       });
     }

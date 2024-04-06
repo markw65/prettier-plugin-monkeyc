@@ -167,12 +167,18 @@ function printAst(
       return body;
     }
 
-    case "TypedefDeclaration":
-      return [
+    case "TypedefDeclaration": {
+      const body = [
         group(["typedef", indent(line), typedPath(node).call(print, "id")]),
         typedPath(node).call(print, "ts"),
         ";",
       ];
+      if (node.attrs) {
+        const attrs = typedPath(node).call(print, "attrs");
+        return [attrs, body];
+      }
+      return body;
+    }
 
     case "Property": {
       return group([
