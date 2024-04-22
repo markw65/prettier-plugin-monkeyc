@@ -564,6 +564,7 @@ export interface AttributeList extends BaseNode {
   type: "AttributeList";
   attributes?: Attributes;
   access?: AccessSpecifier[];
+  system?: Record<string, unknown>;
 }
 
 type Attribute = SymbolExpression | CallExpression;
