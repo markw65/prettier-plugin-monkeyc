@@ -2,6 +2,10 @@
 
 All notable changes to the "prettier-plugin-monkeyc" package will be documented in this file.
 
+#### 1.0.57
+
+- Add a missing field in estree_types
+
 #### 1.0.56
 
 - Allow exclude annotations on typedefs
