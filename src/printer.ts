@@ -239,7 +239,8 @@ function printAst(
       const body = [node.name ? path.call(print, "name") : ""];
 
       if (node.body) {
-        body.push(" ", dedent(typedPath(node).call(print, "body")));
+        const rest = typedPath(node).call(print, "body");
+        body.push(" ", node.name === "interface" ? rest : dedent(rest));
       }
       if (node.generics) {
         // Add a space between the trailing >> in Array<Array<Number>>,
