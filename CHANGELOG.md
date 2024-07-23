@@ -4,6 +4,10 @@ All notable changes to the "prettier-plugin-monkeyc" package will be documented 
 
 #### 1.0.58
 
+- Ignore `resolveType` field in serializeMonkeyC to avoid errors due to cycles.
+
+#### 1.0.58
+
 - Fix an indentation issue with interfaces
 
 #### 1.0.57
