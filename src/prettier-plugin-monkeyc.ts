@@ -175,6 +175,10 @@ export const defaultOptions = {
  */
 export function serializeMonkeyC(node: ESTreeNode) {
   return JSON.stringify(node, (key: string, value: unknown) => {
+    // monkeyc-optimizer sometimes adds a resolvedType field to
+    // EnumStringMembers. This field can contain cycles, and is only there to
+    // cache a value for performance. Ignore it here to prevent issues.
+    if (key === "resolvedType") return undefined;
     if (
       key === "value" &&
       (typeof value === "bigint" || (typeof value === "number" && isNaN(value)))
