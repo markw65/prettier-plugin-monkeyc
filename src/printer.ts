@@ -435,7 +435,7 @@ function preprocessHelper<T extends ESTreeNode>(
   for (const [key, value] of Object.entries(node)) {
     if (!value) continue;
     if (Array.isArray(value)) {
-      value.forEach((obj) => preprocessHelper(obj, null, options));
+      value.forEach((obj) => obj && preprocessHelper(obj, null, options));
     } else if (typeof value == "object" && value.type) {
       node[key as keyof T] = preprocessHelper(value, node, options);
     }
