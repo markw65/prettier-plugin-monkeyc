@@ -2,6 +2,10 @@
 
 All notable changes to the "prettier-plugin-monkeyc" package will be documented in this file.
 
+#### 1.0.60
+
+- Ignore `null`s in arrays to prevent a crash in `preprocessHelper`
+
 #### 1.0.59
 
 - Ignore `resolveType` field in serializeMonkeyC to avoid errors due to cycles.
