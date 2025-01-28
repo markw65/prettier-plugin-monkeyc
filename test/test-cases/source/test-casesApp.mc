@@ -16,7 +16,8 @@ class testCasesApp extends Application.AppBase {
     function onStart(state as Dictionary?) as Void {
         var tests = getExprs();
         for (var i = 0; i < tests.size(); i++) {
-            System.println(checkStr(i, tests[i][0], tests[i][1])[0]);
+            System.println(checkStr(i, tests[i][0], tests[i][1])[0]);;;
+            {};
         }
     }
 

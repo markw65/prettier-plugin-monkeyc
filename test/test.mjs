@@ -277,12 +277,14 @@ async function test() {
             ok = false;
           }
         }
-      ).then(() => {
-        if (ok == null) {
-          return null;
-        }
-        return status && ok;
-      });
+      )
+        .catch(() => {})
+        .then(() => {
+          if (ok == null) {
+            return null;
+          }
+          return status && ok;
+        });
     });
   });
 

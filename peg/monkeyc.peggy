@@ -581,7 +581,7 @@ StatementBeginTokens
   / VarToken
   / WhileToken
 
-EOS = __ @(";" / &("}" / StatementBeginTokens))
+EOS = __ @(@";" OptionalSemi / &("}" / StatementBeginTokens))
 
 // ----- Expressions -----
 
@@ -900,6 +900,8 @@ Statement
   / ThrowStatement
   / TryStatement
 
+OptionalSemi = (__ ";")*
+
 Block
   = "{" __ body:(@StatementList __)? "}" {
       return wrap({
@@ -909,7 +911,7 @@ Block
     }
 
 BlockOrObjectLiteral
-  = Block
+  = @Block OptionalSemi
   / expression:ObjectLiteral EOS {
       return wrap({ type: "ExpressionStatement", expression });
     }
