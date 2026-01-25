@@ -2,6 +2,11 @@
 
 All notable changes to the "prettier-plugin-monkeyc" package will be documented in this file.
 
+#### 1.0.62
+
+- Make plugin compatible with prettier-3.7.x and later
+  - Parts of the api changed in 3.7.0, causing various issues. This version should be compatible with everything from 2.5.x upwards.
+
 #### 1.0.61
 
 - Allow semi-colons after expression-statements, and uncontrolled block-statements to match Garmin's parser.
