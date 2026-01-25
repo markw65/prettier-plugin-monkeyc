@@ -7,6 +7,7 @@
     "eslint": "^8.10.0",
     "globby": "^13.1.1",
     "peggy": "^3.0.2",
+    "prettier": "^3.8.0",
     "prettier-plugin-pegjs": "^1.0.1",
     "typescript": "^5.0.4"
   },

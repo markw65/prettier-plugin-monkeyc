@@ -1,6 +1,6 @@
 import { parse } from "peg/monkeyc.peggy";
 import {
-  default as preprocess,
+  printerInitialize,
   LiteralIntegerRe,
   estree_promise,
 } from "./printer";
@@ -68,7 +68,7 @@ export const parsers = {
     astFormat: "monkeyc",
     locStart: (node: ESTreeNode) => node.start || 0,
     locEnd: (node: ESTreeNode) => node.end || 0,
-    preprocess,
+    preprocess: printerInitialize,
   } as const,
   "monkeyc-json": {
     // just parse the last line out of str, so we can pass in the
@@ -107,7 +107,7 @@ export const parsers = {
     astFormat: "monkeyc",
     locStart: (node) => node.start || 0,
     locEnd: (node) => node.end || 0,
-    preprocess,
+    preprocess: printerInitialize,
   } as Parser<ESTreeNode>,
 };
 

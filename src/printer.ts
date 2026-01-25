@@ -44,14 +44,14 @@ type PluginPrinterElem =
 let estree_print: Printer<ESTreeNode>["print"],
   estree_preprocess: Printer<ESTreeNode>["preprocess"];
 
-export let estree_promise: Promise<void> | undefined | null;
+export let estree_promise: Promise<string> | undefined | null;
 
 // We set this as the parser's preprocess function. That lets
 // us grab the estree printer early on, and munge our printer,
 // before any printing starts
-export default function printerInitialize(
+export function printerInitialize(
   text: string,
-  options: ParserOptions
+  options: ParserOptions & {printer?:Printer<ESTreeNode>}
 ) {
   if (estree_promise === undefined) {
     const find = (name: string) => {
@@ -67,26 +67,32 @@ export default function printerInitialize(
     const setup = (estree: Printer<ESTreeNode>) => {
       estree_promise = null;
       let rest,
-        canAttachComment: ((node: ESTreeNode) => boolean) | undefined,
-        getVisitorKeys;
+        canAttachComment: ((node: ESTreeNode, ancestors:unknown[]) => boolean) | undefined,
+        getVisitorKeys,embed;
       ({
         print: estree_print,
         preprocess: estree_preprocess,
         canAttachComment,
         getVisitorKeys,
+        embed,
         ...rest
       } = estree);
       Object.assign(printers.monkeyc, rest, {
         print: printAst,
         preprocess: preprocessAst,
-        canAttachComment: (node: ESTreeNode) =>
+        canAttachComment: (node: ESTreeNode, ancestors:unknown[]) =>
           node.type != "AttributeList" &&
-          (!canAttachComment || canAttachComment(node)),
+          (!canAttachComment || canAttachComment(node, ancestors)),
         willPrintOwnComments: () => false,
       });
+      Object.assign(options.printer as unknown as Record<string, unknown>, printers.monkeyc);
     };
     if (typeof estree === "function") {
-      estree_promise = estree().then(setup);
+      estree_promise = estree().then(setup).then(()=>text);
+      const semver = Prettier.version.split(".").map(s=>Number(s))
+      if (semver[0] > 3 || semver[0] === 3 && semver[1] >= 7) {
+        return estree_promise;
+      }
     } else {
       setup(estree);
     }
