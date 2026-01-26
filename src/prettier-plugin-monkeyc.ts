@@ -21,7 +21,7 @@ export const languages = [
 function parseMonkeyC(
   text: string,
   parsers: unknown,
-  options: Partial<ParserOptions<ESTreeNode>> & {
+  options?: Partial<ParserOptions<ESTreeNode>> & {
     singleExpression?: boolean;
     mss?: string;
   }
@@ -55,7 +55,7 @@ export const parsers = {
     parse: (
       text: string,
       parsers: unknown,
-      options: Partial<ParserOptions<ESTreeNode>> & {
+      options?: Partial<ParserOptions<ESTreeNode>> & {
         singleExpression?: boolean;
         mss?: string;
       }
