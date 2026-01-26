@@ -44,6 +44,9 @@
   ],
   "author": "Mark Williams",
   "license": "MIT",
+  "prettier": {
+    "trailingComma": "es5"
+  },
   "bugs": {
     "url": "https://github.com/markw65/prettier-plugin-monkeyc/issues"
   },
