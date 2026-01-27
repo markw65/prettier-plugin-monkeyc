@@ -1,9 +1,5 @@
 import { parse } from "peg/monkeyc.peggy";
-import {
-  printerInitialize,
-  LiteralIntegerRe,
-  estree_promise,
-} from "./printer";
+import { printerInitialize, LiteralIntegerRe, estree_promise } from "./printer";
 import { Node as ESTreeNode } from "./estree-types";
 import { Parser, ParserOptions } from "prettier";
 import { Printer } from "./printer";
@@ -47,14 +43,14 @@ function parseMonkeyC(
         : "Start";
     }
   }
-  return parse(text, peggyOptions);
+  return parse(text, peggyOptions) as ESTreeNode;
 }
 
-export const parsers = {
+export const parsers: Record<string, Parser<ESTreeNode>> = {
   monkeyc: {
     parse: (
       text: string,
-      parsers: unknown,
+      parsers: ParserOptions<ESTreeNode>,
       options?: Partial<ParserOptions<ESTreeNode>> & {
         singleExpression?: boolean;
         mss?: string;
@@ -69,7 +65,7 @@ export const parsers = {
     locStart: (node: ESTreeNode) => node.start || 0,
     locEnd: (node: ESTreeNode) => node.end || 0,
     preprocess: printerInitialize,
-  } as const,
+  },
   "monkeyc-json": {
     // just parse the last line out of str, so we can pass in the
     // original text, followed by the json ast. This is because
@@ -108,7 +104,7 @@ export const parsers = {
     locStart: (node) => node.start || 0,
     locEnd: (node) => node.end || 0,
     preprocess: printerInitialize,
-  } as Parser<ESTreeNode>,
+  },
 };
 
 const nonTraversableKeys = new Set([

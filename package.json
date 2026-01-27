@@ -2,7 +2,6 @@
   "type": "commonjs",
   "devDependencies": {
     "@markw65/peggy-optimizer": "^1.0.1",
-    "@types/prettier": "^2.6.1",
     "esbuild": "^0.17.16",
     "eslint": "^8.10.0",
     "globby": "^13.1.1",

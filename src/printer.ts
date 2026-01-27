@@ -51,14 +51,17 @@ export let estree_promise: Promise<string> | undefined | null;
 // before any printing starts
 export function printerInitialize(
   text: string,
-  options: ParserOptions & {printer?:Printer<ESTreeNode>}
+  options: ParserOptions & { printer?: Printer<ESTreeNode> }
 ) {
   if (estree_promise === undefined) {
     const find = (name: string) => {
       const finder = (
-        p: Prettier.Plugin | string | undefined
+        p: Prettier.Plugin | string | URL | undefined
       ): false | "" | undefined | PluginPrinterElem =>
-        p && typeof p !== "string" && (p.printers?.[name] as PluginPrinterElem);
+        p &&
+        typeof p !== "string" &&
+        !(p instanceof URL) &&
+        (p.printers?.[name] as PluginPrinterElem);
       const result = finder(options.plugins?.find(finder));
       if (!result) throw new Error("Prettier setup failure!");
       return result;
@@ -67,8 +70,11 @@ export function printerInitialize(
     const setup = (estree: Printer<ESTreeNode>) => {
       estree_promise = null;
       let rest,
-        canAttachComment: ((node: ESTreeNode, ancestors:unknown[]) => boolean) | undefined,
-        getVisitorKeys,embed;
+        canAttachComment:
+          | ((node: ESTreeNode, ancestors: ESTreeNode[]) => boolean)
+          | undefined,
+        getVisitorKeys,
+        embed;
       ({
         print: estree_print,
         preprocess: estree_preprocess,
@@ -80,17 +86,22 @@ export function printerInitialize(
       Object.assign(printers.monkeyc, rest, {
         print: printAst,
         preprocess: preprocessAst,
-        canAttachComment: (node: ESTreeNode, ancestors:unknown[]) =>
+        canAttachComment: (node: ESTreeNode, ancestors: ESTreeNode[]) =>
           node.type != "AttributeList" &&
           (!canAttachComment || canAttachComment(node, ancestors)),
         willPrintOwnComments: () => false,
       });
-      Object.assign(options.printer as unknown as Record<string, unknown>, printers.monkeyc);
+      Object.assign(
+        options.printer as unknown as Record<string, unknown>,
+        printers.monkeyc
+      );
     };
     if (typeof estree === "function") {
-      estree_promise = estree().then(setup).then(()=>text);
-      const semver = Prettier.version.split(".").map(s=>Number(s))
-      if (semver[0] > 3 || semver[0] === 3 && semver[1] >= 7) {
+      estree_promise = estree()
+        .then(setup)
+        .then(() => text);
+      const semver = Prettier.version.split(".").map((s) => Number(s));
+      if (semver[0] > 3 || (semver[0] === 3 && semver[1] >= 7)) {
         return estree_promise;
       }
     } else {
