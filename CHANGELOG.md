@@ -2,6 +2,10 @@
 
 All notable changes to the "prettier-plugin-monkeyc" package will be documented in this file.
 
+#### 1.0.64
+
+- More typescript fixes for the switch to 3.x (also clean up some lazy typing).
+
 #### 1.0.63
 
 - Fix the signature of monkeyc.parse, so that other projects that depend on this one don't get typescript errors when building against prettier 3.x. Doesn't change the behavior.
