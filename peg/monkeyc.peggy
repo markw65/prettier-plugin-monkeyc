@@ -1110,7 +1110,7 @@ ThrowStatement
     }
 
 TryStatement
-  = TryToken __ block:Block __ handler:Catches? __ finalizer:Finally? {
+  = TryToken __ block:Block handler:Catches? finalizer:(__ @Finally)? {
       return wrap({
         type: "TryStatement",
         block,
@@ -1120,7 +1120,7 @@ TryStatement
     }
 
 Catches
-  = catches:(@Catch __)+ {
+  = catches:(__ @Catch)+ {
       return catches.length == 1
         ? catches[0]
         : wrap({
