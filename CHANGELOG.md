@@ -2,6 +2,11 @@
 
 All notable changes to the "prettier-plugin-monkeyc" package will be documented in this file.
 
+#### 1.0.65
+
+- Fix an issue that prevented a blank line after a catch block being preserved
+- Replace a horribly inefficient regex with a loop to avoid stack overflows when `@markw65/monkeyc-optimizer` tries to write large files.
+
 #### 1.0.64
 
 - More typescript fixes for the switch to 3.x (also clean up some lazy typing).
