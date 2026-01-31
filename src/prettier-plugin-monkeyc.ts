@@ -72,16 +72,16 @@ export const parsers: Record<string, Parser<ESTreeNode>> = {
     // prettier makes some of its formatting decisions by looking
     // at the original source, rather than the contents of the ast.
     parse: (str: string) => {
-      const match = str.match(
-        /^((.|[\r\n\u2028\u2029])*)(\r\n|[\n\r\u2028\u2029])(.+)$/
-      );
-      const result = unserializeMonkeyC(match ? match[4] : str);
+      let lastIndex: number = 0;
+      const re = /\r\n|[\n\r\u2028\u2029]/g;
+      while (true) {
+        const m = re.exec(str);
+        if (!m) break;
+        lastIndex = m.index + m[0].length;
+      }
+      const result = unserializeMonkeyC(str.substring(lastIndex));
       if ("comments" in result) {
-        if (
-          !match ||
-          !match[1] ||
-          (result.end && match[1].length < result.end)
-        ) {
+        if (!lastIndex || (result.end && lastIndex < result.end)) {
           // If we didn't get original text, don't try to print comments
           // because prettier ignores the comment value, and reads the
           // text of the comment from the source.
