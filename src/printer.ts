@@ -124,7 +124,7 @@ function printAttributeList(
   options: ParserOptions,
   print: (path: AstPath<ESTreeNode | string | undefined>) => Prettier.Doc
 ) {
-  const node = path.getValue();
+  const node = path.node;
   if (!node) return [];
   let body: Prettier.Doc = [];
   if (node.access) {
@@ -144,7 +144,7 @@ function printAst(
   options: ParserOptions,
   print: (path: AstPath<ESTreeNode | string | null | undefined>) => Prettier.Doc
 ) {
-  const node = path.getValue();
+  const node = path.node;
   if (!node) {
     return "";
   }
