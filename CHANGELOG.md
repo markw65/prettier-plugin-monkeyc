@@ -2,6 +2,10 @@
 
 All notable changes to the "prettier-plugin-monkeyc" package will be documented in this file.
 
+#### 1.0.66
+
+- Insert a single space after the comma in a list of exclusions if there was at least one space already.
+
 #### 1.0.65
 
 - Fix an issue that prevented a blank line after a catch block being preserved
