@@ -14,10 +14,11 @@
     "prettier": ">2.8.0"
   },
   "scripts": {
-    "test": "node test/test.mjs --validate-locations=true && node test/test.mjs --check-mss=true && node test/test.mjs",
+    "test": "npm run test-locations && npm run test-mss && npm run test-expectations && node test/test.mjs",
     "test-quick": "node test/test.mjs --projects=test/test-cases",
     "test-locations": "node test/test.mjs --validate-locations=true",
     "test-mss": "node test/test.mjs --check-mss=true",
+    "test-expectations": "node test/test-expectations.mjs",
     "watch": "node esbuild.mjs --watch",
     "build-debug": "node esbuild.mjs",
     "build-release": "node esbuild.mjs --release",

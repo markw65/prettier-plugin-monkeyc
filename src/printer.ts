@@ -340,16 +340,29 @@ function printAst(
       return [body, " ", typedPath(node).call(print, "body")];
     }
 
-    case "Attributes":
+    case "Attributes": {
+      const joinStr = node.elements.some((attribute, i, arr) => {
+        const prev = arr[i - 1];
+        const prevEnd = prev?.loc?.end;
+        const start = attribute.loc?.start;
+        return (
+          prevEnd &&
+          start &&
+          (prevEnd.line < start.line || prevEnd.column < start.column - 1)
+        );
+      })
+        ? ", "
+        : ",";
       return group([
         "(",
         indent([
           softline,
-          group(join([",", softline], path.map(print, "elements"))),
+          group(join([joinStr, softline], path.map(print, "elements"))),
         ]),
         softline,
         ")",
       ]);
+    }
 
     case "AttributeList":
       return printAttributeList(path as AstPath<typeof node>, options, print);
