@@ -2,7 +2,7 @@
   "type": "commonjs",
   "devDependencies": {
     "@markw65/peggy-optimizer": "^1.0.1",
-    "esbuild": "^0.17.16",
+    "esbuild": "^0.27.3",
     "eslint": "^8.10.0",
     "globby": "^13.1.1",
     "peggy": "^3.0.2",
