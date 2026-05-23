@@ -316,9 +316,23 @@ function printAst(
         node.byte || "",
       ]);
 
+    case "ClassDeclaration":
+      if (node.superClass) {
+        /*
+          The estree prettier won't break `class C extends E {` unless there are
+          multiple "inherited" classes - this includes "mixins", "interfaces"
+          and "extends". "extends" is a list of superclasses, and is only valid
+          for interfaces. If both superClass and extends are set, extends is
+          ignored, except that it counts towards the multiple-inheritance count,
+          which triggers wrapping.
+
+          So we set extends to [superClass], which enables the wrapping
+          behavior, but is otherwise ignored.
+        */
+        (node as { extends?: ESTreeNode[] }).extends = [node.superClass];
+      }
     case "VariableDeclaration":
-    case "FunctionDeclaration":
-    case "ClassDeclaration": {
+    case "FunctionDeclaration": {
       const body = estree_print(path, options, print);
       if (node.attrs) {
         const attrs = typedPath(node).call(print, "attrs");
