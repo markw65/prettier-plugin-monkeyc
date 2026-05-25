@@ -7,6 +7,7 @@ import {
   Comment as ESTreeComment,
 } from "./estree-types";
 import { printers } from "./prettier-plugin-monkeyc";
+import { builders } from "prettier/doc";
 
 const { doc } = Prettier;
 
@@ -137,6 +138,19 @@ function printAttributeList(
   }
   if (!node.attributes) return body;
   return [path.call(print, "attributes"), hardline, body];
+}
+
+function isDocCommand(
+  doc: Prettier.Doc | undefined
+): doc is builders.DocCommand {
+  return doc != null && typeof doc === "object" && !Array.isArray(doc);
+}
+
+function isDoc<T extends builders.DocCommand["type"]>(
+  doc: Prettier.Doc | undefined,
+  type: T
+): doc is Extract<builders.DocCommand, { type: T }> {
+  return isDocCommand(doc) && doc.type === type;
 }
 
 function printAst(
@@ -319,6 +333,40 @@ function printAst(
         "]",
         node.byte || "",
       ]);
+
+    case "UnaryExpression":
+      if (node.operator === " as") {
+        const result = estree_print(path, options, print);
+        if (
+          !Array.isArray(result) ||
+          result.length !== 3 ||
+          result[0] !== " as" ||
+          result[1] !== " "
+        ) {
+          return result;
+        }
+        const res2 = result[2];
+        if (
+          !isDoc(res2, "group") ||
+          !Array.isArray(res2.contents) ||
+          res2.contents.length < 3 ||
+          res2.contents.at(0) !== "(" ||
+          res2.contents.at(-1) !== ")"
+        ) {
+          return group([result[0], indent([line, result[2]])]);
+        }
+
+        return [
+          " as ",
+          ...res2.contents.slice(
+            1,
+            res2.contents.length === 4 && isDoc(res2.contents[2], "line")
+              ? -2
+              : -1
+          ),
+        ];
+      }
+      break;
 
     case "ClassDeclaration":
       if (node.superClass) {
