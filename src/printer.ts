@@ -231,18 +231,22 @@ function printAst(
     }
 
     case "ParenthesizedExpression": {
-      // We wrap top-level ObjectExpressions in parens
-      // so that the estree printer doesn't realize they're
-      // top level (because it would *add* parens in that case)
-      // There's also a bug where trying to print certain expressions
-      // with no parent node will crash the estree printer, so
-      // we wrap the nodes in parens.
+      // We wrap top-level ObjectExpressions in parens so that the estree
+      // printer doesn't realize they're top level (because it would *add*
+      // parens in that case) There's also a bug where trying to print certain
+      // expressions with no parent node will crash the estree printer, so we
+      // wrap the nodes in parens.
       // In both cases, we don't want to actually print the parens.
+
+      // We also wrap "as" expressions that are children of VariableDeclarators
+      // because the estree formatter won't indent when it breaks if the parent
+      // of a BinaryExpression is a VariableDeclarator
       const parent = path.getParentNode();
       if (
         !parent ||
         (node.expression.type === "ObjectExpression" &&
-          (parent.type !== "BinaryExpression" || parent.operator !== "as"))
+          (parent.type !== "BinaryExpression" || parent.operator !== "as")) ||
+        parent.type === "VariableDeclarator"
       ) {
         return path.call(print, "expression");
       }
@@ -548,6 +552,9 @@ function nodeNeedsParens(node: ESTreeNode, parent: ESTreeNode): boolean {
 
   if (node.type == "BinaryExpression") {
     switch (parent.type) {
+      case "VariableDeclarator":
+        // this must have been an "as" expression
+        return node === parent.id;
       case "BinaryExpression": {
         const nprec = BinaryOpPrecedence[node.operator];
         const pprec = BinaryOpPrecedence[parent.operator];
