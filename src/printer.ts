@@ -340,7 +340,7 @@ function printAst(
       const body = estree_print(path, options, print);
       if (node.attrs) {
         const attrs = typedPath(node).call(print, "attrs");
-        return [attrs, body];
+        return [attrs, Array.isArray(body) ? group(body) : body];
       }
       return body;
     }
