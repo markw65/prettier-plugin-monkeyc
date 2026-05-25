@@ -15,10 +15,11 @@ const { doc } = Prettier;
 const {
   group,
   fill,
-  // ifBreak,
+  ifBreak,
   line,
   softline,
   hardline,
+  hardlineWithoutBreakParent,
   //lineSuffix,
   //lineSuffixBoundary,
   indent,
@@ -386,6 +387,24 @@ function printAst(
     case "VariableDeclaration":
     case "FunctionDeclaration": {
       const body = estree_print(path, options, print);
+      if (
+        node.type === "FunctionDeclaration" &&
+        Array.isArray(body) &&
+        body[6] === " " &&
+        Array.isArray(body[7]) &&
+        body[7][0] === "{"
+      ) {
+        if (
+          isDoc(body[5], "group") &&
+          Array.isArray(body[5].contents) &&
+          body[5].contents.length === 2 &&
+          Array.isArray(body[5].contents[1])
+        ) {
+          const id = Symbol();
+          body[5].contents[1] = group(body[5].contents[1], { id });
+          body[6] = group([ifBreak(hardlineWithoutBreakParent, " ", { groupId: id })]);
+        }
+      }
       if (node.attrs) {
         const attrs = typedPath(node).call(print, "attrs");
         return [attrs, Array.isArray(body) ? group(body) : body];
