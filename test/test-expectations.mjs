@@ -28,7 +28,7 @@ async function test() {
       const expectedPath = path.resolve(expectationsDir, expectName);
 
       return Promise.all([
-        exec(`npx prettier --plugin ${pluginPath} ${inputPath}`, {
+        exec(`npx prettier --plugin "${pluginPath}" --config "${expectationsDir}/.prettierrc.yml" "${inputPath}"`, {
           encoding: "utf-8",
         }),
         fs.readFile(expectedPath, "utf-8"),
