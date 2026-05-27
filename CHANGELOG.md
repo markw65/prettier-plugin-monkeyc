@@ -2,6 +2,14 @@
 
 All notable changes to the "prettier-plugin-monkeyc" package will be documented in this file.
 
+#### 1.0.67
+
+- Fix a bug where `function f() as /* comment */ T` could get formatted as `function f() as (/* comment */ T)`, which doesn't parse.
+- Fix [Issue #8](https://github.com/markw65/prettier-plugin-monkeyc/issues/8)
+  - Wrap `class E extends T {` if it exceeds the line length by indenting `extends T` on a new line, and breaking again before `{`
+  - When `var v as T;` wraps after the `as`, indent the `T`
+  - Wrap `function f() as T {` after `as` if it would exceed the line length.
+
 #### 1.0.66
 
 - Insert a single space after the comma in a list of exclusions if there was at least one space already.
