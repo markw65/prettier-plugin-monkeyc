@@ -61,3 +61,6 @@ class C
         return 42;
     }
 }
+
+class /* comment0 */ D /* comment1 */ extends /* comment2 */ C /*comment3*/ {
+}

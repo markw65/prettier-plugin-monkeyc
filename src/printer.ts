@@ -75,12 +75,14 @@ export function printerInitialize(
         canAttachComment:
           | ((node: ESTreeNode, ancestors: ESTreeNode[]) => boolean)
           | undefined,
+        willPrintOwnComments: ((path: AstPath) => boolean) | undefined,
         getVisitorKeys,
         embed;
       ({
         print: estree_print,
         preprocess: estree_preprocess,
         canAttachComment,
+        willPrintOwnComments,
         getVisitorKeys,
         embed,
         ...rest
@@ -91,7 +93,7 @@ export function printerInitialize(
         canAttachComment: (node: ESTreeNode, ancestors: ESTreeNode[]) =>
           node.type != "AttributeList" &&
           (!canAttachComment || canAttachComment(node, ancestors)),
-        willPrintOwnComments: () => false,
+        willPrintOwnComments: willPrintOwnComments ?? (() => false),
       });
       Object.assign(
         options.printer as unknown as Record<string, unknown>,
