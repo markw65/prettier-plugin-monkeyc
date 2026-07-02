@@ -2,6 +2,10 @@
 
 All notable changes to the "prettier-plugin-monkeyc" package will be documented in this file.
 
+#### 1.0.69
+
+- Update exported types to indicate that Method.returnType is optional
+
 #### 1.0.68
 
 - Fix a bug where comments in a class declaration would get duplicated when the class was formatted.
