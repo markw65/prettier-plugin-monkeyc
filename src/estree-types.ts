@@ -545,7 +545,7 @@ export interface MethodDefinition extends BaseNode {
   kind: "method";
   key: "";
   params: Array<TypedIdentifier>;
-  returnType: AsTypeSpec;
+  returnType?: AsTypeSpec | undefined | null;
 }
 
 export type AccessSpecifier =
